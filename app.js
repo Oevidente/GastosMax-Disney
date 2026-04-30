@@ -89,6 +89,7 @@ const profileNameInput = document.querySelector("#profileNameInput");
 const profileMessage = document.querySelector("#profileMessage");
 const themeButton = document.querySelector("#themeButton");
 const notificationButton = document.querySelector("#notificationButton");
+const notificationStatus = document.querySelector("#notificationStatus");
 const changeProfileButton = document.querySelector("#changeProfileButton");
 const personName = document.querySelector("#personName");
 const summaryCount = document.querySelector("#summaryCount");
@@ -196,7 +197,6 @@ async function handleProfileSubmit() {
 
   saveProfile(personKey);
   openDashboard(personKey);
-  await requestNotificationAccess();
 }
 
 function restoreProfile() {
@@ -247,6 +247,7 @@ function openDashboard(personKey) {
   detailsPanel.classList.add("is-hidden");
   renderSubscriptionCards(personKey);
   updateNotificationButton();
+  updateNotificationStatus();
   startSessionLoops();
   void checkPaymentReminders();
 }
@@ -568,37 +569,84 @@ function refreshCurrentDates() {
 }
 
 async function requestNotificationAccess({ runReminderCheck = true } = {}) {
-  if (!supportsNotifications() || !state.currentPersonKey) {
+  const capability = getNotificationCapability();
+
+  if (!state.currentPersonKey) {
     updateNotificationButton();
-    return;
+    return false;
   }
 
-  if (Notification.permission === "default") {
-    await Notification.requestPermission();
+  if (!capability.available) {
+    updateNotificationButton();
+    setNotificationStatus(capability.message);
+    return false;
+  }
+
+  try {
+    if (Notification.permission === "default") {
+      setNotificationStatus("O navegador deve abrir o pedido de permissão agora.");
+      await Notification.requestPermission();
+    }
+  } catch {
+    setNotificationStatus("O navegador bloqueou o pedido de permissão.");
+    updateNotificationButton();
+    return false;
   }
 
   updateNotificationButton();
 
+  if (Notification.permission === "denied") {
+    setNotificationStatus(
+      "As notificações estão bloqueadas. Libere nas configurações do navegador para este site."
+    );
+    return false;
+  }
+
+  if (Notification.permission === "default") {
+    setNotificationStatus("A permissão ainda não foi concedida.");
+    return false;
+  }
+
   if (Notification.permission === "granted") {
-    await registerServiceWorker();
+    const registration = await registerServiceWorker();
+
+    if ("serviceWorker" in navigator && !registration) {
+      setNotificationStatus(
+        "Permissão concedida, mas o service worker não foi registrado. No Android, abra pelo GitHub Pages em HTTPS."
+      );
+      return false;
+    }
 
     if (runReminderCheck) {
       await checkPaymentReminders();
     }
+
+    setNotificationStatus("Notificações permitidas neste navegador.");
+    return true;
   }
+
+  return false;
 }
 
 function updateNotificationButton() {
-  if (!state.currentPersonKey || !supportsNotifications()) {
+  if (!state.currentPersonKey) {
     notificationButton.classList.add("is-hidden");
     return;
   }
 
   notificationButton.classList.remove("is-hidden");
 
+  const capability = getNotificationCapability();
+
+  if (!capability.available) {
+    notificationButton.textContent = "Notificações indisponíveis";
+    notificationButton.disabled = true;
+    return;
+  }
+
   if (Notification.permission === "granted") {
     notificationButton.textContent = "Notificações ativas";
-    notificationButton.disabled = true;
+    notificationButton.disabled = false;
     return;
   }
 
@@ -610,6 +658,38 @@ function updateNotificationButton() {
 
   notificationButton.textContent = "Ativar notificações";
   notificationButton.disabled = false;
+}
+
+function updateNotificationStatus() {
+  if (!state.currentPersonKey) {
+    setNotificationStatus("");
+    return;
+  }
+
+  const capability = getNotificationCapability();
+
+  if (!capability.available) {
+    setNotificationStatus(capability.message);
+    return;
+  }
+
+  if (Notification.permission === "granted") {
+    setNotificationStatus(
+      "Notificações permitidas. Use o botão de teste em Meus próximos pagamentos para ver como elas aparecem."
+    );
+    return;
+  }
+
+  if (Notification.permission === "denied") {
+    setNotificationStatus(
+      "Notificações bloqueadas para este site. Libere nas configurações do navegador se quiser receber avisos."
+    );
+    return;
+  }
+
+  setNotificationStatus(
+    "Ative as notificações para receber aviso quando uma parcela estiver perto do vencimento."
+  );
 }
 
 async function checkPaymentReminders() {
@@ -633,8 +713,14 @@ async function checkPaymentReminders() {
     );
 
     for (const payment of reminders) {
-      await showPaymentNotification(personKey, payment);
-      markPaymentAsNotified(personKey, payment);
+      try {
+        await showPaymentNotification(personKey, payment);
+        markPaymentAsNotified(personKey, payment);
+      } catch {
+        setNotificationStatus(
+          "Não foi possível exibir um lembrete agora. Use o botão de teste para diagnosticar."
+        );
+      }
     }
   } finally {
     reminderCheckInProgress = false;
@@ -669,14 +755,7 @@ async function showPaymentNotification(personKey, payment) {
     renotify: false,
   };
 
-  const registration = await registerServiceWorker();
-
-  if (registration?.showNotification) {
-    await registration.showNotification(title, options);
-    return;
-  }
-
-  new Notification(title, options);
+  await showBrowserNotification(title, options);
 }
 
 async function showTestNotification() {
@@ -684,9 +763,10 @@ async function showTestNotification() {
     return;
   }
 
-  await requestNotificationAccess({ runReminderCheck: false });
+  setNotificationStatus("Preparando a notificação de teste...");
+  const hasPermission = await requestNotificationAccess({ runReminderCheck: false });
 
-  if (!supportsNotifications() || Notification.permission !== "granted") {
+  if (!hasPermission) {
     updateNotificationButton();
     return;
   }
@@ -704,6 +784,19 @@ async function showTestNotification() {
     renotify: true,
   };
 
+  try {
+    await showBrowserNotification(title, options);
+    setNotificationStatus(
+      "Notificação de teste enviada. Se ela não apareceu, confira as notificações do navegador e do sistema operacional."
+    );
+  } catch {
+    setNotificationStatus(
+      "A permissão foi concedida, mas o navegador não exibiu a notificação. No Android, teste pelo endereço HTTPS do GitHub Pages."
+    );
+  }
+}
+
+async function showBrowserNotification(title, options) {
   const registration = await registerServiceWorker();
 
   if (registration?.showNotification) {
@@ -711,7 +804,12 @@ async function showTestNotification() {
     return;
   }
 
-  new Notification(title, options);
+  if (typeof Notification === "function") {
+    new Notification(title, options);
+    return;
+  }
+
+  throw new Error("Notifications are not available.");
 }
 
 async function registerServiceWorker() {
@@ -730,7 +828,35 @@ async function registerServiceWorker() {
 }
 
 function supportsNotifications() {
-  return "Notification" in window;
+  return getNotificationCapability().available;
+}
+
+function getNotificationCapability() {
+  if (!("Notification" in window)) {
+    return {
+      available: false,
+      message: "Este navegador não oferece notificações para sites.",
+    };
+  }
+
+  if (!window.isSecureContext) {
+    return {
+      available: false,
+      message:
+        "Notificações precisam de HTTPS. Elas não funcionam abrindo o HTML direto; teste pelo GitHub Pages.",
+    };
+  }
+
+  return {
+    available: true,
+    message: "",
+  };
+}
+
+function setNotificationStatus(message) {
+  if (notificationStatus) {
+    notificationStatus.textContent = message;
+  }
 }
 
 function markPaymentAsNotified(personKey, payment) {
