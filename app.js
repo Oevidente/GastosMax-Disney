@@ -1,6 +1,9 @@
 const SETTINGS = {
   dueDay: 10,
   upcomingPaymentLimit: 6,
+  calendarMonthsAhead: 24,
+  calendarEventHour: 9,
+  calendarTimeZone: "America/Fortaleza",
   reminderDaysBefore: 3,
   refreshMinutes: 30,
   maxRotationStartMonth: 5,
@@ -134,9 +137,14 @@ function bindEvents() {
 
   upcomingPanel.addEventListener("click", (event) => {
     const testButton = event.target.closest("[data-test-notification]");
+    const calendarButton = event.target.closest("[data-add-calendar]");
 
     if (testButton) {
       void showTestNotification();
+    }
+
+    if (calendarButton) {
+      openGoogleCalendarEvent();
     }
   });
 
@@ -346,6 +354,9 @@ function renderUpcomingPayments(serviceKey, personKey) {
 
   return `
     <div class="panel-actions">
+      <button class="ghost-button" type="button" data-add-calendar>
+        Abrir no Google Agenda
+      </button>
       <button class="ghost-button" type="button" data-test-notification>
         Testar notificação
       </button>
@@ -478,6 +489,72 @@ function getUpcomingPaymentsForPerson(serviceKey, personKey, limit) {
   }
 
   return payments;
+}
+
+function openGoogleCalendarEvent() {
+  if (!state.currentPersonKey || !state.selectedServiceKey) {
+    return;
+  }
+
+  const nextPayment = getNextPayment(state.selectedServiceKey, state.currentPersonKey);
+
+  if (!nextPayment) {
+    setNotificationStatus("Não há pagamento futuro para adicionar ao Google Agenda.");
+    return;
+  }
+
+  const calendarUrl = createGoogleCalendarUrl(
+    state.currentPersonKey,
+    state.selectedServiceKey,
+    nextPayment.date
+  );
+  const openedWindow = window.open(calendarUrl, "_blank", "noopener");
+
+  if (!openedWindow) {
+    window.location.href = calendarUrl;
+  }
+
+  setNotificationStatus(
+    "O Google Agenda foi aberto com o evento preenchido. Revise os lembretes e salve o evento."
+  );
+}
+
+function createGoogleCalendarUrl(personKey, serviceKey, startDate) {
+  const person = PEOPLE[personKey];
+  const service = SERVICES[serviceKey];
+  const eventStart = createCalendarEventDate(startDate, SETTINGS.calendarEventHour, 0);
+  const eventEnd = createCalendarEventDate(startDate, SETTINGS.calendarEventHour, 15);
+  const recurrenceInterval = getCalendarRecurrenceInterval(serviceKey);
+  const recurrenceCount = getCalendarRecurrenceCount(serviceKey);
+  const timeZone = getCalendarTimeZone();
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `Pagamento ${service.name} - ${moneyFormatter.format(service.amount)}`,
+    dates: `${formatGoogleCalendarDate(eventStart)}/${formatGoogleCalendarDate(eventEnd)}`,
+    details: [
+      `${person.name}, este é o lembrete de pagamento de ${service.name}.`,
+      `Valor: ${moneyFormatter.format(service.amount)}.`,
+      `Primeiro vencimento: ${formatLongDate(startDate)}.`,
+      "Confira os lembretes do evento antes de salvar.",
+    ].join("\n"),
+    recur: `RRULE:FREQ=MONTHLY;INTERVAL=${recurrenceInterval};COUNT=${recurrenceCount}`,
+    ctz: timeZone,
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function getCalendarRecurrenceInterval(serviceKey) {
+  return SERVICES[serviceKey].model === "rotation" ? SETTINGS.maxRotation.length : 1;
+}
+
+function getCalendarRecurrenceCount(serviceKey) {
+  const interval = getCalendarRecurrenceInterval(serviceKey);
+  return Math.max(1, Math.ceil(SETTINGS.calendarMonthsAhead / interval));
+}
+
+function createCalendarEventDate(date, hour, minute) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute, 0);
 }
 
 function personPaysInMonth(serviceKey, personKey, monthIndex) {
@@ -954,6 +1031,22 @@ function formatDateKey(date) {
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-");
+}
+
+function formatGoogleCalendarDate(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+    "T",
+    String(date.getHours()).padStart(2, "0"),
+    String(date.getMinutes()).padStart(2, "0"),
+    String(date.getSeconds()).padStart(2, "0"),
+  ].join("");
+}
+
+function getCalendarTimeZone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || SETTINGS.calendarTimeZone;
 }
 
 function capitalize(value) {
