@@ -3,6 +3,9 @@
   --bg: #f5f7fb;
   --surface: #ffffff;
   --ink: #19202a;
+  --details-heading: #f4f7fb;
+  --details-strong: #19202a;
+  --details-muted: #4f6575;
   --muted: #687385;
   --line: #dce2ec;
   --soft: #eef2f7;
@@ -25,6 +28,9 @@
   --soft: #202a36;
   --accent: #5cc6d0;
   --accent-strong: #93e3ea;
+  --details-heading: var(--ink);
+  --details-strong: var(--ink);
+  --details-muted: var(--muted);
   --danger: #ffb4ab;
   --shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
   --grid-a: rgba(92, 198, 208, 0.09);
@@ -201,11 +207,11 @@ button {
 }
 
 .preview-disney {
-  background: #063e78;
+  background: #040714;
 }
 
 .preview-max {
-  background: #5c2bb7;
+  background: #000000;
 }
 
 .service-symbol {
@@ -358,11 +364,43 @@ button {
 }
 
 .subscription-card.service-disney {
-  background: #063e78;
+  background: #040714;
+  position: relative;
+}
+
+.subscription-card.service-disney::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 150px;
+  height: 150px;
+  background-image: url('disney--1.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.11;
+  pointer-events: none;
 }
 
 .subscription-card.service-max {
-  background: #5c2bb7;
+  background: #000000;
+  position: relative;
+}
+
+.subscription-card.service-max::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 150px;
+  height: 150px;
+  background-image: url('HBO_Max_logo_(May_2025).png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.11;
+  pointer-events: none;
 }
 
 .subscription-top,
@@ -430,6 +468,14 @@ button {
   box-shadow: var(--shadow);
 }
 
+.details-panel.details-disney {
+  background: rgba(4, 7, 20, 0.94);
+}
+
+.details-panel.details-max {
+  background: rgba(0, 0, 0, 0.94);
+}
+
 .details-header {
   display: flex;
   align-items: start;
@@ -441,6 +487,7 @@ button {
   margin: 0;
   font-size: clamp(1.4rem, 3vw, 2.2rem);
   letter-spacing: 0;
+  color: var(--details-heading);
 }
 
 .icon-button {
@@ -534,11 +581,12 @@ button {
 .empty-state strong {
   display: block;
   margin-bottom: 2px;
+  color: var(--details-strong);
 }
 
 .payment-item span,
 .empty-state span {
-  color: var(--muted);
+  color: var(--details-muted);
   font-size: 0.92rem;
 }
 
@@ -596,6 +644,11 @@ button {
   font-size: 0.78rem;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.status-pill.status-passou {
+  background: color-mix(in srgb, var(--danger) 16%, var(--surface));
+  color: var(--danger);
 }
 
 .is-hidden {

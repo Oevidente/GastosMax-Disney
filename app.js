@@ -3,76 +3,76 @@ const SETTINGS = {
   upcomingPaymentLimit: 6,
   calendarMonthsAhead: 24,
   calendarEventHour: 9,
-  calendarTimeZone: "America/Fortaleza",
+  calendarTimeZone: 'America/Fortaleza',
   reminderDaysBefore: 3,
   refreshMinutes: 30,
   maxRotationStartMonth: 5,
-  maxRotation: ["sarha", "andre", "isabela", "ianka"],
+  maxRotation: ['sarha', 'andre', 'isabela', 'ianka'],
 };
 
 const PEOPLE = {
   andre: {
-    name: "André",
-    aliases: ["andre", "andré"],
-    subscriptions: ["disney", "max"],
+    name: 'André',
+    aliases: ['andre', 'andré'],
+    subscriptions: ['disney', 'max'],
   },
   isabela: {
-    name: "Isabela",
-    aliases: ["isabela"],
-    subscriptions: ["disney", "max"],
+    name: 'Isabela',
+    aliases: ['isabela'],
+    subscriptions: ['disney', 'max'],
   },
   ianka: {
-    name: "Ianka",
-    aliases: ["ianka"],
-    subscriptions: ["disney", "max"],
+    name: 'Ianka',
+    aliases: ['ianka'],
+    subscriptions: ['disney', 'max'],
   },
   sarha: {
-    name: "Sarha",
-    aliases: ["sarha"],
-    subscriptions: ["max"],
+    name: 'Sarha',
+    aliases: ['sarha'],
+    subscriptions: ['max'],
   },
 };
 
 const SERVICES = {
   disney: {
-    name: "Disney+",
-    shortName: "D+",
-    cssClass: "service-disney",
-    model: "monthly",
-    modelLabel: "Todo mês",
+    name: 'Disney+',
+    shortName: 'D+',
+    cssClass: 'service-disney',
+    model: 'monthly',
+    modelLabel: 'Todo mês',
     amount: 22.31,
-    participants: ["andre", "isabela", "ianka"],
+    participants: ['andre', 'isabela', 'ianka'],
   },
   max: {
-    name: "HBO Max",
-    shortName: "M",
-    cssClass: "service-max",
-    model: "rotation",
-    modelLabel: "Rodízio",
+    name: 'HBO Max',
+    shortName: 'M',
+    cssClass: 'service-max',
+    model: 'rotation',
+    modelLabel: 'Rodízio',
     amount: 22.45,
-    participants: ["andre", "isabela", "ianka", "sarha"],
+    participants: ['andre', 'isabela', 'ianka', 'sarha'],
   },
 };
 
 const MONTHS = [
-  "janeiro",
-  "fevereiro",
-  "março",
-  "abril",
-  "maio",
-  "junho",
-  "julho",
-  "agosto",
-  "setembro",
-  "outubro",
-  "novembro",
-  "dezembro",
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
 ];
 
 const STORAGE_KEYS = {
-  profile: "streaming-payments-profile-v2",
-  notifications: "streaming-payments-notifications-v2",
-  theme: "streaming-payments-theme",
+  profile: 'streaming-payments-profile-v2',
+  notifications: 'streaming-payments-notifications-v2',
+  theme: 'streaming-payments-theme',
 };
 
 const state = {
@@ -85,34 +85,34 @@ let refreshIntervalId = null;
 let reminderCheckInProgress = false;
 let serviceWorkerRegistrationPromise = null;
 
-const profileScreen = document.querySelector("#profileScreen");
-const dashboard = document.querySelector("#dashboard");
-const profileForm = document.querySelector("#profileForm");
-const profileNameInput = document.querySelector("#profileNameInput");
-const profileMessage = document.querySelector("#profileMessage");
-const themeButton = document.querySelector("#themeButton");
-const notificationButton = document.querySelector("#notificationButton");
-const notificationStatus = document.querySelector("#notificationStatus");
-const changeProfileButton = document.querySelector("#changeProfileButton");
-const personName = document.querySelector("#personName");
-const summaryCount = document.querySelector("#summaryCount");
-const summaryLabel = document.querySelector("#summaryLabel");
-const subscriptionList = document.querySelector("#subscriptionList");
-const detailsPanel = document.querySelector("#detailsPanel");
-const detailsService = document.querySelector("#detailsService");
-const detailsTitle = document.querySelector("#detailsTitle");
-const upcomingPanel = document.querySelector("#upcomingPanel");
-const fullPanel = document.querySelector("#fullPanel");
-const closeDetailsButton = document.querySelector("#closeDetailsButton");
-const tabButtons = document.querySelectorAll(".tab-button");
-const yearControls = document.querySelector("#yearControls");
-const previousYearButton = document.querySelector("#previousYearButton");
-const nextYearButton = document.querySelector("#nextYearButton");
-const selectedYearLabel = document.querySelector("#selectedYearLabel");
+const profileScreen = document.querySelector('#profileScreen');
+const dashboard = document.querySelector('#dashboard');
+const profileForm = document.querySelector('#profileForm');
+const profileNameInput = document.querySelector('#profileNameInput');
+const profileMessage = document.querySelector('#profileMessage');
+const themeButton = document.querySelector('#themeButton');
+const notificationButton = document.querySelector('#notificationButton');
+const notificationStatus = document.querySelector('#notificationStatus');
+const changeProfileButton = document.querySelector('#changeProfileButton');
+const personName = document.querySelector('#personName');
+const summaryCount = document.querySelector('#summaryCount');
+const summaryLabel = document.querySelector('#summaryLabel');
+const subscriptionList = document.querySelector('#subscriptionList');
+const detailsPanel = document.querySelector('#detailsPanel');
+const detailsService = document.querySelector('#detailsService');
+const detailsTitle = document.querySelector('#detailsTitle');
+const upcomingPanel = document.querySelector('#upcomingPanel');
+const fullPanel = document.querySelector('#fullPanel');
+const closeDetailsButton = document.querySelector('#closeDetailsButton');
+const tabButtons = document.querySelectorAll('.tab-button');
+const yearControls = document.querySelector('#yearControls');
+const previousYearButton = document.querySelector('#previousYearButton');
+const nextYearButton = document.querySelector('#nextYearButton');
+const selectedYearLabel = document.querySelector('#selectedYearLabel');
 
-const moneyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
+const moneyFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
 });
 
 initTheme();
@@ -120,24 +120,25 @@ bindEvents();
 restoreProfile();
 
 function bindEvents() {
-  profileForm.addEventListener("submit", (event) => {
+  profileForm.addEventListener('submit', (event) => {
     event.preventDefault();
     void handleProfileSubmit();
   });
 
-  themeButton.addEventListener("click", () => {
-    const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  themeButton.addEventListener('click', () => {
+    const nextTheme =
+      document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     applyTheme(nextTheme);
     saveTheme(nextTheme);
   });
 
-  notificationButton.addEventListener("click", () => {
+  notificationButton.addEventListener('click', () => {
     void requestNotificationAccess();
   });
 
-  upcomingPanel.addEventListener("click", (event) => {
-    const testButton = event.target.closest("[data-test-notification]");
-    const calendarButton = event.target.closest("[data-add-calendar]");
+  upcomingPanel.addEventListener('click', (event) => {
+    const testButton = event.target.closest('[data-test-notification]');
+    const calendarButton = event.target.closest('[data-add-calendar]');
 
     if (testButton) {
       void showTestNotification();
@@ -148,23 +149,23 @@ function bindEvents() {
     }
   });
 
-  changeProfileButton.addEventListener("click", changeProfile);
+  changeProfileButton.addEventListener('click', changeProfile);
 
-  closeDetailsButton.addEventListener("click", () => {
+  closeDetailsButton.addEventListener('click', () => {
     state.selectedServiceKey = null;
-    detailsPanel.classList.add("is-hidden");
+    detailsPanel.classList.add('is-hidden');
     document
-      .querySelectorAll(".subscription-card")
-      .forEach((card) => card.classList.remove("is-selected"));
+      .querySelectorAll('.subscription-card')
+      .forEach((card) => card.classList.remove('is-selected'));
   });
 
   tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener('click', () => {
       setActiveTab(button.dataset.panel);
     });
   });
 
-  previousYearButton.addEventListener("click", () => {
+  previousYearButton.addEventListener('click', () => {
     const currentYear = getToday().getFullYear();
 
     if (state.selectedYear <= currentYear) {
@@ -175,17 +176,17 @@ function bindEvents() {
     renderDetails();
   });
 
-  nextYearButton.addEventListener("click", () => {
+  nextYearButton.addEventListener('click', () => {
     state.selectedYear += 1;
     renderDetails();
   });
 
-  window.addEventListener("focus", () => {
+  window.addEventListener('focus', () => {
     refreshCurrentDates();
     void checkPaymentReminders();
   });
 
-  document.addEventListener("visibilitychange", () => {
+  document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       refreshCurrentDates();
       void checkPaymentReminders();
@@ -195,7 +196,7 @@ function bindEvents() {
 
 async function handleProfileSubmit() {
   const personKey = findPersonKey(profileNameInput.value);
-  profileMessage.textContent = "";
+  profileMessage.textContent = '';
 
   if (!personKey) {
     profileMessage.textContent = getNameError(profileNameInput.value);
@@ -213,10 +214,10 @@ function restoreProfile() {
   updateNotificationButton();
 
   if (!personKey || !PEOPLE[personKey]) {
-    profileScreen.classList.remove("is-hidden");
-    dashboard.classList.add("is-hidden");
-    notificationButton.classList.add("is-hidden");
-    changeProfileButton.classList.add("is-hidden");
+    profileScreen.classList.remove('is-hidden');
+    dashboard.classList.add('is-hidden');
+    notificationButton.classList.add('is-hidden');
+    changeProfileButton.classList.add('is-hidden');
     return;
   }
 
@@ -229,14 +230,14 @@ function changeProfile() {
   state.currentPersonKey = null;
   state.selectedServiceKey = null;
   state.selectedYear = getToday().getFullYear();
-  dashboard.classList.add("is-hidden");
-  detailsPanel.classList.add("is-hidden");
-  notificationButton.classList.add("is-hidden");
-  changeProfileButton.classList.add("is-hidden");
-  yearControls.classList.add("is-hidden");
-  profileScreen.classList.remove("is-hidden");
-  profileNameInput.value = "";
-  profileMessage.textContent = "";
+  dashboard.classList.add('is-hidden');
+  detailsPanel.classList.add('is-hidden');
+  notificationButton.classList.add('is-hidden');
+  changeProfileButton.classList.add('is-hidden');
+  yearControls.classList.add('is-hidden');
+  profileScreen.classList.remove('is-hidden');
+  profileNameInput.value = '';
+  profileMessage.textContent = '';
   profileNameInput.focus();
 }
 
@@ -248,11 +249,12 @@ function openDashboard(personKey) {
 
   personName.textContent = person.name;
   summaryCount.textContent = person.subscriptions.length;
-  summaryLabel.textContent = person.subscriptions.length === 1 ? "assinatura" : "assinaturas";
-  profileScreen.classList.add("is-hidden");
-  dashboard.classList.remove("is-hidden");
-  changeProfileButton.classList.remove("is-hidden");
-  detailsPanel.classList.add("is-hidden");
+  summaryLabel.textContent =
+    person.subscriptions.length === 1 ? 'assinatura' : 'assinaturas';
+  profileScreen.classList.add('is-hidden');
+  dashboard.classList.remove('is-hidden');
+  changeProfileButton.classList.remove('is-hidden');
+  detailsPanel.classList.add('is-hidden');
   renderSubscriptionCards(personKey);
   updateNotificationButton();
   updateNotificationStatus();
@@ -263,22 +265,26 @@ function openDashboard(personKey) {
 function renderSubscriptionCards(personKey) {
   const person = PEOPLE[personKey];
   const sortedServices = [...person.subscriptions].sort((a, b) =>
-    SERVICES[a].name.localeCompare(SERVICES[b].name, "pt-BR")
+    SERVICES[a].name.localeCompare(SERVICES[b].name, 'pt-BR'),
   );
 
   subscriptionList.innerHTML = sortedServices
     .map((serviceKey) => createSubscriptionCard(serviceKey, personKey))
-    .join("");
+    .join('');
 
-  subscriptionList.querySelectorAll(".subscription-card").forEach((card) => {
-    card.addEventListener("click", () => openServiceDetails(card.dataset.service));
+  subscriptionList.querySelectorAll('.subscription-card').forEach((card) => {
+    card.addEventListener('click', () =>
+      openServiceDetails(card.dataset.service),
+    );
   });
 }
 
 function createSubscriptionCard(serviceKey, personKey) {
   const service = SERVICES[serviceKey];
   const nextPayment = getNextPayment(serviceKey, personKey);
-  const dateText = nextPayment ? formatShortDate(nextPayment.date) : "Sem data restante";
+  const dateText = nextPayment
+    ? formatShortDate(nextPayment.date)
+    : 'Sem data restante';
   const amountText = moneyFormatter.format(service.amount);
 
   return `
@@ -311,16 +317,18 @@ function openServiceDetails(serviceKey) {
   const person = PEOPLE[state.currentPersonKey];
   state.selectedYear = getToday().getFullYear();
 
-  document.querySelectorAll(".subscription-card").forEach((card) => {
-    card.classList.toggle("is-selected", card.dataset.service === serviceKey);
+  document.querySelectorAll('.subscription-card').forEach((card) => {
+    card.classList.toggle('is-selected', card.dataset.service === serviceKey);
   });
 
   detailsService.textContent = service.name;
   detailsTitle.textContent = `${person.name}, estes são os pagamentos dessa assinatura`;
-  detailsPanel.classList.remove("is-hidden");
-  setActiveTab("upcoming");
+  detailsPanel.classList.remove('details-disney', 'details-max');
+  detailsPanel.classList.add(`details-${serviceKey}`);
+  detailsPanel.classList.remove('is-hidden');
+  setActiveTab('upcoming');
   renderDetails();
-  detailsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderDetails() {
@@ -330,7 +338,7 @@ function renderDetails() {
 
   upcomingPanel.innerHTML = renderUpcomingPayments(
     state.selectedServiceKey,
-    state.currentPersonKey
+    state.currentPersonKey,
   );
   fullPanel.innerHTML = renderFullSheet(state.selectedServiceKey);
   updateYearControls();
@@ -340,7 +348,7 @@ function renderUpcomingPayments(serviceKey, personKey) {
   const payments = getUpcomingPaymentsForPerson(
     serviceKey,
     personKey,
-    SETTINGS.upcomingPaymentLimit
+    SETTINGS.upcomingPaymentLimit,
   );
 
   if (!payments.length) {
@@ -372,9 +380,9 @@ function renderUpcomingPayments(serviceKey, personKey) {
               </span>
               <span class="amount">${moneyFormatter.format(payment.amount)}</span>
             </li>
-          `
+          `,
         )
-        .join("")}
+        .join('')}
     </ul>
   `;
 }
@@ -383,7 +391,7 @@ function renderFullSheet(serviceKey) {
   const service = SERVICES[serviceKey];
   const year = state.selectedYear;
 
-  if (service.model === "monthly") {
+  if (service.model === 'monthly') {
     return renderMonthlySheet(serviceKey, year);
   }
 
@@ -394,23 +402,24 @@ function renderMonthlySheet(serviceKey, year) {
   const service = SERVICES[serviceKey];
   const participantHeaders = service.participants
     .map((personKey) => `<th>${PEOPLE[personKey].name}</th>`)
-    .join("");
+    .join('');
 
   const rows = getYearMonths(year)
     .map((date) => {
       const status = getDateStatus(date);
+      const statusClass = status === 'passou' ? ' status-passou' : '';
       return `
         <tr>
           <td>${capitalize(MONTHS[date.getMonth()])}</td>
           <td>${formatLongDate(date)}</td>
           ${service.participants
             .map(() => `<td>${moneyFormatter.format(service.amount)}</td>`)
-            .join("")}
-          <td><span class="status-pill">${status}</span></td>
+            .join('')}
+          <td><span class="status-pill${statusClass}">${status}</span></td>
         </tr>
       `;
     })
-    .join("");
+    .join('');
 
   return `
     <table class="sheet-table">
@@ -431,17 +440,19 @@ function renderRotationSheet(serviceKey, year) {
   const rows = getYearMonths(year)
     .map((date) => {
       const payerKey = getRotationPayer(date.getMonth());
+      const status = getDateStatus(date);
+      const statusClass = status === 'passou' ? ' status-passou' : '';
       return `
         <tr>
           <td>${capitalize(MONTHS[date.getMonth()])}</td>
           <td>${formatLongDate(date)}</td>
           <td>${PEOPLE[payerKey].name}</td>
           <td>${moneyFormatter.format(SERVICES[serviceKey].amount)}</td>
-          <td><span class="status-pill">${getDateStatus(date)}</span></td>
+          <td><span class="status-pill${statusClass}">${status}</span></td>
         </tr>
       `;
     })
-    .join("");
+    .join('');
 
   return `
     <table class="sheet-table">
@@ -496,47 +507,60 @@ function openGoogleCalendarEvent() {
     return;
   }
 
-  const nextPayment = getNextPayment(state.selectedServiceKey, state.currentPersonKey);
+  const nextPayment = getNextPayment(
+    state.selectedServiceKey,
+    state.currentPersonKey,
+  );
 
   if (!nextPayment) {
-    setNotificationStatus("Não há pagamento futuro para adicionar ao Google Agenda.");
+    setNotificationStatus(
+      'Não há pagamento futuro para adicionar ao Google Agenda.',
+    );
     return;
   }
 
   const calendarUrl = createGoogleCalendarUrl(
     state.currentPersonKey,
     state.selectedServiceKey,
-    nextPayment.date
+    nextPayment.date,
   );
-  const openedWindow = window.open(calendarUrl, "_blank", "noopener");
+  const openedWindow = window.open(calendarUrl, '_blank', 'noopener');
 
   if (!openedWindow) {
     window.location.href = calendarUrl;
   }
 
   setNotificationStatus(
-    "O Google Agenda foi aberto com o evento preenchido. Revise os lembretes e salve o evento."
+    'O Google Agenda foi aberto com o evento preenchido. Revise os lembretes e salve o evento.',
   );
 }
 
 function createGoogleCalendarUrl(personKey, serviceKey, startDate) {
   const person = PEOPLE[personKey];
   const service = SERVICES[serviceKey];
-  const eventStart = createCalendarEventDate(startDate, SETTINGS.calendarEventHour, 0);
-  const eventEnd = createCalendarEventDate(startDate, SETTINGS.calendarEventHour, 15);
+  const eventStart = createCalendarEventDate(
+    startDate,
+    SETTINGS.calendarEventHour,
+    0,
+  );
+  const eventEnd = createCalendarEventDate(
+    startDate,
+    SETTINGS.calendarEventHour,
+    15,
+  );
   const recurrenceInterval = getCalendarRecurrenceInterval(serviceKey);
   const recurrenceCount = getCalendarRecurrenceCount(serviceKey);
   const timeZone = getCalendarTimeZone();
   const params = new URLSearchParams({
-    action: "TEMPLATE",
+    action: 'TEMPLATE',
     text: `Pagamento ${service.name} - ${moneyFormatter.format(service.amount)}`,
     dates: `${formatGoogleCalendarDate(eventStart)}/${formatGoogleCalendarDate(eventEnd)}`,
     details: [
       `${person.name}, este é o lembrete de pagamento de ${service.name}.`,
       `Valor: ${moneyFormatter.format(service.amount)}.`,
       `Primeiro vencimento: ${formatLongDate(startDate)}.`,
-      "Confira os lembretes do evento antes de salvar.",
-    ].join("\n"),
+      'Confira os lembretes do evento antes de salvar.',
+    ].join('\n'),
     recur: `RRULE:FREQ=MONTHLY;INTERVAL=${recurrenceInterval};COUNT=${recurrenceCount}`,
     ctz: timeZone,
   });
@@ -545,7 +569,9 @@ function createGoogleCalendarUrl(personKey, serviceKey, startDate) {
 }
 
 function getCalendarRecurrenceInterval(serviceKey) {
-  return SERVICES[serviceKey].model === "rotation" ? SETTINGS.maxRotation.length : 1;
+  return SERVICES[serviceKey].model === 'rotation'
+    ? SETTINGS.maxRotation.length
+    : 1;
 }
 
 function getCalendarRecurrenceCount(serviceKey) {
@@ -554,7 +580,14 @@ function getCalendarRecurrenceCount(serviceKey) {
 }
 
 function createCalendarEventDate(date, hour, minute) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute, 0);
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    hour,
+    minute,
+    0,
+  );
 }
 
 function personPaysInMonth(serviceKey, personKey, monthIndex) {
@@ -564,7 +597,7 @@ function personPaysInMonth(serviceKey, personKey, monthIndex) {
     return false;
   }
 
-  if (service.model === "monthly") {
+  if (service.model === 'monthly') {
     return true;
   }
 
@@ -574,12 +607,15 @@ function personPaysInMonth(serviceKey, personKey, monthIndex) {
 function getRotationPayer(monthIndex) {
   const rotation = SETTINGS.maxRotation;
   const offset = monthIndex - SETTINGS.maxRotationStartMonth;
-  const rotationIndex = ((offset % rotation.length) + rotation.length) % rotation.length;
+  const rotationIndex =
+    ((offset % rotation.length) + rotation.length) % rotation.length;
   return rotation[rotationIndex];
 }
 
 function getYearMonths(year) {
-  return Array.from({ length: 12 }, (_, monthIndex) => createPaymentDate(year, monthIndex));
+  return Array.from({ length: 12 }, (_, monthIndex) =>
+    createPaymentDate(year, monthIndex),
+  );
 }
 
 function createPaymentDate(year, monthIndex) {
@@ -591,22 +627,22 @@ function getDateStatus(date) {
   const paymentDate = startOfDay(date);
 
   if (paymentDate < today) {
-    return "passou";
+    return 'passou';
   }
 
-  return paymentDate.getTime() === today.getTime() ? "vence hoje" : "futuro";
+  return paymentDate.getTime() === today.getTime() ? 'vence hoje' : 'futuro';
 }
 
 function setActiveTab(panelName) {
   tabButtons.forEach((button) => {
     const isActive = button.dataset.panel === panelName;
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-selected", String(isActive));
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-selected', String(isActive));
   });
 
-  upcomingPanel.classList.toggle("is-hidden", panelName !== "upcoming");
-  fullPanel.classList.toggle("is-hidden", panelName !== "full");
-  yearControls.classList.toggle("is-hidden", panelName !== "full");
+  upcomingPanel.classList.toggle('is-hidden', panelName !== 'upcoming');
+  fullPanel.classList.toggle('is-hidden', panelName !== 'full');
+  yearControls.classList.toggle('is-hidden', panelName !== 'full');
   updateYearControls();
 }
 
@@ -620,10 +656,13 @@ function updateYearControls() {
 function startSessionLoops() {
   stopSessionLoops();
 
-  refreshIntervalId = window.setInterval(() => {
-    refreshCurrentDates();
-    void checkPaymentReminders();
-  }, SETTINGS.refreshMinutes * 60 * 1000);
+  refreshIntervalId = window.setInterval(
+    () => {
+      refreshCurrentDates();
+      void checkPaymentReminders();
+    },
+    SETTINGS.refreshMinutes * 60 * 1000,
+  );
 }
 
 function stopSessionLoops() {
@@ -660,36 +699,38 @@ async function requestNotificationAccess({ runReminderCheck = true } = {}) {
   }
 
   try {
-    if (Notification.permission === "default") {
-      setNotificationStatus("O navegador deve abrir o pedido de permissão agora.");
+    if (Notification.permission === 'default') {
+      setNotificationStatus(
+        'O navegador deve abrir o pedido de permissão agora.',
+      );
       await Notification.requestPermission();
     }
   } catch {
-    setNotificationStatus("O navegador bloqueou o pedido de permissão.");
+    setNotificationStatus('O navegador bloqueou o pedido de permissão.');
     updateNotificationButton();
     return false;
   }
 
   updateNotificationButton();
 
-  if (Notification.permission === "denied") {
+  if (Notification.permission === 'denied') {
     setNotificationStatus(
-      "As notificações estão bloqueadas. Libere nas configurações do navegador para este site."
+      'As notificações estão bloqueadas. Libere nas configurações do navegador para este site.',
     );
     return false;
   }
 
-  if (Notification.permission === "default") {
-    setNotificationStatus("A permissão ainda não foi concedida.");
+  if (Notification.permission === 'default') {
+    setNotificationStatus('A permissão ainda não foi concedida.');
     return false;
   }
 
-  if (Notification.permission === "granted") {
+  if (Notification.permission === 'granted') {
     const registration = await registerServiceWorker();
 
-    if ("serviceWorker" in navigator && !registration) {
+    if ('serviceWorker' in navigator && !registration) {
       setNotificationStatus(
-        "Permissão concedida, mas o service worker não foi registrado. No Android, abra pelo GitHub Pages em HTTPS."
+        'Permissão concedida, mas o service worker não foi registrado. No Android, abra pelo GitHub Pages em HTTPS.',
       );
       return false;
     }
@@ -698,7 +739,7 @@ async function requestNotificationAccess({ runReminderCheck = true } = {}) {
       await checkPaymentReminders();
     }
 
-    setNotificationStatus("Notificações permitidas neste navegador.");
+    setNotificationStatus('Notificações permitidas neste navegador.');
     return true;
   }
 
@@ -707,39 +748,39 @@ async function requestNotificationAccess({ runReminderCheck = true } = {}) {
 
 function updateNotificationButton() {
   if (!state.currentPersonKey) {
-    notificationButton.classList.add("is-hidden");
+    notificationButton.classList.add('is-hidden');
     return;
   }
 
-  notificationButton.classList.remove("is-hidden");
+  notificationButton.classList.remove('is-hidden');
 
   const capability = getNotificationCapability();
 
   if (!capability.available) {
-    notificationButton.textContent = "Notificações indisponíveis";
+    notificationButton.textContent = 'Notificações indisponíveis';
     notificationButton.disabled = true;
     return;
   }
 
-  if (Notification.permission === "granted") {
-    notificationButton.textContent = "Notificações ativas";
+  if (Notification.permission === 'granted') {
+    notificationButton.textContent = 'Notificações ativas';
     notificationButton.disabled = false;
     return;
   }
 
-  if (Notification.permission === "denied") {
-    notificationButton.textContent = "Notificações bloqueadas";
+  if (Notification.permission === 'denied') {
+    notificationButton.textContent = 'Notificações bloqueadas';
     notificationButton.disabled = true;
     return;
   }
 
-  notificationButton.textContent = "Ativar notificações";
+  notificationButton.textContent = 'Ativar notificações';
   notificationButton.disabled = false;
 }
 
 function updateNotificationStatus() {
   if (!state.currentPersonKey) {
-    setNotificationStatus("");
+    setNotificationStatus('');
     return;
   }
 
@@ -750,22 +791,22 @@ function updateNotificationStatus() {
     return;
   }
 
-  if (Notification.permission === "granted") {
+  if (Notification.permission === 'granted') {
     setNotificationStatus(
-      "Notificações permitidas. Use o botão de teste em Meus próximos pagamentos para ver como elas aparecem."
+      'Notificações permitidas. Use o botão de teste em Meus próximos pagamentos para ver como elas aparecem.',
     );
     return;
   }
 
-  if (Notification.permission === "denied") {
+  if (Notification.permission === 'denied') {
     setNotificationStatus(
-      "Notificações bloqueadas para este site. Libere nas configurações do navegador se quiser receber avisos."
+      'Notificações bloqueadas para este site. Libere nas configurações do navegador se quiser receber avisos.',
     );
     return;
   }
 
   setNotificationStatus(
-    "Ative as notificações para receber aviso quando uma parcela estiver perto do vencimento."
+    'Ative as notificações para receber aviso quando uma parcela estiver perto do vencimento.',
   );
 }
 
@@ -774,7 +815,7 @@ async function checkPaymentReminders() {
     reminderCheckInProgress ||
     !state.currentPersonKey ||
     !supportsNotifications() ||
-    Notification.permission !== "granted"
+    Notification.permission !== 'granted'
   ) {
     return;
   }
@@ -786,7 +827,7 @@ async function checkPaymentReminders() {
     const logs = getNotificationLogs();
     const personLog = logs[personKey] ?? {};
     const reminders = getReminderCandidates(personKey).filter(
-      (payment) => !personLog[getPaymentNotificationKey(payment)]
+      (payment) => !personLog[getPaymentNotificationKey(payment)],
     );
 
     for (const payment of reminders) {
@@ -795,7 +836,7 @@ async function checkPaymentReminders() {
         markPaymentAsNotified(personKey, payment);
       } catch {
         setNotificationStatus(
-          "Não foi possível exibir um lembrete agora. Use o botão de teste para diagnosticar."
+          'Não foi possível exibir um lembrete agora. Use o botão de teste para diagnosticar.',
         );
       }
     }
@@ -813,8 +854,9 @@ function getReminderCandidates(personKey) {
       }))
       .filter(
         (payment) =>
-          payment.daysUntil >= 0 && payment.daysUntil <= SETTINGS.reminderDaysBefore
-      )
+          payment.daysUntil >= 0 &&
+          payment.daysUntil <= SETTINGS.reminderDaysBefore,
+      ),
   );
 }
 
@@ -822,8 +864,8 @@ async function showPaymentNotification(personKey, payment) {
   const service = SERVICES[payment.serviceKey];
   const when =
     payment.daysUntil === 0
-      ? "vence hoje"
-      : `vence em ${payment.daysUntil} ${payment.daysUntil === 1 ? "dia" : "dias"}`;
+      ? 'vence hoje'
+      : `vence em ${payment.daysUntil} ${payment.daysUntil === 1 ? 'dia' : 'dias'}`;
   const title = `${service.name}: pagamento ${when}`;
   const body = `${PEOPLE[personKey].name}, ${formatLongDate(payment.date)} - ${moneyFormatter.format(payment.amount)}.`;
   const options = {
@@ -840,15 +882,20 @@ async function showTestNotification() {
     return;
   }
 
-  setNotificationStatus("Preparando a notificação de teste...");
-  const hasPermission = await requestNotificationAccess({ runReminderCheck: false });
+  setNotificationStatus('Preparando a notificação de teste...');
+  const hasPermission = await requestNotificationAccess({
+    runReminderCheck: false,
+  });
 
   if (!hasPermission) {
     updateNotificationButton();
     return;
   }
 
-  const payment = getNextPayment(state.selectedServiceKey, state.currentPersonKey);
+  const payment = getNextPayment(
+    state.selectedServiceKey,
+    state.currentPersonKey,
+  );
   const service = SERVICES[state.selectedServiceKey];
   const person = PEOPLE[state.currentPersonKey];
   const title = `Teste: ${service.name}`;
@@ -864,11 +911,11 @@ async function showTestNotification() {
   try {
     await showBrowserNotification(title, options);
     setNotificationStatus(
-      "Notificação de teste enviada. Se ela não apareceu, confira as notificações do navegador e do sistema operacional."
+      'Notificação de teste enviada. Se ela não apareceu, confira as notificações do navegador e do sistema operacional.',
     );
   } catch {
     setNotificationStatus(
-      "A permissão foi concedida, mas o navegador não exibiu a notificação. No Android, teste pelo endereço HTTPS do GitHub Pages."
+      'A permissão foi concedida, mas o navegador não exibiu a notificação. No Android, teste pelo endereço HTTPS do GitHub Pages.',
     );
   }
 }
@@ -881,22 +928,22 @@ async function showBrowserNotification(title, options) {
     return;
   }
 
-  if (typeof Notification === "function") {
+  if (typeof Notification === 'function') {
     new Notification(title, options);
     return;
   }
 
-  throw new Error("Notifications are not available.");
+  throw new Error('Notifications are not available.');
 }
 
 async function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) {
+  if (!('serviceWorker' in navigator)) {
     return null;
   }
 
   if (!serviceWorkerRegistrationPromise) {
     serviceWorkerRegistrationPromise = navigator.serviceWorker
-      .register("./sw.js")
+      .register('./sw.js')
       .then(() => navigator.serviceWorker.ready)
       .catch(() => null);
   }
@@ -909,10 +956,10 @@ function supportsNotifications() {
 }
 
 function getNotificationCapability() {
-  if (!("Notification" in window)) {
+  if (!('Notification' in window)) {
     return {
       available: false,
-      message: "Este navegador não oferece notificações para sites.",
+      message: 'Este navegador não oferece notificações para sites.',
     };
   }
 
@@ -920,13 +967,13 @@ function getNotificationCapability() {
     return {
       available: false,
       message:
-        "Notificações precisam de HTTPS. Elas não funcionam abrindo o HTML direto; teste pelo GitHub Pages.",
+        'Notificações precisam de HTTPS. Elas não funcionam abrindo o HTML direto; teste pelo GitHub Pages.',
     };
   }
 
   return {
     available: true,
-    message: "",
+    message: '',
   };
 }
 
@@ -940,7 +987,8 @@ function markPaymentAsNotified(personKey, payment) {
   const logs = getNotificationLogs();
 
   logs[personKey] = logs[personKey] ?? {};
-  logs[personKey][getPaymentNotificationKey(payment)] = new Date().toISOString();
+  logs[personKey][getPaymentNotificationKey(payment)] =
+    new Date().toISOString();
   saveNotificationLogs(logs);
 }
 
@@ -990,7 +1038,7 @@ function findPersonKey(rawName) {
 
   return (
     Object.entries(PEOPLE).find(([, person]) =>
-      person.aliases.map(normalizeName).includes(normalized)
+      person.aliases.map(normalizeName).includes(normalized),
     )?.[0] ?? null
   );
 }
@@ -998,23 +1046,23 @@ function findPersonKey(rawName) {
 function getNameError(rawName) {
   const normalized = normalizeName(rawName);
 
-  if (normalized === "ianca") {
-    return "Esse cadastro está como Ianka, com k.";
+  if (normalized === 'ianca') {
+    return 'Esse cadastro está como Ianka, com k.';
   }
 
-  if (normalized === "sara" || normalized === "sarah") {
-    return "Esse cadastro está como Sarha.";
+  if (normalized === 'sara' || normalized === 'sarah') {
+    return 'Esse cadastro está como Sarha.';
   }
 
-  return "Nome não encontrado. Use André, Isabela, Ianka ou Sarha.";
+  return 'Nome não encontrado. Use André, Isabela, Ianka ou Sarha.';
 }
 
 function normalizeName(value) {
   return value
     .trim()
-    .toLocaleLowerCase("pt-BR")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 function formatShortDate(date) {
@@ -1028,34 +1076,39 @@ function formatLongDate(date) {
 function formatDateKey(date) {
   return [
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 }
 
 function formatGoogleCalendarDate(date) {
   return [
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-    "T",
-    String(date.getHours()).padStart(2, "0"),
-    String(date.getMinutes()).padStart(2, "0"),
-    String(date.getSeconds()).padStart(2, "0"),
-  ].join("");
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+    'T',
+    String(date.getHours()).padStart(2, '0'),
+    String(date.getMinutes()).padStart(2, '0'),
+    String(date.getSeconds()).padStart(2, '0'),
+  ].join('');
 }
 
 function getCalendarTimeZone() {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || SETTINGS.calendarTimeZone;
+  return (
+    Intl.DateTimeFormat().resolvedOptions().timeZone ||
+    SETTINGS.calendarTimeZone
+  );
 }
 
 function capitalize(value) {
-  return value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
+  return value.charAt(0).toLocaleUpperCase('pt-BR') + value.slice(1);
 }
 
 function getDaysUntil(date) {
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
-  return Math.ceil((startOfDay(date) - startOfDay(getToday())) / millisecondsPerDay);
+  return Math.ceil(
+    (startOfDay(date) - startOfDay(getToday())) / millisecondsPerDay,
+  );
 }
 
 function startOfDay(date) {
@@ -1068,16 +1121,19 @@ function getToday() {
 
 function initTheme() {
   const storedTheme = getStoredTheme();
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  applyTheme(storedTheme ?? (prefersDark ? "dark" : "light"));
+  const prefersDark = window.matchMedia?.(
+    '(prefers-color-scheme: dark)',
+  ).matches;
+  applyTheme(storedTheme ?? (prefersDark ? 'dark' : 'light'));
 }
 
 function applyTheme(theme) {
-  const normalizedTheme = theme === "dark" ? "dark" : "light";
+  const normalizedTheme = theme === 'dark' ? 'dark' : 'light';
 
   document.documentElement.dataset.theme = normalizedTheme;
-  themeButton.textContent = normalizedTheme === "dark" ? "Modo claro" : "Modo escuro";
-  themeButton.setAttribute("aria-pressed", String(normalizedTheme === "dark"));
+  themeButton.textContent =
+    normalizedTheme === 'dark' ? 'Modo claro' : 'Modo escuro';
+  themeButton.setAttribute('aria-pressed', String(normalizedTheme === 'dark'));
 }
 
 function getStoredTheme() {
