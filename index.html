@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pagamentos compartilhados</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup" aria-label="Pagamentos compartilhados">
+          <span class="brand-mark">R$</span>
+          <div>
+            <span>Pagamentos</span>
+            <strong>Max & Disney+</strong>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button class="ghost-button" id="themeButton" type="button" aria-pressed="false">
+            Modo escuro
+          </button>
+          <button class="ghost-button is-hidden" id="notificationButton" type="button">
+            Ativar notificações
+          </button>
+          <button class="ghost-button is-hidden" id="changeProfileButton" type="button">
+            Trocar usuário
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="profile-screen" id="profileScreen">
+          <div class="profile-panel">
+            <div class="profile-copy">
+              <p class="eyebrow">Assinaturas compartilhadas</p>
+              <h1>Veja suas próximas parcelas sem abrir planilha.</h1>
+            </div>
+
+            <div class="service-preview" aria-hidden="true">
+              <div class="preview-card preview-disney">
+                <span class="service-symbol">D+</span>
+                <strong>Disney+</strong>
+                <small>Todo mês</small>
+              </div>
+              <div class="preview-card preview-max">
+                <span class="service-symbol">M</span>
+                <strong>HBO Max</strong>
+                <small>Rodízio</small>
+              </div>
+            </div>
+
+            <div class="profile-box">
+              <form class="profile-form" id="profileForm" autocomplete="off">
+                <label for="profileNameInput">Digite seu primeiro nome</label>
+                <div class="input-row">
+                  <input
+                    id="profileNameInput"
+                    name="name"
+                    type="text"
+                    inputmode="text"
+                    placeholder="André, Isabela, Ianka ou Sarha"
+                    required
+                  />
+                  <button type="submit">Continuar</button>
+                </div>
+                <p class="form-message" id="profileMessage" role="alert"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard is-hidden" id="dashboard" aria-live="polite">
+          <div class="welcome-row">
+            <div>
+              <p class="eyebrow">Olá, <span id="personName"></span></p>
+              <h1>Suas próximas parcelas</h1>
+            </div>
+            <div class="summary-pill">
+              <strong id="summaryCount">0</strong>
+              <span id="summaryLabel">assinaturas</span>
+            </div>
+          </div>
+
+          <div class="subscription-list" id="subscriptionList"></div>
+
+          <section class="details-panel is-hidden" id="detailsPanel">
+            <div class="details-header">
+              <div>
+                <p class="eyebrow" id="detailsService"></p>
+                <h2 id="detailsTitle"></h2>
+              </div>
+              <button class="icon-button" id="closeDetailsButton" type="button" aria-label="Fechar detalhes">
+                &times;
+              </button>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="Detalhes da assinatura">
+              <button
+                class="tab-button is-active"
+                id="upcomingTab"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="upcomingPanel"
+                data-panel="upcoming"
+              >
+                Meus próximos pagamentos
+              </button>
+              <button
+                class="tab-button"
+                id="fullTab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="fullPanel"
+                data-panel="full"
+              >
+                Planilha completa
+              </button>
+            </div>
+
+            <div class="year-controls is-hidden" id="yearControls" aria-label="Ano da planilha">
+              <button class="ghost-button" id="previousYearButton" type="button">
+                Ano anterior
+              </button>
+              <strong id="selectedYearLabel">2026</strong>
+              <button class="ghost-button" id="nextYearButton" type="button">
+                Próximo ano
+              </button>
+            </div>
+
+            <div class="tab-panel" id="upcomingPanel" role="tabpanel" aria-labelledby="upcomingTab"></div>
+            <div class="tab-panel is-hidden" id="fullPanel" role="tabpanel" aria-labelledby="fullTab"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
