@@ -166,6 +166,52 @@ button {
   opacity: 0.46;
 }
 
+
+.payment-action-button {
+  position: relative;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: transparent;
+  font-size: 0;
+  line-height: 1;
+}
+
+.payment-action-button::before {
+  content: attr(data-symbol);
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.payment-action-button.is-mark {
+  background: var(--accent);
+}
+
+.payment-action-button.is-mark:hover,
+.payment-action-button.is-mark:focus-visible {
+  background: var(--accent-strong);
+  outline: 0;
+}
+
+.payment-action-button.is-unmark {
+  background: var(--danger);
+}
+
+.payment-action-button.is-unmark:hover,
+.payment-action-button.is-unmark:focus-visible {
+  filter: brightness(0.94);
+  outline: 0;
+}
+
 .profile-screen {
   display: grid;
   min-height: calc(100vh - 144px);
@@ -667,6 +713,18 @@ button {
   margin-right: 10px;
 }
 
+.sheet-table td:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sheet-table td:last-child .status-pill,
+.sheet-table td:last-child .amount {
+  margin-right: 0;
+}
+
 .status-pill.status-passou {
   background: color-mix(in srgb, var(--danger) 16%, var(--surface));
   color: var(--danger);
@@ -754,6 +812,14 @@ button {
 
   .year-controls {
     grid-template-columns: 1fr;
+  }
+
+  .payment-item .payment-action-button {
+    justify-self: end;
+  }
+
+  .sheet-table td:last-child {
+    row-gap: 8px;
   }
 }
 
