@@ -7,14 +7,10 @@
   "theme_color": "#0b1020",
   "icons": [
     {
-      "src": "Google_Calendar_icon_(2020).svg.png",
-      "sizes": "960x960",
-      "type": "image/png"
-    },
-    {
       "src": "favicon.png",
       "sizes": "1254x1254",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
