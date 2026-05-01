@@ -1333,13 +1333,24 @@ function initTheme() {
   applyTheme(storedTheme ?? (prefersDark ? 'dark' : 'light'));
 }
 
+function updateThemeButton(theme) {
+  const isDarkTheme = theme === 'dark';
+  const icon = isDarkTheme ? '☀️' : '🌙';
+  const iconColor = isDarkTheme ? '#ffffff' : '#0b1020';
+  const nextActionLabel = isDarkTheme
+    ? 'Ativar modo claro'
+    : 'Ativar modo escuro';
+
+  themeButton.innerHTML = `<span aria-hidden="true" style="color: ${iconColor};">${icon}</span>`;
+  themeButton.setAttribute('aria-label', nextActionLabel);
+  themeButton.setAttribute('aria-pressed', String(isDarkTheme));
+}
+
 function applyTheme(theme) {
   const normalizedTheme = theme === 'dark' ? 'dark' : 'light';
 
   document.documentElement.dataset.theme = normalizedTheme;
-  themeButton.textContent =
-    normalizedTheme === 'dark' ? 'Modo claro' : 'Modo escuro';
-  themeButton.setAttribute('aria-pressed', String(normalizedTheme === 'dark'));
+  updateThemeButton(normalizedTheme);
 }
 
 function getStoredTheme() {
