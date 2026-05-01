@@ -812,6 +812,14 @@ button {
   .year-controls {
     grid-template-columns: 1fr;
   }
+
+  .payment-item .payment-action-button {
+    justify-self: end;
+  }
+
+  .sheet-table td:last-child {
+    row-gap: 8px;
+  }
 }
 
 @media (max-width: 460px) {
