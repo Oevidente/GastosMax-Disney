@@ -448,8 +448,8 @@ function renderUpcomingPayments(serviceKey, personKey) {
                 <span class="amount">${moneyFormatter.format(payment.amount)}</span>
                 ${
                   paid
-                    ? `<button class="ghost-button payment-action-button is-unmark" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}" aria-label="Desfazer pago"><span aria-hidden="true">↺</span></button>`
-                    : `<button class="ghost-button payment-action-button is-mark" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}" aria-label="Marcar como pago"><span aria-hidden="true">R$</span></button>`
+                    ? `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Desfazer pago</button>`
+                    : `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Marcar como pago</button>`
                 }
               </span>
             </li>
@@ -498,7 +498,7 @@ function renderMonthlySheet(serviceKey, year) {
           const paid = isPaymentPaid(participantKey, { serviceKey, date });
           const isCurrentUser = participantKey === state.currentPersonKey;
           const actionButton = isCurrentUser
-            ? `<button class="ghost-button payment-action-button ${paid ? 'is-unmark' : 'is-mark'}" type="button" data-toggle-paid data-person="${participantKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}" aria-label="${paid ? 'Desfazer pago' : 'Marcar como pago'}"><span aria-hidden="true">${paid ? '↺' : 'R$'}</span></button>`
+            ? `<button class="ghost-button" type="button" data-toggle-paid data-person="${participantKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
             : '';
           return paid
             ? `<td><span class="status-pill status-pago">pago</span>${actionButton}</td>`
@@ -549,7 +549,7 @@ function renderRotationSheet(serviceKey, year) {
               : '';
       const actionButton =
         payerKey === state.currentPersonKey
-          ? `<button class="ghost-button payment-action-button ${paid ? 'is-unmark' : 'is-mark'}" type="button" data-toggle-paid data-person="${payerKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}" aria-label="${paid ? 'Desfazer pago' : 'Marcar como pago'}"><span aria-hidden="true">${paid ? '↺' : 'R$'}</span></button>`
+          ? `<button class="ghost-button" type="button" data-toggle-paid data-person="${payerKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
           : '';
       return `
         <tr>
