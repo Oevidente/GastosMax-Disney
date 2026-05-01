@@ -141,7 +141,7 @@ function bindEvents() {
     void requestNotificationAccess();
   });
 
-  upcomingPanel.addEventListener('click', (event) => {
+  upcomingPanel.addEventListener('click', async (event) => {
     const testButton = event.target.closest('[data-test-notification]');
     const calendarButton = event.target.closest('[data-add-calendar]');
     const markButton = event.target.closest('[data-mark-paid]');
@@ -170,9 +170,8 @@ function bindEvents() {
         amount: SERVICES[serviceKey]?.amount ?? 0,
       };
 
-      markPaymentAsPaid(state.currentPersonKey, payment);
+      await markPaymentAsPaid(state.currentPersonKey, payment);
       setNotificationStatus('Parcela marcada como paga.');
-      renderDetails();
     }
   });
 
@@ -301,9 +300,9 @@ function renderSubscriptionCards(personKey) {
     .join('');
 
   subscriptionList.querySelectorAll('.subscription-card').forEach((card) => {
-    card.addEventListener('click', () =>
-      openServiceDetails(card.dataset.service),
-    );
+    card.addEventListener('click', () => {
+      void openServiceDetails(card.dataset.service);
+    });
   });
 }
 
@@ -339,7 +338,7 @@ function createSubscriptionCard(serviceKey, personKey) {
   `;
 }
 
-function openServiceDetails(serviceKey) {
+async function openServiceDetails(serviceKey) {
   state.selectedServiceKey = serviceKey;
   const service = SERVICES[serviceKey];
   const person = PEOPLE[state.currentPersonKey];
@@ -355,6 +354,8 @@ function openServiceDetails(serviceKey) {
   detailsPanel.classList.add(`details-${serviceKey}`);
   detailsPanel.classList.remove('is-hidden');
   setActiveTab('upcoming');
+
+  await fetchPaidLogs();
   renderDetails();
   detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
