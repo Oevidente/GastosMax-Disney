@@ -148,6 +148,19 @@ button {
   outline: 0;
 }
 
+.ghost-button.calendar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-logo {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  object-fit: contain;
+}
+
 .ghost-button:disabled {
   cursor: not-allowed;
   opacity: 0.46;

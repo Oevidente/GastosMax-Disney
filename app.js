@@ -385,7 +385,8 @@ function renderUpcomingPayments(serviceKey, personKey) {
 
   return `
     <div class="panel-actions">
-      <button class="ghost-button" type="button" data-add-calendar>
+      <button class="ghost-button calendar-button" type="button" data-add-calendar>
+        <img src="Google_Calendar_icon_(2020).svg.png" alt="Google Agenda" class="calendar-logo" />
         Abrir no Google Agenda
       </button>
       <button class="ghost-button" type="button" data-test-notification>
