@@ -886,25 +886,25 @@ function updateNotificationButton() {
 function setNotificationButtonState(stateName) {
   const stateConfig = {
     unavailable: {
-      icon: '🔕',
+      icon: `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.01 10.01 0 0 0 12 2Zm5.71 14.29L7.71 6.29a8 8 0 0 1 10 10Z"/><path fill="currentColor" d="M6.29 7.71 16.29 17.71a8 8 0 0 1-10-10ZM12 6a4 4 0 0 0-4 4v2.59l-.71.7a1 1 0 0 0 .71 1.71h8a1 1 0 0 0 .71-1.71l-.71-.7V10a4 4 0 0 0-4-4Z"/></svg>`,
       ariaLabel: 'Notificações indisponíveis neste dispositivo',
       title: 'Notificações indisponíveis',
       disabled: true,
     },
     enabled: {
-      icon: '🔔',
+      icon: `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 3a5 5 0 0 0-5 5v2.59l-1.71 1.7A1 1 0 0 0 6 14h12a1 1 0 0 0 .71-1.71L17 10.59V8a5 5 0 0 0-5-5Zm0 18a3 3 0 0 0 2.82-2h-5.64A3 3 0 0 0 12 21Z"/></svg>`,
       ariaLabel: 'Notificações ativas',
       title: 'Notificações ativas',
       disabled: false,
     },
     blocked: {
-      icon: '🚫',
+      icon: `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 3a5 5 0 0 0-5 5v2.59l-1.71 1.7A1 1 0 0 0 6 14h7.1a5.98 5.98 0 0 1 8.53-2.9A1 1 0 0 0 21 10.6V8a5 5 0 0 0-5-5Zm0 18a3 3 0 0 0 2.82-2H9.18A3 3 0 0 0 12 21Zm7-8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm2.12 5.12-1 1L19 18.41l-1.12.71-1-1-.71 1.12 1 1L16.41 21l1.12.71 1-1 1 .71.71-1.12-1-1 .76-1.17Z"/></svg>`,
       ariaLabel: 'Notificações bloqueadas',
       title: 'Notificações bloqueadas',
       disabled: true,
     },
     prompt: {
-      icon: '🔔',
+      icon: `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 3a5 5 0 0 0-5 5v2.59l-1.71 1.7A1 1 0 0 0 6 14h12a1 1 0 0 0 .71-1.71L17 10.59V8a5 5 0 0 0-5-5Zm0 18a3 3 0 0 0 2.82-2h-5.64A3 3 0 0 0 12 21Z"/><path fill="currentColor" d="M20 6h-2V4a1 1 0 1 0-2 0v2h-2a1 1 0 1 0 0 2h2v2a1 1 0 1 0 2 0V8h2a1 1 0 1 0 0-2Z"/></svg>`,
       ariaLabel: 'Ativar notificações',
       title: 'Ativar notificações',
       disabled: false,
@@ -913,7 +913,7 @@ function setNotificationButtonState(stateName) {
 
   const config = stateConfig[stateName] || stateConfig.prompt;
 
-  notificationButton.textContent = config.icon;
+  notificationButton.innerHTML = config.icon;
   notificationButton.setAttribute('aria-label', config.ariaLabel);
   notificationButton.title = config.title;
   notificationButton.disabled = config.disabled;
@@ -1367,12 +1367,14 @@ function initTheme() {
 
 function updateThemeButton(theme) {
   const isDarkTheme = theme === 'dark';
-  const icon = isDarkTheme ? '☀️' : '🌙';
+  const icon = isDarkTheme
+    ? `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 4a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1Zm0 14a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1Zm8-7a1 1 0 1 1 0 2h-1a1 1 0 1 1 0-2h1ZM6 12a1 1 0 0 1-1 1H4a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm10.36-5.95a1 1 0 0 1 1.41 0l.71.71a1 1 0 1 1-1.41 1.42l-.71-.71a1 1 0 0 1 0-1.42Zm-9.9 9.9a1 1 0 0 1 1.41 0l.71.71a1 1 0 0 1-1.41 1.42l-.71-.71a1 1 0 0 1 0-1.42Zm11.31 1.42a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.42l.71.71a1 1 0 0 1 0 1.42ZM8.58 8.58a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.42l.71.71a1 1 0 0 1 0 1.42ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg>`
+    : `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.5 3.5a1 1 0 0 1 .32 1.95A7.5 7.5 0 1 0 20.55 15a1 1 0 1 1 1.95.32A9.5 9.5 0 1 1 14.18 3.18a1 1 0 0 1 .32.32Z"/></svg>`;
   const nextActionLabel = isDarkTheme
     ? 'Ativar modo claro'
     : 'Ativar modo escuro';
 
-  themeButton.innerHTML = `<span aria-hidden="true">${icon}</span>`;
+  themeButton.innerHTML = icon;
   themeButton.setAttribute('aria-label', nextActionLabel);
   themeButton.setAttribute('aria-pressed', String(isDarkTheme));
 }

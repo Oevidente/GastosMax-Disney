@@ -16,6 +16,7 @@
   --grid-a: rgba(8, 127, 140, 0.07);
   --grid-b: rgba(8, 127, 140, 0.06);
   --radius: 8px;
+  --top-icon-color: #10141b;
 }
 
 :root[data-theme="dark"] {
@@ -35,6 +36,7 @@
   --shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
   --grid-a: rgba(92, 198, 208, 0.09);
   --grid-b: rgba(92, 198, 208, 0.07);
+  --top-icon-color: #ffffff;
 }
 
 * {
@@ -155,18 +157,26 @@ button {
   line-height: 1;
 }
 
-.top-actions .top-icon-button > [aria-hidden="true"] {
-  display: inline-grid;
-  place-items: center;
-  font-size: 1.1rem;
+.top-actions .top-icon-button {
+  color: var(--top-icon-color);
 }
+
+.top-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  color: currentColor;
+  flex: 0 0 auto;
+}
+
 #notificationButton.ghost-button {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 44px;
   padding: 0;
-  font-size: 1.1rem;
   line-height: 1;
+  color: var(--top-icon-color);
 }
 
 .ghost-button:hover,
