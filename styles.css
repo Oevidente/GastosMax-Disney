@@ -717,7 +717,6 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .sheet-table td:last-child .status-pill,
