@@ -408,6 +408,14 @@ function renderDetails() {
   updateYearControls();
 }
 
+function renderPaidToggleButton({ paid, attrs, compact = false }) {
+  const label = paid ? 'Desfazer pagamento' : 'Marcar como pago';
+  const symbol = paid ? '↺' : 'R$';
+  const stateClass = paid ? 'is-unpay' : 'is-pay';
+  const compactClass = compact ? ' is-compact' : '';
+  return `<button class="paid-toggle ${stateClass}${compactClass}" type="button" aria-label="${label}" title="${label}" ${attrs}>${symbol}</button>`;
+}
+
 function renderUpcomingPayments(serviceKey, personKey) {
   const payments = getUpcomingPaymentsForPerson(
     serviceKey,
