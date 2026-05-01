@@ -682,51 +682,6 @@ button {
   color: #2b6fbf;
 }
 
-.paid-toggle {
-  width: 2.2rem;
-  height: 2.2rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.paid-toggle:hover,
-.paid-toggle:focus-visible {
-  transform: translateY(-1px);
-}
-
-.paid-toggle.is-pay {
-  background: color-mix(in srgb, var(--accent) 32%, var(--surface));
-  color: var(--accent-strong);
-  border-color: color-mix(in srgb, var(--accent) 52%, var(--surface));
-}
-
-.paid-toggle.is-unpay {
-  background: color-mix(in srgb, var(--danger) 24%, var(--surface));
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 46%, var(--surface));
-}
-
-.paid-toggle.is-compact {
-  width: 1.9rem;
-  height: 1.9rem;
-  font-size: 0.75rem;
-}
-
-.sheet-cell-content {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 2rem;
-}
-
 .is-hidden {
   display: none !important;
 }
