@@ -413,7 +413,7 @@ function renderUpcomingPayments(serviceKey, personKey) {
                 <span class="amount">${moneyFormatter.format(payment.amount)}</span>
                 ${
                   paid
-                    ? `<span class="status-pill status-pago">pago</span>`
+                    ? `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Desfazer pago</button>`
                     : `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Marcar como pago</button>`
                 }
               </span>
@@ -461,9 +461,13 @@ function renderMonthlySheet(serviceKey, year) {
       const participantCells = service.participants
         .map((participantKey) => {
           const paid = isPaymentPaid(participantKey, { serviceKey, date });
+          const isCurrentUser = participantKey === state.currentPersonKey;
+          const actionButton = isCurrentUser
+            ? `<button class="ghost-button" type="button" data-toggle-paid data-person="${participantKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
+            : '';
           return paid
-            ? `<td><span class="status-pill status-pago">pago</span></td>`
-            : `<td>${moneyFormatter.format(service.amount)}</td>`;
+            ? `<td><span class="status-pill status-pago">pago</span>${actionButton}</td>`
+            : `<td>${moneyFormatter.format(service.amount)}${actionButton}</td>`;
         })
         .join('');
 
@@ -508,13 +512,17 @@ function renderRotationSheet(serviceKey, year) {
             : status === 'futuro'
               ? ' status-futuro'
               : '';
+      const actionButton =
+        payerKey === state.currentPersonKey
+          ? `<button class="ghost-button" type="button" data-toggle-paid data-person="${payerKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
+          : '';
       return `
         <tr>
           <td>${capitalize(MONTHS[date.getMonth()])}</td>
           <td>${formatLongDate(date)}</td>
           <td>${PEOPLE[payerKey].name}</td>
           <td>${moneyFormatter.format(SERVICES[serviceKey].amount)}</td>
-          <td><span class="status-pill${statusClass}">${status}</span></td>
+          <td><span class="status-pill${statusClass}">${status}</span>${actionButton}</td>
         </tr>
       `;
     })
