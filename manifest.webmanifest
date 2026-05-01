@@ -1,0 +1,20 @@
+{
+  "name": "Pagamentos compartilhados Max & Disney+",
+  "short_name": "Pagamentos",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "icons": [
+    {
+      "src": "Google_Calendar_icon_(2020).svg.png",
+      "sizes": "960x960",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "1254x1254",
+      "type": "image/png"
+    }
+  ]
+}
