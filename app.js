@@ -89,6 +89,7 @@ let refreshIntervalId = null;
 let reminderCheckInProgress = false;
 let serviceWorkerRegistrationPromise = null;
 let paidLogsCache = getPaidLogs();
+let paidLogsCache = {};
 
 const profileScreen = document.querySelector('#profileScreen');
 const dashboard = document.querySelector('#dashboard');
