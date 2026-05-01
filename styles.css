@@ -142,6 +142,24 @@ button {
   color: var(--ink);
 }
 
+
+.top-actions .ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-actions .top-icon-button {
+  min-width: 44px;
+  padding: 0;
+  line-height: 1;
+}
+
+.top-actions .top-icon-button > [aria-hidden="true"] {
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.1rem;
+}
 #notificationButton.ghost-button {
   display: inline-grid;
   place-items: center;
