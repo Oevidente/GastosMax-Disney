@@ -180,7 +180,8 @@ button {
   line-height: 1;
 }
 
-.payment-action-button span {
+.payment-action-button::before {
+  content: attr(data-symbol);
   display: grid;
   width: 100%;
   height: 100%;
@@ -716,7 +717,6 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .sheet-table td:last-child .status-pill,
