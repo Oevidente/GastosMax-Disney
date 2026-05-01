@@ -76,6 +76,9 @@ const STORAGE_KEYS = {
   paid: 'streaming-payments-paid-v1',
 };
 
+const API_URL =
+  'https://script.google.com/macros/s/AKfycby58BE3oqEGXry125z6XyTMhZ54AwacgzfaDxaEqDYjttUJF1Pntv6ZCnViKfaCj8m4/exec';
+
 const state = {
   currentPersonKey: null,
   selectedServiceKey: null,
@@ -85,6 +88,7 @@ const state = {
 let refreshIntervalId = null;
 let reminderCheckInProgress = false;
 let serviceWorkerRegistrationPromise = null;
+let paidLogsCache = getPaidLogs();
 
 const profileScreen = document.querySelector('#profileScreen');
 const dashboard = document.querySelector('#dashboard');
@@ -281,6 +285,7 @@ function openDashboard(personKey) {
   renderSubscriptionCards(personKey);
   updateNotificationButton();
   updateNotificationStatus();
+  void fetchPaidLogs();
   startSessionLoops();
   void checkPaymentReminders();
 }
@@ -1072,20 +1077,73 @@ function savePaidLogs(logs) {
   writeJson(STORAGE_KEYS.paid, logs);
 }
 
-function markPaymentAsPaid(personKey, payment) {
-  const logs = getPaidLogs();
+async function fetchPaidLogs() {
+  if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
+    paidLogsCache = getPaidLogs();
+    applyPaidLogsToUi();
+    return;
+  }
 
-  logs[personKey] = logs[personKey] ?? {};
-  logs[personKey][getPaymentNotificationKey(payment)] =
-    new Date().toISOString();
-  savePaidLogs(logs);
+  try {
+    const response = await fetch(`${API_URL}?t=${Date.now()}`);
+    const textData = await response.text();
+
+    try {
+      paidLogsCache = JSON.parse(textData);
+      savePaidLogs(paidLogsCache);
+    } catch {
+      console.error('O Google não devolveu JSON válido:', textData);
+      paidLogsCache = getPaidLogs();
+    }
+  } catch (error) {
+    console.error('Deu erro na rede ao buscar os pagamentos:', error);
+    paidLogsCache = getPaidLogs();
+  }
+
+  applyPaidLogsToUi();
+}
+
+function applyPaidLogsToUi() {
+  if (!state.currentPersonKey) {
+    return;
+  }
+
+  renderSubscriptionCards(state.currentPersonKey);
+
+  if (state.selectedServiceKey) {
+    renderDetails();
+  }
+}
+
+async function markPaymentAsPaid(personKey, payment) {
+  const paymentKey = getPaymentNotificationKey(payment);
+  const timestamp = new Date().toISOString();
+
+  paidLogsCache[personKey] = paidLogsCache[personKey] ?? {};
+  paidLogsCache[personKey][paymentKey] = timestamp;
+  savePaidLogs(paidLogsCache);
+  renderDetails();
+
+  if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
+    return;
+  }
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ personKey, paymentKey, timestamp }),
+    });
+  } catch (error) {
+    console.error('Erro ao salvar no Sheets:', error);
+  }
 }
 
 function isPaymentPaid(personKey, payment) {
   if (!personKey) return false;
-  const logs = getPaidLogs();
   return Boolean(
-    logs[personKey] && logs[personKey][getPaymentNotificationKey(payment)],
+    paidLogsCache[personKey] &&
+      paidLogsCache[personKey][getPaymentNotificationKey(payment)],
   );
 }
 
