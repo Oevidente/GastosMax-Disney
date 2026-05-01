@@ -88,7 +88,6 @@ const state = {
 let refreshIntervalId = null;
 let reminderCheckInProgress = false;
 let serviceWorkerRegistrationPromise = null;
-let paidLogsCache = getPaidLogs();
 let paidLogsCache = {};
 
 const profileScreen = document.querySelector('#profileScreen');
@@ -1081,7 +1080,6 @@ function savePaidLogs(logs) {
 async function fetchPaidLogs() {
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     paidLogsCache = getPaidLogs();
-    applyPaidLogsToUi();
     return;
   }
 
@@ -1099,20 +1097,6 @@ async function fetchPaidLogs() {
   } catch (error) {
     console.error('Deu erro na rede ao buscar os pagamentos:', error);
     paidLogsCache = getPaidLogs();
-  }
-
-  applyPaidLogsToUi();
-}
-
-function applyPaidLogsToUi() {
-  if (!state.currentPersonKey) {
-    return;
-  }
-
-  renderSubscriptionCards(state.currentPersonKey);
-
-  if (state.selectedServiceKey) {
-    renderDetails();
   }
 }
 
