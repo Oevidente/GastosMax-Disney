@@ -153,7 +153,6 @@ function bindEvents() {
     if (calendarButton) {
       openGoogleCalendarEvent();
     }
-
     if (markButton) {
       if (!state.currentPersonKey) {
         setNotificationStatus(
@@ -170,7 +169,43 @@ function bindEvents() {
         amount: SERVICES[serviceKey]?.amount ?? 0,
       };
 
-      await markPaymentAsPaid(state.currentPersonKey, payment);
+      const paid = isPaymentPaid(state.currentPersonKey, payment);
+
+      if (paid) {
+        await unmarkPayment(state.currentPersonKey, payment);
+        setNotificationStatus('Parcela desmarcada como paga.');
+      } else {
+        await markPaymentAsPaid(state.currentPersonKey, payment);
+        setNotificationStatus('Parcela marcada como paga.');
+      }
+    }
+  });
+
+  fullPanel.addEventListener('click', async (event) => {
+    const toggleButton = event.target.closest('[data-toggle-paid]');
+    if (!toggleButton) return;
+
+    if (!state.currentPersonKey) {
+      setNotificationStatus('Selecione um perfil antes de marcar pagamentos.');
+      return;
+    }
+
+    const personKey = toggleButton.dataset.person;
+    const serviceKey = toggleButton.dataset.service;
+    const dateMs = Number(toggleButton.dataset.dateMs);
+    const payment = {
+      serviceKey,
+      date: new Date(dateMs),
+      amount: SERVICES[serviceKey]?.amount ?? 0,
+    };
+
+    const paid = isPaymentPaid(personKey, payment);
+
+    if (paid) {
+      await unmarkPayment(personKey, payment);
+      setNotificationStatus('Parcela desmarcada como paga.');
+    } else {
+      await markPaymentAsPaid(personKey, payment);
       setNotificationStatus('Parcela marcada como paga.');
     }
   });
@@ -467,7 +502,7 @@ function renderMonthlySheet(serviceKey, year) {
             : '';
           return paid
             ? `<td><span class="status-pill status-pago">pago</span>${actionButton}</td>`
-            : `<td>${moneyFormatter.format(service.amount)}${actionButton}</td>`;
+            : `<td><span class="amount">${moneyFormatter.format(service.amount)}</span>${actionButton}</td>`;
         })
         .join('');
 
@@ -521,7 +556,7 @@ function renderRotationSheet(serviceKey, year) {
           <td>${capitalize(MONTHS[date.getMonth()])}</td>
           <td>${formatLongDate(date)}</td>
           <td>${PEOPLE[payerKey].name}</td>
-          <td>${moneyFormatter.format(SERVICES[serviceKey].amount)}</td>
+          <td><span class="amount">${moneyFormatter.format(SERVICES[serviceKey].amount)}</span></td>
           <td><span class="status-pill${statusClass}">${status}</span>${actionButton}</td>
         </tr>
       `;
@@ -1133,11 +1168,45 @@ async function markPaymentAsPaid(personKey, payment) {
   }
 }
 
+async function unmarkPayment(personKey, payment) {
+  const paymentKey = getPaymentNotificationKey(payment);
+
+  if (!paidLogsCache[personKey]) {
+    return;
+  }
+
+  delete paidLogsCache[personKey][paymentKey];
+
+  if (Object.keys(paidLogsCache[personKey]).length === 0) {
+    delete paidLogsCache[personKey];
+  }
+
+  savePaidLogs(paidLogsCache);
+  renderDetails();
+  // Envia pedido de remoção ao Apps Script para que ele delete a(s) linha(s)
+  // correspondentes no Sheets. O Apps Script implementado em
+  // apps_script/Code.gs procura por `personKey` + `paymentKey` e remove
+  // qualquer linha que casar.
+  if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
+    return;
+  }
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ personKey, paymentKey, remove: true }),
+    });
+  } catch (error) {
+    console.error('Erro ao remover no Sheets:', error);
+  }
+}
+
 function isPaymentPaid(personKey, payment) {
   if (!personKey) return false;
   return Boolean(
     paidLogsCache[personKey] &&
-      paidLogsCache[personKey][getPaymentNotificationKey(payment)],
+    paidLogsCache[personKey][getPaymentNotificationKey(payment)],
   );
 }
 
