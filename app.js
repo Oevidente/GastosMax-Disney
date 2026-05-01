@@ -88,7 +88,7 @@ const state = {
 let refreshIntervalId = null;
 let reminderCheckInProgress = false;
 let serviceWorkerRegistrationPromise = null;
-let paidLogsCache = getPaidLogs();
+let paidLogsCache = {};
 
 const profileScreen = document.querySelector('#profileScreen');
 const dashboard = document.querySelector('#dashboard');
@@ -1078,37 +1078,9 @@ function savePaidLogs(logs) {
   writeJson(STORAGE_KEYS.paid, logs);
 }
 
-function normalizePaidLogs(value) {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value
-    : {};
-}
-
-function parsePaidLogsResponse(textData) {
-  const parsed = JSON.parse(textData);
-
-  if (typeof parsed === 'string') {
-    return normalizePaidLogs(JSON.parse(parsed));
-  }
-
-  if (parsed?.paidLogs) {
-    return normalizePaidLogs(parsed.paidLogs);
-  }
-
-  if (parsed?.data) {
-    if (typeof parsed.data === 'string') {
-      return normalizePaidLogs(JSON.parse(parsed.data));
-    }
-    return normalizePaidLogs(parsed.data);
-  }
-
-  return normalizePaidLogs(parsed);
-}
-
 async function fetchPaidLogs() {
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
-    paidLogsCache = normalizePaidLogs(getPaidLogs());
-    applyPaidLogsToUi();
+    paidLogsCache = getPaidLogs();
     return;
   }
 
@@ -1117,29 +1089,15 @@ async function fetchPaidLogs() {
     const textData = await response.text();
 
     try {
-      paidLogsCache = parsePaidLogsResponse(textData);
+      paidLogsCache = JSON.parse(textData);
       savePaidLogs(paidLogsCache);
     } catch {
       console.error('O Google não devolveu JSON válido:', textData);
-      paidLogsCache = normalizePaidLogs(getPaidLogs());
+      paidLogsCache = getPaidLogs();
     }
   } catch (error) {
     console.error('Deu erro na rede ao buscar os pagamentos:', error);
-    paidLogsCache = normalizePaidLogs(getPaidLogs());
-  }
-
-  applyPaidLogsToUi();
-}
-
-function applyPaidLogsToUi() {
-  if (!state.currentPersonKey) {
-    return;
-  }
-
-  renderSubscriptionCards(state.currentPersonKey);
-
-  if (state.selectedServiceKey) {
-    renderDetails();
+    paidLogsCache = getPaidLogs();
   }
 }
 
@@ -1147,7 +1105,6 @@ async function markPaymentAsPaid(personKey, payment) {
   const paymentKey = getPaymentNotificationKey(payment);
   const timestamp = new Date().toISOString();
 
-  paidLogsCache = normalizePaidLogs(paidLogsCache);
   paidLogsCache[personKey] = paidLogsCache[personKey] ?? {};
   paidLogsCache[personKey][paymentKey] = timestamp;
   savePaidLogs(paidLogsCache);
