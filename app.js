@@ -866,25 +866,57 @@ function updateNotificationButton() {
   const capability = getNotificationCapability();
 
   if (!capability.available) {
-    notificationButton.textContent = 'Notificações indisponíveis';
-    notificationButton.disabled = true;
+    setNotificationButtonState('unavailable');
     return;
   }
 
   if (Notification.permission === 'granted') {
-    notificationButton.textContent = 'Notificações ativas';
-    notificationButton.disabled = false;
+    setNotificationButtonState('enabled');
     return;
   }
 
   if (Notification.permission === 'denied') {
-    notificationButton.textContent = 'Notificações bloqueadas';
-    notificationButton.disabled = true;
+    setNotificationButtonState('blocked');
     return;
   }
 
-  notificationButton.textContent = 'Ativar notificações';
-  notificationButton.disabled = false;
+  setNotificationButtonState('prompt');
+}
+
+function setNotificationButtonState(stateName) {
+  const stateConfig = {
+    unavailable: {
+      icon: '🔕',
+      ariaLabel: 'Notificações indisponíveis neste dispositivo',
+      title: 'Notificações indisponíveis',
+      disabled: true,
+    },
+    enabled: {
+      icon: '🔔',
+      ariaLabel: 'Notificações ativas',
+      title: 'Notificações ativas',
+      disabled: false,
+    },
+    blocked: {
+      icon: '🚫',
+      ariaLabel: 'Notificações bloqueadas',
+      title: 'Notificações bloqueadas',
+      disabled: true,
+    },
+    prompt: {
+      icon: '🔔',
+      ariaLabel: 'Ativar notificações',
+      title: 'Ativar notificações',
+      disabled: false,
+    },
+  };
+
+  const config = stateConfig[stateName] || stateConfig.prompt;
+
+  notificationButton.textContent = config.icon;
+  notificationButton.setAttribute('aria-label', config.ariaLabel);
+  notificationButton.title = config.title;
+  notificationButton.disabled = config.disabled;
 }
 
 function updateNotificationStatus() {
@@ -1336,12 +1368,11 @@ function initTheme() {
 function updateThemeButton(theme) {
   const isDarkTheme = theme === 'dark';
   const icon = isDarkTheme ? '☀️' : '🌙';
-  const iconColor = isDarkTheme ? '#ffffff' : '#0b1020';
   const nextActionLabel = isDarkTheme
     ? 'Ativar modo claro'
     : 'Ativar modo escuro';
 
-  themeButton.innerHTML = `<span aria-hidden="true" style="color: ${iconColor};">${icon}</span>`;
+  themeButton.innerHTML = `<span aria-hidden="true">${icon}</span>`;
   themeButton.setAttribute('aria-label', nextActionLabel);
   themeButton.setAttribute('aria-pressed', String(isDarkTheme));
 }
