@@ -73,6 +73,7 @@ const STORAGE_KEYS = {
   profile: 'streaming-payments-profile-v2',
   notifications: 'streaming-payments-notifications-v2',
   theme: 'streaming-payments-theme',
+  paid: 'streaming-payments-paid-v1',
 };
 
 const state = {
@@ -139,6 +140,7 @@ function bindEvents() {
   upcomingPanel.addEventListener('click', (event) => {
     const testButton = event.target.closest('[data-test-notification]');
     const calendarButton = event.target.closest('[data-add-calendar]');
+    const markButton = event.target.closest('[data-mark-paid]');
 
     if (testButton) {
       void showTestNotification();
@@ -146,6 +148,27 @@ function bindEvents() {
 
     if (calendarButton) {
       openGoogleCalendarEvent();
+    }
+
+    if (markButton) {
+      if (!state.currentPersonKey) {
+        setNotificationStatus(
+          'Selecione um perfil antes de marcar pagamentos.',
+        );
+        return;
+      }
+
+      const serviceKey = markButton.dataset.service;
+      const dateMs = Number(markButton.dataset.dateMs);
+      const payment = {
+        serviceKey,
+        date: new Date(dateMs),
+        amount: SERVICES[serviceKey]?.amount ?? 0,
+      };
+
+      markPaymentAsPaid(state.currentPersonKey, payment);
+      setNotificationStatus('Parcela marcada como paga.');
+      renderDetails();
     }
   });
 
@@ -371,17 +394,25 @@ function renderUpcomingPayments(serviceKey, personKey) {
     </div>
     <ul class="payment-list">
       ${payments
-        .map(
-          (payment) => `
+        .map((payment) => {
+          const paid = isPaymentPaid(personKey, payment);
+          return `
             <li class="payment-item">
               <span>
                 <strong>${capitalize(MONTHS[payment.date.getMonth()])}</strong>
                 <span>${formatLongDate(payment.date)}</span>
               </span>
-              <span class="amount">${moneyFormatter.format(payment.amount)}</span>
+              <span>
+                <span class="amount">${moneyFormatter.format(payment.amount)}</span>
+                ${
+                  paid
+                    ? `<span class="status-pill status-pago">pago</span>`
+                    : `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Marcar como pago</button>`
+                }
+              </span>
             </li>
-          `,
-        )
+          `;
+        })
         .join('')}
     </ul>
   `;
@@ -407,15 +438,34 @@ function renderMonthlySheet(serviceKey, year) {
   const rows = getYearMonths(year)
     .map((date) => {
       const status = getDateStatus(date);
-      const statusClass = status === 'passou' ? ' status-passou' : '';
+      const currentPersonPaid = state.currentPersonKey
+        ? isPaymentPaid(state.currentPersonKey, { serviceKey, date })
+        : false;
+      const rowStatus = currentPersonPaid ? 'pago' : status;
+      const statusClass =
+        rowStatus === 'passou'
+          ? ' status-passou'
+          : rowStatus === 'pago'
+            ? ' status-pago'
+            : rowStatus === 'futuro'
+              ? ' status-futuro'
+              : '';
+
+      const participantCells = service.participants
+        .map((participantKey) => {
+          const paid = isPaymentPaid(participantKey, { serviceKey, date });
+          return paid
+            ? `<td><span class="status-pill status-pago">pago</span></td>`
+            : `<td>${moneyFormatter.format(service.amount)}</td>`;
+        })
+        .join('');
+
       return `
         <tr>
           <td>${capitalize(MONTHS[date.getMonth()])}</td>
           <td>${formatLongDate(date)}</td>
-          ${service.participants
-            .map(() => `<td>${moneyFormatter.format(service.amount)}</td>`)
-            .join('')}
-          <td><span class="status-pill${statusClass}">${status}</span></td>
+          ${participantCells}
+          <td><span class="status-pill${statusClass}">${rowStatus}</span></td>
         </tr>
       `;
     })
@@ -440,8 +490,17 @@ function renderRotationSheet(serviceKey, year) {
   const rows = getYearMonths(year)
     .map((date) => {
       const payerKey = getRotationPayer(date.getMonth());
-      const status = getDateStatus(date);
-      const statusClass = status === 'passou' ? ' status-passou' : '';
+      const baseStatus = getDateStatus(date);
+      const paid = isPaymentPaid(payerKey, { serviceKey, date });
+      const status = paid ? 'pago' : baseStatus;
+      const statusClass =
+        status === 'passou'
+          ? ' status-passou'
+          : status === 'pago'
+            ? ' status-pago'
+            : status === 'futuro'
+              ? ' status-futuro'
+              : '';
       return `
         <tr>
           <td>${capitalize(MONTHS[date.getMonth()])}</td>
@@ -1002,6 +1061,31 @@ function getNotificationLogs() {
 
 function saveNotificationLogs(logs) {
   writeJson(STORAGE_KEYS.notifications, logs);
+}
+
+function getPaidLogs() {
+  return readJson(STORAGE_KEYS.paid, {});
+}
+
+function savePaidLogs(logs) {
+  writeJson(STORAGE_KEYS.paid, logs);
+}
+
+function markPaymentAsPaid(personKey, payment) {
+  const logs = getPaidLogs();
+
+  logs[personKey] = logs[personKey] ?? {};
+  logs[personKey][getPaymentNotificationKey(payment)] =
+    new Date().toISOString();
+  savePaidLogs(logs);
+}
+
+function isPaymentPaid(personKey, payment) {
+  if (!personKey) return false;
+  const logs = getPaidLogs();
+  return Boolean(
+    logs[personKey] && logs[personKey][getPaymentNotificationKey(payment)],
+  );
 }
 
 function getSavedProfile() {

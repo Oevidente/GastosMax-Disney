@@ -651,6 +651,16 @@ button {
   color: var(--danger);
 }
 
+.status-pill.status-pago {
+  background: color-mix(in srgb, var(--accent) 28%, var(--surface));
+  color: var(--accent-strong);
+}
+
+.status-pill.status-futuro {
+  background: color-mix(in srgb, #2b6fbf 16%, var(--surface));
+  color: #2b6fbf;
+}
+
 .is-hidden {
   display: none !important;
 }
