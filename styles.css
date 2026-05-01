@@ -659,6 +659,14 @@ button {
   white-space: nowrap;
 }
 
+.sheet-table td .status-pill {
+  margin-right: 10px;
+}
+
+.sheet-table td .amount {
+  margin-right: 10px;
+}
+
 .status-pill.status-passou {
   background: color-mix(in srgb, var(--danger) 16%, var(--surface));
   color: var(--danger);

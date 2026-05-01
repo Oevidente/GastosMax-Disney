@@ -88,7 +88,7 @@ const state = {
 let refreshIntervalId = null;
 let reminderCheckInProgress = false;
 let serviceWorkerRegistrationPromise = null;
-let paidLogsCache = getPaidLogs();
+let paidLogsCache = {};
 
 const profileScreen = document.querySelector('#profileScreen');
 const dashboard = document.querySelector('#dashboard');
@@ -153,7 +153,6 @@ function bindEvents() {
     if (calendarButton) {
       openGoogleCalendarEvent();
     }
-
     if (markButton) {
       if (!state.currentPersonKey) {
         setNotificationStatus(
@@ -170,17 +169,28 @@ function bindEvents() {
         amount: SERVICES[serviceKey]?.amount ?? 0,
       };
 
-      await togglePaymentPaid(state.currentPersonKey, payment);
+      const paid = isPaymentPaid(state.currentPersonKey, payment);
+
+      if (paid) {
+        await unmarkPayment(state.currentPersonKey, payment);
+        setNotificationStatus('Parcela desmarcada como paga.');
+      } else {
+        await markPaymentAsPaid(state.currentPersonKey, payment);
+        setNotificationStatus('Parcela marcada como paga.');
       }
+    }
   });
 
   fullPanel.addEventListener('click', async (event) => {
     const toggleButton = event.target.closest('[data-toggle-paid]');
-    if (!toggleButton || !state.currentPersonKey) return;
+    if (!toggleButton) return;
+
+    if (!state.currentPersonKey) {
+      setNotificationStatus('Selecione um perfil antes de marcar pagamentos.');
+      return;
+    }
 
     const personKey = toggleButton.dataset.person;
-    if (personKey !== state.currentPersonKey) return;
-
     const serviceKey = toggleButton.dataset.service;
     const dateMs = Number(toggleButton.dataset.dateMs);
     const payment = {
@@ -189,7 +199,15 @@ function bindEvents() {
       amount: SERVICES[serviceKey]?.amount ?? 0,
     };
 
-    await togglePaymentPaid(personKey, payment);
+    const paid = isPaymentPaid(personKey, payment);
+
+    if (paid) {
+      await unmarkPayment(personKey, payment);
+      setNotificationStatus('Parcela desmarcada como paga.');
+    } else {
+      await markPaymentAsPaid(personKey, payment);
+      setNotificationStatus('Parcela marcada como paga.');
+    }
   });
 
   changeProfileButton.addEventListener('click', changeProfile);
@@ -438,14 +456,8 @@ function renderUpcomingPayments(serviceKey, personKey) {
                 <span class="amount">${moneyFormatter.format(payment.amount)}</span>
                 ${
                   paid
-                    ? renderPaidToggleButton({
-                        paid,
-                        attrs: `data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}"`,
-                      })
-                    : renderPaidToggleButton({
-                        paid,
-                        attrs: `data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}"`,
-                      })
+                    ? `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Desfazer pago</button>`
+                    : `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Marcar como pago</button>`
                 }
               </span>
             </li>
@@ -494,15 +506,11 @@ function renderMonthlySheet(serviceKey, year) {
           const paid = isPaymentPaid(participantKey, { serviceKey, date });
           const isCurrentUser = participantKey === state.currentPersonKey;
           const actionButton = isCurrentUser
-            ? renderPaidToggleButton({
-                paid,
-                compact: true,
-                attrs: `data-toggle-paid data-person="${participantKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}"`,
-              })
+            ? `<button class="ghost-button" type="button" data-toggle-paid data-person="${participantKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
             : '';
           return paid
-            ? `<td><div class="sheet-cell-content"><span class="status-pill status-pago">pago</span>${actionButton}</div></td>`
-            : `<td><div class="sheet-cell-content">${moneyFormatter.format(service.amount)}${actionButton}</div></td>`;
+            ? `<td><span class="status-pill status-pago">pago</span>${actionButton}</td>`
+            : `<td><span class="amount">${moneyFormatter.format(service.amount)}</span>${actionButton}</td>`;
         })
         .join('');
 
@@ -549,19 +557,15 @@ function renderRotationSheet(serviceKey, year) {
               : '';
       const actionButton =
         payerKey === state.currentPersonKey
-          ? renderPaidToggleButton({
-              paid,
-              compact: true,
-              attrs: `data-toggle-paid data-person="${payerKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}"`,
-            })
+          ? `<button class="ghost-button" type="button" data-toggle-paid data-person="${payerKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
           : '';
       return `
         <tr>
           <td>${capitalize(MONTHS[date.getMonth()])}</td>
           <td>${formatLongDate(date)}</td>
           <td>${PEOPLE[payerKey].name}</td>
-          <td>${moneyFormatter.format(SERVICES[serviceKey].amount)}</td>
-          <td><div class="sheet-cell-content"><span class="status-pill${statusClass}">${status}</span>${actionButton}</div></td>
+          <td><span class="amount">${moneyFormatter.format(SERVICES[serviceKey].amount)}</span></td>
+          <td><span class="status-pill${statusClass}">${status}</span>${actionButton}</td>
         </tr>
       `;
     })
@@ -1125,66 +1129,9 @@ function savePaidLogs(logs) {
   writeJson(STORAGE_KEYS.paid, logs);
 }
 
-function normalizePaidLogs(value) {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value
-    : {};
-}
-
-function parsePaidLogsResponse(textData) {
-  const parsed = JSON.parse(textData);
-  const fromArray = (entries) => {
-    const mapped = {};
-    entries.forEach((entry) => {
-      if (!entry || typeof entry !== 'object') return;
-      const personKey = entry.personKey ?? entry.person ?? entry.userKey;
-      const paymentKey =
-        entry.paymentKey ??
-        (entry.serviceKey && entry.date
-          ? `${entry.serviceKey}:${entry.date}`
-          : entry.serviceKey && entry.paymentDateKey
-            ? `${entry.serviceKey}:${entry.paymentDateKey}`
-          : null);
-      if (!personKey || !paymentKey) return;
-      mapped[personKey] = mapped[personKey] ?? {};
-      mapped[personKey][paymentKey] =
-        entry.timestamp ?? entry.paidAt ?? new Date().toISOString();
-    });
-    return mapped;
-  };
-
-  if (typeof parsed === 'string') {
-    return normalizePaidLogs(JSON.parse(parsed));
-  }
-
-  if (Array.isArray(parsed)) {
-    return normalizePaidLogs(fromArray(parsed));
-  }
-
-  if (parsed?.paidLogs) {
-    if (Array.isArray(parsed.paidLogs)) {
-      return normalizePaidLogs(fromArray(parsed.paidLogs));
-    }
-    return normalizePaidLogs(parsed.paidLogs);
-  }
-
-  if (parsed?.data) {
-    if (typeof parsed.data === 'string') {
-      return normalizePaidLogs(JSON.parse(parsed.data));
-    }
-    if (Array.isArray(parsed.data)) {
-      return normalizePaidLogs(fromArray(parsed.data));
-    }
-    return normalizePaidLogs(parsed.data);
-  }
-
-  return normalizePaidLogs(parsed);
-}
-
 async function fetchPaidLogs() {
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
-    paidLogsCache = normalizePaidLogs(getPaidLogs());
-    applyPaidLogsToUi();
+    paidLogsCache = getPaidLogs();
     return;
   }
 
@@ -1193,64 +1140,24 @@ async function fetchPaidLogs() {
     const textData = await response.text();
 
     try {
-      paidLogsCache = parsePaidLogsResponse(textData);
+      paidLogsCache = JSON.parse(textData);
       savePaidLogs(paidLogsCache);
     } catch {
       console.error('O Google não devolveu JSON válido:', textData);
-      paidLogsCache = normalizePaidLogs(getPaidLogs());
+      paidLogsCache = getPaidLogs();
     }
   } catch (error) {
     console.error('Deu erro na rede ao buscar os pagamentos:', error);
-    paidLogsCache = normalizePaidLogs(getPaidLogs());
-  }
-
-  applyPaidLogsToUi();
-}
-
-function applyPaidLogsToUi() {
-  if (!state.currentPersonKey) {
-    return;
-  }
-
-  renderSubscriptionCards(state.currentPersonKey);
-
-  if (state.selectedServiceKey) {
-    renderDetails();
+    paidLogsCache = getPaidLogs();
   }
 }
 
 async function markPaymentAsPaid(personKey, payment) {
-  await setPaymentPaidStatus(personKey, payment, true);
-}
-
-async function togglePaymentPaid(personKey, payment) {
-  const paid = isPaymentPaid(personKey, payment);
-  await setPaymentPaidStatus(personKey, payment, !paid);
-  setNotificationStatus(!paid ? 'Parcela marcada como paga.' : 'Pagamento desfeito.');
-}
-
-async function setPaymentPaidStatus(personKey, payment, isPaid) {
   const paymentKey = getPaymentNotificationKey(payment);
-  const paidDateIso = new Date(
-    payment.date.getFullYear(),
-    payment.date.getMonth(),
-    payment.date.getDate(),
-    12,
-    0,
-    0,
-    0,
-  ).toISOString();
-  const actionTimestamp = new Date().toISOString();
+  const timestamp = new Date().toISOString();
 
-  paidLogsCache = normalizePaidLogs(paidLogsCache);
   paidLogsCache[personKey] = paidLogsCache[personKey] ?? {};
-
-  if (isPaid) {
-    paidLogsCache[personKey][paymentKey] = paidDateIso;
-  } else {
-    delete paidLogsCache[personKey][paymentKey];
-  }
-
+  paidLogsCache[personKey][paymentKey] = timestamp;
   savePaidLogs(paidLogsCache);
   renderDetails();
 
@@ -1262,17 +1169,44 @@ async function setPaymentPaidStatus(personKey, payment, isPaid) {
     await fetch(API_URL, {
       method: 'POST',
       mode: 'no-cors',
-      body: JSON.stringify({
-        personKey,
-        paymentKey,
-        timestamp: isPaid ? paidDateIso : '',
-        actionTimestamp,
-        isPaid,
-        action: isPaid ? 'mark_paid' : 'unmark_paid',
-      }),
+      body: JSON.stringify({ personKey, paymentKey, timestamp }),
     });
   } catch (error) {
     console.error('Erro ao salvar no Sheets:', error);
+  }
+}
+
+async function unmarkPayment(personKey, payment) {
+  const paymentKey = getPaymentNotificationKey(payment);
+
+  if (!paidLogsCache[personKey]) {
+    return;
+  }
+
+  delete paidLogsCache[personKey][paymentKey];
+
+  if (Object.keys(paidLogsCache[personKey]).length === 0) {
+    delete paidLogsCache[personKey];
+  }
+
+  savePaidLogs(paidLogsCache);
+  renderDetails();
+  // Envia pedido de remoção ao Apps Script para que ele delete a(s) linha(s)
+  // correspondentes no Sheets. O Apps Script implementado em
+  // apps_script/Code.gs procura por `personKey` + `paymentKey` e remove
+  // qualquer linha que casar.
+  if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
+    return;
+  }
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ personKey, paymentKey, remove: true }),
+    });
+  } catch (error) {
+    console.error('Erro ao remover no Sheets:', error);
   }
 }
 
@@ -1280,7 +1214,7 @@ function isPaymentPaid(personKey, payment) {
   if (!personKey) return false;
   return Boolean(
     paidLogsCache[personKey] &&
-      paidLogsCache[personKey][getPaymentNotificationKey(payment)],
+    paidLogsCache[personKey][getPaymentNotificationKey(payment)],
   );
 }
 
