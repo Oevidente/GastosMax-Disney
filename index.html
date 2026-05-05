@@ -63,10 +63,17 @@
           </div>
 
           <div class="profile-box">
-            <form class="profile-form" id="profileForm" autocomplete="off">
-              <label for="profileNameInput">Digite seu primeiro nome</label>
+            <div class="profile-selection" id="profileSelection">
+              <h2 class="profile-selection-title">Quem está acessando?</h2>
+              <div class="profile-grid" id="profileGrid">
+                <!-- Perfis serão inseridos aqui via JS -->
+              </div>
+            </div>
+            
+            <form class="profile-form is-hidden" id="profileForm" autocomplete="off">
+              <label for="profileNameInput">Ou digite seu nome</label>
               <div class="input-row">
-                <input id="profileNameInput" name="name" type="text" inputmode="text" placeholder="André, Isabela, Ianka ou Sarha" required />
+                <input id="profileNameInput" name="name" type="text" inputmode="text" placeholder="André, Isabela, Ianka ou Sarha" />
                 <button type="submit">Continuar</button>
               </div>
               <p class="form-message" id="profileMessage" role="alert"></p>

@@ -12,24 +12,32 @@ const SETTINGS = {
 
 const PEOPLE = {
   andre: {
-    name: 'André',
+    name: 'André Luiz',
     aliases: ['andre', 'andré'],
     subscriptions: ['disney', 'max'],
+    color: '#4f46e5',
+    avatar: 'AL',
   },
   isabela: {
-    name: 'Isabela',
+    name: 'Bela Lustosa',
     aliases: ['isabela'],
     subscriptions: ['disney', 'max'],
+    color: '#ec4899',
+    avatar: 'BL',
   },
   ianka: {
-    name: 'Ianka',
+    name: 'Ianka Lacerda',
     aliases: ['ianka'],
     subscriptions: ['disney', 'max'],
+    color: '#10b981',
+    avatar: 'IL',
   },
   sarha: {
-    name: 'Sarha',
+    name: 'Sarha Pedrosa',
     aliases: ['sarha'],
     subscriptions: ['max'],
+    color: '#f59e0b',
+    avatar: 'SP',
   },
 };
 
@@ -92,6 +100,8 @@ let paidLogsCache = {};
 
 const profileScreen = document.querySelector('#profileScreen');
 const dashboard = document.querySelector('#dashboard');
+const profileSelection = document.querySelector('#profileSelection');
+const profileGrid = document.querySelector('#profileGrid');
 const profileForm = document.querySelector('#profileForm');
 const profileNameInput = document.querySelector('#profileNameInput');
 const profileMessage = document.querySelector('#profileMessage');
@@ -124,6 +134,7 @@ const moneyFormatter = new Intl.NumberFormat('pt-BR', {
 initTheme();
 bindEvents();
 restoreProfile();
+renderProfileSelection();
 
 function bindEvents() {
   profileForm.addEventListener('submit', (event) => {
@@ -298,10 +309,34 @@ function restoreProfile() {
     dashboard.classList.add('is-hidden');
     notificationButton.classList.add('is-hidden');
     changeProfileButton.classList.add('is-hidden');
+    renderProfileSelection();
     return;
   }
 
   openDashboard(personKey);
+}
+
+function renderProfileSelection() {
+  if (!profileGrid) return;
+  
+  profileGrid.innerHTML = Object.entries(PEOPLE)
+    .map(([key, person]) => `
+      <button class="profile-item" type="button" data-person="${key}">
+        <div class="profile-avatar" style="background-color: ${person.color}">${person.avatar}</div>
+        <span class="profile-name">${person.name}</span>
+      </button>
+    `)
+    .join('');
+
+  profileGrid.querySelectorAll('.profile-item').forEach(button => {
+    button.addEventListener('click', () => {
+      const personKey = button.dataset.person;
+      if (personKey && PEOPLE[personKey]) {
+        saveProfile(personKey);
+        openDashboard(personKey);
+      }
+    });
+  });
 }
 
 function changeProfile() {
@@ -316,9 +351,9 @@ function changeProfile() {
   changeProfileButton.classList.add('is-hidden');
   yearControls.classList.add('is-hidden');
   profileScreen.classList.remove('is-hidden');
-  profileNameInput.value = '';
-  profileMessage.textContent = '';
-  profileNameInput.focus();
+  renderProfileSelection();
+  if (profileNameInput) profileNameInput.value = '';
+  if (profileMessage) profileMessage.textContent = '';
 }
 
 async function openDashboard(personKey) {
