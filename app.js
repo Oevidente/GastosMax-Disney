@@ -498,37 +498,40 @@ function renderMonthlySheet(serviceKey, year) {
           const paid = isPaymentPaid(participantKey, { serviceKey, date });
           const isCurrentUser = participantKey === state.currentPersonKey;
           const actionButton = isCurrentUser
-            ? `<button class="ghost-button" type="button" data-toggle-paid data-person="${participantKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
+            ? `<button class="ghost-button action-btn" type="button" data-toggle-paid data-person="${participantKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
             : '';
-          return paid
-            ? `<td><span class="status-pill status-pago">pago</span>${actionButton}</td>`
-            : `<td><span class="amount">${moneyFormatter.format(service.amount)}</span>${actionButton}</td>`;
+          const innerContent = paid
+            ? `<div class="status-actions"><span class="status-pill status-pago">pago</span>${actionButton}</div>`
+            : `<div class="status-actions"><span class="amount">${moneyFormatter.format(service.amount)}</span>${actionButton}</div>`;
+          return `<td data-label="${PEOPLE[participantKey].name}">${innerContent}</td>`;
         })
         .join('');
 
       return `
         <tr>
-          <td>${capitalize(MONTHS[date.getMonth()])}</td>
-          <td>${formatLongDate(date)}</td>
+          <td data-label="Mês">${capitalize(MONTHS[date.getMonth()])}</td>
+          <td data-label="Data">${formatLongDate(date)}</td>
           ${participantCells}
-          <td><span class="status-pill${statusClass}">${rowStatus}</span></td>
+          <td data-label="Status"><div class="status-actions"><span class="status-pill${statusClass}">${rowStatus}</span></div></td>
         </tr>
       `;
     })
     .join('');
 
   return `
-    <table class="sheet-table">
-      <thead>
-        <tr>
-          <th>Mês</th>
-          <th>Data</th>
-          ${participantHeaders}
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="sheet-table">
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Data</th>
+            ${participantHeaders}
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
   `;
 }
 
@@ -553,29 +556,31 @@ function renderRotationSheet(serviceKey, year) {
           : '';
       return `
         <tr>
-          <td>${capitalize(MONTHS[date.getMonth()])}</td>
-          <td>${formatLongDate(date)}</td>
-          <td>${PEOPLE[payerKey].name}</td>
-          <td><span class="amount">${moneyFormatter.format(SERVICES[serviceKey].amount)}</span></td>
-          <td><span class="status-pill${statusClass}">${status}</span>${actionButton}</td>
+          <td data-label="Mês">${capitalize(MONTHS[date.getMonth()])}</td>
+          <td data-label="Data">${formatLongDate(date)}</td>
+          <td data-label="Responsável">${PEOPLE[payerKey].name}</td>
+          <td data-label="Valor"><span class="amount">${moneyFormatter.format(SERVICES[serviceKey].amount)}</span></td>
+          <td data-label="Status"><div class="status-actions"><span class="status-pill${statusClass}">${status}</span>${actionButton}</div></td>
         </tr>
       `;
     })
     .join('');
 
   return `
-    <table class="sheet-table">
-      <thead>
-        <tr>
-          <th>Mês</th>
-          <th>Data</th>
-          <th>Responsável</th>
-          <th>Valor</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="sheet-table sheet-rotation">
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Data</th>
+            <th>Responsável</th>
+            <th>Valor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
   `;
 }
 
@@ -886,25 +891,25 @@ function updateNotificationButton() {
 function setNotificationButtonState(stateName) {
   const stateConfig = {
     unavailable: {
-      icon: `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.01 10.01 0 0 0 12 2Zm5.71 14.29L7.71 6.29a8 8 0 0 1 10 10Z"/><path fill="currentColor" d="M6.29 7.71 16.29 17.71a8 8 0 0 1-10-10ZM12 6a4 4 0 0 0-4 4v2.59l-.71.7a1 1 0 0 0 .71 1.71h8a1 1 0 0 0 .71-1.71l-.71-.7V10a4 4 0 0 0-4-4Z"/></svg>`,
+      icon: `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>`,
       ariaLabel: 'Notificações indisponíveis neste dispositivo',
       title: 'Notificações indisponíveis',
       disabled: true,
     },
     enabled: {
-      icon: `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 3a5 5 0 0 0-5 5v2.59l-1.71 1.7A1 1 0 0 0 6 14h12a1 1 0 0 0 .71-1.71L17 10.59V8a5 5 0 0 0-5-5Zm0 18a3 3 0 0 0 2.82-2h-5.64A3 3 0 0 0 12 21Z"/></svg>`,
+      icon: `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`,
       ariaLabel: 'Notificações ativas',
       title: 'Notificações ativas',
       disabled: false,
     },
     blocked: {
-      icon: `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 3a5 5 0 0 0-5 5v2.59l-1.71 1.7A1 1 0 0 0 6 14h7.1a5.98 5.98 0 0 1 8.53-2.9A1 1 0 0 0 21 10.6V8a5 5 0 0 0-5-5Zm0 18a3 3 0 0 0 2.82-2H9.18A3 3 0 0 0 12 21Zm7-8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm2.12 5.12-1 1L19 18.41l-1.12.71-1-1-.71 1.12 1 1L16.41 21l1.12.71 1-1 1 .71.71-1.12-1-1 .76-1.17Z"/></svg>`,
+      icon: `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>`,
       ariaLabel: 'Notificações bloqueadas',
       title: 'Notificações bloqueadas',
       disabled: true,
     },
     prompt: {
-      icon: `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 3a5 5 0 0 0-5 5v2.59l-1.71 1.7A1 1 0 0 0 6 14h12a1 1 0 0 0 .71-1.71L17 10.59V8a5 5 0 0 0-5-5Zm0 18a3 3 0 0 0 2.82-2h-5.64A3 3 0 0 0 12 21Z"/><path fill="currentColor" d="M20 6h-2V4a1 1 0 1 0-2 0v2h-2a1 1 0 1 0 0 2h2v2a1 1 0 1 0 2 0V8h2a1 1 0 1 0 0-2Z"/></svg>`,
+      icon: `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><circle cx="18" cy="6" r="3"></circle></svg>`,
       ariaLabel: 'Ativar notificações',
       title: 'Ativar notificações',
       disabled: false,
@@ -1215,10 +1220,7 @@ async function unmarkPayment(personKey, payment) {
 
   savePaidLogs(paidLogsCache);
   renderDetails();
-  // Envia pedido de remoção ao Apps Script para que ele delete a(s) linha(s)
-  // correspondentes no Sheets. O Apps Script implementado em
-  // apps_script/Code.gs procura por `personKey` + `paymentKey` e remove
-  // qualquer linha que casar.
+  
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     return;
   }
@@ -1368,8 +1370,8 @@ function initTheme() {
 function updateThemeButton(theme) {
   const isDarkTheme = theme === 'dark';
   const icon = isDarkTheme
-    ? `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 4a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1Zm0 14a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1Zm8-7a1 1 0 1 1 0 2h-1a1 1 0 1 1 0-2h1ZM6 12a1 1 0 0 1-1 1H4a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm10.36-5.95a1 1 0 0 1 1.41 0l.71.71a1 1 0 1 1-1.41 1.42l-.71-.71a1 1 0 0 1 0-1.42Zm-9.9 9.9a1 1 0 0 1 1.41 0l.71.71a1 1 0 0 1-1.41 1.42l-.71-.71a1 1 0 0 1 0-1.42Zm11.31 1.42a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.42l.71.71a1 1 0 0 1 0 1.42ZM8.58 8.58a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.42l.71.71a1 1 0 0 1 0 1.42ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg>`
-    : `<svg class="top-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.5 3.5a1 1 0 0 1 .32 1.95A7.5 7.5 0 1 0 20.55 15a1 1 0 1 1 1.95.32A9.5 9.5 0 1 1 14.18 3.18a1 1 0 0 1 .32.32Z"/></svg>`;
+    ? `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`
+    : `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
   const nextActionLabel = isDarkTheme
     ? 'Ativar modo claro'
     : 'Ativar modo escuro';
@@ -1398,6 +1400,5 @@ function saveTheme(theme) {
   try {
     localStorage.setItem(STORAGE_KEYS.theme, theme);
   } catch {
-    // The selected theme still applies for the current page even if storage is blocked.
   }
 }
