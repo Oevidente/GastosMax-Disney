@@ -77,7 +77,7 @@ const STORAGE_KEYS = {
 };
 
 const API_URL =
-  'https://script.google.com/macros/s/AKfycby58BE3oqEGXry125z6XyTMhZ54AwacgzfaDxaEqDYjttUJF1Pntv6ZCnViKfaCj8m4/exec';
+  'https://script.google.com/macros/s/AKfycbz-KQhp22IdLWLF8L9nyuWIn4BC2HaWBYPYewQRbwz_8LX7NZDERSFjZjga5mDlIG-S/exec';
 
 const state = {
   currentPersonKey: null,
