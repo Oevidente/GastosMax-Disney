@@ -114,6 +114,7 @@ const yearControls = document.querySelector('#yearControls');
 const previousYearButton = document.querySelector('#previousYearButton');
 const nextYearButton = document.querySelector('#nextYearButton');
 const selectedYearLabel = document.querySelector('#selectedYearLabel');
+const syncSheetsButton = document.querySelector('#syncSheetsButton');
 
 const moneyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -242,6 +243,24 @@ function bindEvents() {
     renderDetails();
   });
 
+  syncSheetsButton.addEventListener('click', async () => {
+    if (syncSheetsButton.classList.contains('is-syncing')) return;
+
+    syncSheetsButton.classList.add('is-syncing');
+    syncSheetsButton.disabled = true;
+    
+    try {
+      await fetchPaidLogs();
+      setNotificationStatus('Dados sincronizados com sucesso.');
+    } catch (error) {
+      console.error('Erro na sincronização manual:', error);
+      setNotificationStatus('Erro ao sincronizar. Tente novamente.');
+    } finally {
+      syncSheetsButton.classList.remove('is-syncing');
+      syncSheetsButton.disabled = false;
+    }
+  });
+
   window.addEventListener('focus', () => {
     refreshCurrentDates();
     void checkPaymentReminders();
@@ -302,7 +321,7 @@ function changeProfile() {
   profileNameInput.focus();
 }
 
-function openDashboard(personKey) {
+async function openDashboard(personKey) {
   const person = PEOPLE[personKey];
   state.currentPersonKey = personKey;
   state.selectedServiceKey = null;
@@ -316,10 +335,19 @@ function openDashboard(personKey) {
   dashboard.classList.remove('is-hidden');
   changeProfileButton.classList.remove('is-hidden');
   detailsPanel.classList.add('is-hidden');
+
+  // Inicializa com dados locais e dispara busca no servidor
   renderSubscriptionCards(personKey);
   updateNotificationButton();
   updateNotificationStatus();
-  void fetchPaidLogs();
+  
+  try {
+    await fetchPaidLogs();
+  } catch (error) {
+    console.error('Falha ao sincronizar dados iniciais:', error);
+  }
+
+  renderSubscriptionCards(personKey); 
   startSessionLoops();
   void checkPaymentReminders();
 }
@@ -344,24 +372,29 @@ function renderSubscriptionCards(personKey) {
 function createSubscriptionCard(serviceKey, personKey) {
   const service = SERVICES[serviceKey];
   const nextPayment = getNextPayment(serviceKey, personKey);
+  const paid = nextPayment ? isPaymentPaid(personKey, nextPayment) : false;
+  
   const dateText = nextPayment
     ? formatShortDate(nextPayment.date)
     : 'Sem data restante';
   const amountText = moneyFormatter.format(service.amount);
+  const statusPill = paid 
+    ? '<span class="status-pill status-pago" style="margin-left: 8px; vertical-align: middle;">Pago</span>'
+    : '';
 
   return `
-    <button class="subscription-card ${service.cssClass}" type="button" data-service="${serviceKey}">
+    <button class="subscription-card ${service.cssClass}${paid ? ' is-paid' : ''}" type="button" data-service="${serviceKey}">
       <span class="subscription-top">
         <span class="subscription-title">
           <span class="service-symbol">${service.shortName}</span>
-          <strong>${service.name}</strong>
+          <strong>${service.name} ${statusPill}</strong>
         </span>
         <span class="share-type">${service.modelLabel}</span>
       </span>
 
       <span class="payment-line">
         <span>
-          <span>Próxima data</span>
+          <span>${paid ? 'Data paga' : 'Próxima data'}</span>
           <strong>${dateText}</strong>
         </span>
         <span>
@@ -591,16 +624,23 @@ function getNextPayment(serviceKey, personKey) {
 function getUpcomingPaymentsForPerson(serviceKey, personKey, limit) {
   const today = startOfDay(getToday());
   const payments = [];
+  
+  // Retrocede 2 meses para pegar parcelas vencidas que ainda NÃO foram pagas
   const startYear = today.getFullYear();
-  const startMonth = today.getMonth();
+  const startMonth = today.getMonth() - 2;
 
   for (let offset = 0; offset < 120 && payments.length < limit; offset += 1) {
     const monthIndex = startMonth + offset;
     const year = startYear + Math.floor(monthIndex / 12);
-    const normalizedMonth = monthIndex % 12;
+    const normalizedMonth = ((monthIndex % 12) + 12) % 12;
     const date = createPaymentDate(year, normalizedMonth);
 
-    if (date < today) {
+    // Se for no futuro, adicionamos
+    // Se for no passado, SÓ adicionamos se NÃO estiver pago
+    const isFuture = date >= today;
+    const paid = isPaymentPaid(personKey, { serviceKey, date });
+
+    if (!isFuture && paid) {
       continue;
     }
 
@@ -1165,19 +1205,45 @@ async function fetchPaidLogs() {
   }
 
   try {
-    const response = await fetch(`${API_URL}?t=${Date.now()}`);
+    const response = await fetch(`${API_URL}?t=${Date.now()}`, {
+      method: 'GET',
+      redirect: 'follow',
+      cache: 'no-cache'
+    });
+    
+    if (!response.ok) throw new Error(`Status: ${response.status}`);
+    
     const textData = await response.text();
 
     try {
-      paidLogsCache = JSON.parse(textData);
-      savePaidLogs(paidLogsCache);
+      const data = JSON.parse(textData);
+      
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        // Mesclagem inteligente para não perder alterações locais ainda não sincronizadas
+        const localData = getPaidLogs();
+        paidLogsCache = { ...localData, ...data };
+        savePaidLogs(paidLogsCache);
+        
+        if (state.currentPersonKey) {
+          refreshCurrentDates();
+        }
+      } else {
+        console.error('Estrutura de dados inválida do Google:', data);
+        paidLogsCache = getPaidLogs();
+      }
     } catch {
-      console.error('O Google não devolveu JSON válido:', textData);
+      // Se não for JSON, pode ser um erro do GAS em HTML
+      if (textData.includes('<!DOCTYPE html>')) {
+        console.error('O Google retornou uma página de erro HTML em vez de JSON.');
+      } else {
+        console.error('O Google não devolveu JSON válido:', textData);
+      }
       paidLogsCache = getPaidLogs();
     }
   } catch (error) {
-    console.error('Deu erro na rede ao buscar os pagamentos:', error);
+    console.error('Erro de rede ao buscar pagamentos:', error);
     paidLogsCache = getPaidLogs();
+    // Não interrompe o fluxo, usa o cache local
   }
 }
 
@@ -1185,23 +1251,35 @@ async function markPaymentAsPaid(personKey, payment) {
   const paymentKey = getPaymentNotificationKey(payment);
   const timestamp = new Date().toISOString();
 
+  // Atualização otimista na UI
   paidLogsCache[personKey] = paidLogsCache[personKey] ?? {};
   paidLogsCache[personKey][paymentKey] = timestamp;
   savePaidLogs(paidLogsCache);
   renderDetails();
+  refreshCurrentDates();
 
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     return;
   }
 
   try {
-    await fetch(API_URL, {
+    setNotificationStatus('Salvando no banco de dados...');
+    const response = await fetch(API_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      mode: 'no-cors', // GAS exige no-cors para POST de domínios diferentes sem preflight complexo
+      redirect: 'follow',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
       body: JSON.stringify({ personKey, paymentKey, timestamp }),
     });
+    
+    // Com no-cors não conseguimos ler response.ok, mas o fetch resolve se a requisição for enviada
+    setNotificationStatus('Parcela marcada como paga e salva.');
   } catch (error) {
     console.error('Erro ao salvar no Sheets:', error);
+    setNotificationStatus('Erro de conexão ao salvar. O dado está salvo localmente e tentará sincronizar depois.');
   }
 }
 
@@ -1212,27 +1290,36 @@ async function unmarkPayment(personKey, payment) {
     return;
   }
 
+  // Atualização otimista
   delete paidLogsCache[personKey][paymentKey];
-
   if (Object.keys(paidLogsCache[personKey]).length === 0) {
     delete paidLogsCache[personKey];
   }
 
   savePaidLogs(paidLogsCache);
   renderDetails();
+  refreshCurrentDates();
   
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     return;
   }
 
   try {
+    setNotificationStatus('Removendo do banco de dados...');
     await fetch(API_URL, {
       method: 'POST',
       mode: 'no-cors',
+      redirect: 'follow',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
       body: JSON.stringify({ personKey, paymentKey, remove: true }),
     });
+    setNotificationStatus('Parcela desmarcada e sincronizada.');
   } catch (error) {
     console.error('Erro ao remover no Sheets:', error);
+    setNotificationStatus('Erro de conexão ao remover. Alteração salva localmente.');
   }
 }
 

@@ -762,15 +762,17 @@ button {
 }
 
 .year-controls {
-  display: grid;
-  grid-template-columns: auto minmax(90px, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
 }
 
 .year-controls strong {
+  flex: 1;
   display: grid;
-  min-height: 36px;
+  min-height: 38px;
+  min-width: 80px;
   place-items: center;
   border: 1px solid var(--surface-border);
   border-radius: 8px;
@@ -779,6 +781,22 @@ button {
   font-family: var(--font-mono);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+.sync-icon {
+  display: inline-block;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.is-syncing .sync-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .details-panel.details-disney .year-controls strong,
