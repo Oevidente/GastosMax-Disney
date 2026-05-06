@@ -81,7 +81,7 @@ const STORAGE_KEYS = {
   profile: 'streaming-payments-profile-v2',
   notifications: 'streaming-payments-notifications-v2',
   theme: 'streaming-payments-theme',
-  paid: 'streaming-payments-paid-v1', // Revertido para v1 para tentar recuperar dados locais se ainda existirem
+  paid: 'streaming-payments-paid-v2',
 };
 
 // Esta é a API publicada no Google Apps Script.
@@ -1253,6 +1253,22 @@ function getPaymentNotificationKey(payment) {
   return `${payment.serviceKey}:${formatDateKey(payment.date)}`;
 }
 
+function getPaymentSyncPayload(personKey, payment, paid) {
+  const service = SERVICES[payment.serviceKey];
+  const person = PEOPLE[personKey];
+  const mes = formatDateKey(payment.date);
+
+  return {
+    personKey,
+    paymentKey: getPaymentNotificationKey(payment),
+    nome: person?.name ?? personKey,
+    serviceKey: payment.serviceKey,
+    assinatura: service?.name ?? payment.serviceKey,
+    mes,
+    pago: paid,
+  };
+}
+
 function getNotificationLogs() {
   return readJson(STORAGE_KEYS.notifications, {});
 }
@@ -1392,7 +1408,7 @@ async function markPaymentAsPaid(personKey, payment) {
       headers: {
         'Content-Type': 'text/plain;charset=utf-8',
       },
-      body: JSON.stringify({ personKey, paymentKey, paidAt: timestamp }),
+      body: JSON.stringify(getPaymentSyncPayload(personKey, payment, true)),
     });
     
     setNotificationStatus('Parcela marcada como paga e salva.');
@@ -1431,7 +1447,10 @@ async function unmarkPayment(personKey, payment) {
       headers: {
         'Content-Type': 'text/plain;charset=utf-8',
       },
-      body: JSON.stringify({ personKey, paymentKey, remove: true }),
+      body: JSON.stringify({
+        ...getPaymentSyncPayload(personKey, payment, false),
+        remove: true,
+      }),
     });
     setNotificationStatus('Parcela desmarcada e sincronizada.');
   } catch (error) {
