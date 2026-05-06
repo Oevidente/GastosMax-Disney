@@ -81,11 +81,10 @@ const STORAGE_KEYS = {
   profile: 'streaming-payments-profile-v2',
   notifications: 'streaming-payments-notifications-v2',
   theme: 'streaming-payments-theme',
-  paid: 'streaming-payments-paid-v1',
+  paid: 'streaming-payments-paid-v1', // Revertido para v1 para tentar recuperar dados locais se ainda existirem
 };
 
-const API_URL =
-  'https://script.google.com/macros/s/AKfycbz-KQhp22IdLWLF8L9nyuWIn4BC2HaWBYPYewQRbwz_8LX7NZDERSFjZjga5mDlIG-S/exec';
+const API_URL = '/api/sync-paid';
 
 const state = {
   currentPersonKey: null,
@@ -262,10 +261,10 @@ function bindEvents() {
     
     try {
       await fetchPaidLogs();
-      setNotificationStatus('Dados sincronizados com sucesso.');
+      setNotificationStatus('Dados sincronizados com sucesso.', true);
     } catch (error) {
       console.error('Erro na sincronização manual:', error);
-      setNotificationStatus('Erro ao sincronizar. Tente novamente.');
+      setNotificationStatus(error.message || 'Erro ao sincronizar. Tente novamente.', true);
     } finally {
       syncSheetsButton.classList.remove('is-syncing');
       syncSheetsButton.disabled = false;
@@ -274,12 +273,14 @@ function bindEvents() {
 
   window.addEventListener('focus', () => {
     refreshCurrentDates();
+    void fetchPaidLogs().catch(() => {});
     void checkPaymentReminders();
   });
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       refreshCurrentDates();
+      void fetchPaidLogs().catch(() => {});
       void checkPaymentReminders();
     }
   });
@@ -377,9 +378,19 @@ async function openDashboard(personKey) {
   updateNotificationStatus();
   
   try {
+    const isSyncingManual = syncSheetsButton.classList.contains('is-syncing');
+    if (!isSyncingManual) {
+      setNotificationStatus('Sincronizando com o servidor...');
+    }
+    
     await fetchPaidLogs();
+    
+    if (!isSyncingManual) {
+      setNotificationStatus('');
+    }
   } catch (error) {
     console.error('Falha ao sincronizar dados iniciais:', error);
+    setNotificationStatus(error.message || 'Conexão limitada. Usando dados locais.', true);
   }
 
   renderSubscriptionCards(personKey); 
@@ -1198,9 +1209,19 @@ function getNotificationCapability() {
   };
 }
 
-function setNotificationStatus(message) {
+function setNotificationStatus(message, showAsSystem = false) {
   if (notificationStatus) {
     notificationStatus.textContent = message;
+  }
+  
+  if (showAsSystem && message) {
+    const title = message.includes('erro') || message.includes('Falha') || message.includes('Erro') ? 'Aviso de Sincronização' : 'Sincronização';
+    showBrowserNotification(title, {
+      body: message,
+      icon: '/icon-192x192.png',
+      tag: 'sync-status',
+      renotify: true
+    }).catch(err => console.warn('Não foi possível exibir notificação do sistema:', err));
   }
 }
 
@@ -1233,52 +1254,71 @@ function savePaidLogs(logs) {
   writeJson(STORAGE_KEYS.paid, logs);
 }
 
-async function fetchPaidLogs() {
+async function fetchPaidLogs(retryCount = 0) {
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     paidLogsCache = getPaidLogs();
     return;
   }
 
+  const MAX_RETRIES = 2;
+
   try {
-    const response = await fetch(`${API_URL}?t=${Date.now()}`, {
+    // FETCH SIMPLIFICADO: Deixamos o navegador decidir os melhores cabeçalhos e modo.
+    // Isso costuma ter melhor taxa de sucesso em navegadores com proteções estritas.
+    const response = await fetch(API_URL, {
       method: 'GET',
-      redirect: 'follow',
-      cache: 'no-cache'
+      redirect: 'follow'
     });
     
-    if (!response.ok) throw new Error(`Status: ${response.status}`);
+    if (!response.ok) throw new Error(`Erro de conexão (${response.status})`);
     
-    const textData = await response.text();
+    const textData = (await response.text()).trim();
+    if (!textData) throw new Error('O servidor retornou uma resposta vazia.');
 
+    let data;
     try {
-      const data = JSON.parse(textData);
+      data = JSON.parse(textData);
+    } catch (e) {
+      if (textData.includes('<html') || textData.includes('<!DOCTYPE')) {
+        throw new Error('O Google retornou uma página de erro (HTML). Verifique se o script está publicado como "Anyone".');
+      }
+      throw new Error('Não foi possível ler os dados do banco (formato inválido).');
+    }
+
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      // Sincronização bem-sucedida
+      paidLogsCache = data;
+      savePaidLogs(paidLogsCache);
       
-      if (data && typeof data === 'object' && !Array.isArray(data)) {
-        // Mesclagem inteligente para não perder alterações locais ainda não sincronizadas
-        const localData = getPaidLogs();
-        paidLogsCache = { ...localData, ...data };
-        savePaidLogs(paidLogsCache);
-        
-        if (state.currentPersonKey) {
-          refreshCurrentDates();
-        }
-      } else {
-        console.error('Estrutura de dados inválida do Google:', data);
-        paidLogsCache = getPaidLogs();
+      if (state.currentPersonKey) {
+        refreshCurrentDates();
       }
-    } catch {
-      // Se não for JSON, pode ser um erro do GAS em HTML
-      if (textData.includes('<!DOCTYPE html>')) {
-        console.error('O Google retornou uma página de erro HTML em vez de JSON.');
-      } else {
-        console.error('O Google não devolveu JSON válido:', textData);
-      }
-      paidLogsCache = getPaidLogs();
+    } else {
+      throw new Error('Os dados recebidos estão em um formato desconhecido.');
     }
   } catch (error) {
-    console.error('Erro de rede ao buscar pagamentos:', error);
+    console.warn(`Tentativa ${retryCount + 1} falhou:`, error);
+    
+    if (retryCount < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+      return fetchPaidLogs(retryCount + 1);
+    }
+
+    // Se falhou definitivamente, usamos o que temos no localStorage
     paidLogsCache = getPaidLogs();
-    // Não interrompe o fluxo, usa o cache local
+    console.error('Falha na sincronização:', error);
+    
+    // Tratamento de mensagens para o usuário
+    let userMessage = 'Houve um erro ao sincronizar com o Google. Usando dados salvos no aparelho.';
+    if (error.message.includes('html') || error.message.includes('HTML')) {
+      userMessage = 'Erro no Script do Google: Ele não retornou dados. Verifique a URL e as permissões.';
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+      userMessage = 'O navegador bloqueou a conexão com o Google. Tente o Chrome ou Edge.';
+    } else {
+      userMessage = error.message;
+    }
+    
+    throw new Error(userMessage);
   }
 }
 
@@ -1299,22 +1339,18 @@ async function markPaymentAsPaid(personKey, payment) {
 
   try {
     setNotificationStatus('Salvando no banco de dados...');
-    const response = await fetch(API_URL, {
+    await fetch(API_URL, {
       method: 'POST',
-      mode: 'no-cors', // GAS exige no-cors para POST de domínios diferentes sem preflight complexo
-      redirect: 'follow',
-      cache: 'no-cache',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ personKey, paymentKey, timestamp }),
     });
     
-    // Com no-cors não conseguimos ler response.ok, mas o fetch resolve se a requisição for enviada
     setNotificationStatus('Parcela marcada como paga e salva.');
   } catch (error) {
     console.error('Erro ao salvar no Sheets:', error);
-    setNotificationStatus('Erro de conexão ao salvar. O dado está salvo localmente e tentará sincronizar depois.');
+    setNotificationStatus('Erro de conexão ao salvar. O dado está salvo localmente e tentará sincronizar depois.', true);
   }
 }
 
@@ -1343,18 +1379,15 @@ async function unmarkPayment(personKey, payment) {
     setNotificationStatus('Removendo do banco de dados...');
     await fetch(API_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      redirect: 'follow',
-      cache: 'no-cache',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ personKey, paymentKey, remove: true }),
     });
     setNotificationStatus('Parcela desmarcada e sincronizada.');
   } catch (error) {
     console.error('Erro ao remover no Sheets:', error);
-    setNotificationStatus('Erro de conexão ao remover. Alteração salva localmente.');
+    setNotificationStatus('Erro de conexão ao remover. Alteração salva localmente.', true);
   }
 }
 
