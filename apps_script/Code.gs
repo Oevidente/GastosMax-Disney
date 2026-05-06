@@ -1,20 +1,19 @@
-// Code.gs
-// Apps Script para sincronizar pagamentos pagos no Google Sheets.
-//
-// Banco simplificado:
-// - Cada linha representa somente um pagamento marcado como pago.
-// - Se a linha existe, o pagamento está pago.
-// - Se a linha não existe, o pagamento está pendente.
-//
-// Colunas da aba Logs:
-// personKey | paymentKey | paidAt
-//
-// Observação: use comentários de linha e sintaxe ES5 para evitar erros de
-// parser em projetos antigos do Apps Script ou em cópias parciais do arquivo.
+/**
+ * Code.gs
+ * Apps Script para sincronizar pagamentos pagos no Google Sheets.
+ *
+ * Banco simplificado:
+ * - Cada linha representa somente um pagamento marcado como pago.
+ * - Se a linha existe, o pagamento está pago.
+ * - Se a linha não existe, o pagamento está pendente.
+ *
+ * Colunas da aba Logs:
+ * personKey | paymentKey | paidAt
+ */
 
-var SPREADSHEET_ID = '1FTSntPaY0ZSNAHdpKFaYpx9B2378jylDmvkhL1Gw-yY';
-var SHEET_NAME = 'Logs';
-var HEADERS = ['personKey', 'paymentKey', 'paidAt'];
+const SPREADSHEET_ID = '1FTSntPaY0ZSNAHdpKFaYpx9B2378jylDmvkhL1Gw-yY';
+const SHEET_NAME = 'Logs';
+const HEADERS = ['personKey', 'paymentKey', 'paidAt'];
 
 function doPost(e) {
   try {
@@ -76,7 +75,7 @@ function handleAddOrUpdate(data) {
     return jsonResponse({
       success: true,
       action: updated ? 'updated' : 'appended',
-      payment: normalized
+      payment: normalized,
     });
   } finally {
     lock.releaseLock();
@@ -170,7 +169,7 @@ function normalizePaymentData(data) {
   return {
     personKey: String(data.personKey || '').trim(),
     paymentKey: String(data.paymentKey || '').trim(),
-    paidAt: String(data.paidAt || data.timestamp || new Date().toISOString()).trim()
+    paidAt: String(data.paidAt || data.timestamp || new Date().toISOString()).trim(),
   };
 }
 

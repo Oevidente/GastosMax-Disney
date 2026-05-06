@@ -2,20 +2,6 @@
 
 Este Web App é o "banco" da aplicação. Ele guarda apenas os pagamentos que foram marcados como pagos e devolve esses dados para o app sincronizar a tela.
 
-
-## Por que existe uma pasta `apps_script` neste repositório?
-
-A aplicação **não executa** `apps_script/Code.gs` localmente no navegador nem no Vite. Esse arquivo é apenas a cópia versionada do código que precisa ser colado e publicado no Google Apps Script.
-
-O fluxo real é:
-
-1. O navegador roda `app.js`.
-2. `app.js` chama a URL publicada em `API_URL`.
-3. Essa URL executa a versão implantada do `Code.gs` dentro do Google Apps Script.
-4. O Apps Script lê/escreve na planilha Google Sheets.
-
-Mantemos `apps_script/Code.gs` no repositório para ter histórico, revisão e backup do backend do Google Apps Script. Sem essa cópia local, qualquer ajuste feito direto no editor do Google ficaria fora do Git e seria fácil perder ou esquecer qual versão está em produção.
-
 ## Modelo simplificado da planilha
 
 Use uma aba chamada `Logs` com três colunas:
@@ -85,18 +71,6 @@ curl -X POST -H "Content-Type: text/plain;charset=utf-8" \
 ```bash
 curl 'https://script.google.com/macros/s/SEU_ID/exec?action=health'
 ```
-
-## Solução de erro de sintaxe no Apps Script
-
-Se aparecer um erro como `SyntaxError: Unexpected token '*'`, normalmente o editor recebeu um trecho copiado com comentário quebrado, Markdown ou alguma linha extra fora do código. Para evitar isso, o `Code.gs` deste repositório usa apenas comentários de linha (`//`) no cabeçalho e sintaxe compatível com Apps Script.
-
-Ao copiar para o Google Apps Script:
-
-1. Abra `apps_script/Code.gs` como arquivo bruto no editor/repositório.
-2. Copie **somente** o conteúdo do arquivo, começando em `// Code.gs`.
-3. No Google Apps Script, selecione tudo no arquivo `Código.gs`, apague e cole o conteúdo novo.
-4. Confirme que não ficaram linhas com ``` ou textos de Markdown antes/depois do código.
-5. Salve e faça uma nova implantação do Web App.
 
 ## Observações importantes
 
