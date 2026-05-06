@@ -388,7 +388,7 @@ button {
 }
 
 .preview-spotify {
-  background: rgba(29, 185, 84, 0.8);
+  background: rgba(15, 60, 30, 0.85);
 }
 
 .service-symbol {
@@ -695,7 +695,7 @@ button {
 }
 
 .subscription-card.service-spotify {
-  background: rgba(29, 185, 84, 0.85);
+  background: rgba(15, 60, 30, 0.85);
 }
 
 .subscription-card.service-spotify::before {
@@ -798,7 +798,7 @@ button {
   color: white;
 }
 .details-panel.details-spotify {
-  background: rgba(29, 185, 84, 0.8);
+  background: rgba(15, 60, 30, 0.85);
 }
 .details-panel.details-max .details-header h2,
 .details-panel.details-spotify .details-header h2,
