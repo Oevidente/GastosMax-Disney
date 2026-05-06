@@ -87,7 +87,7 @@ const STORAGE_KEYS = {
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbz-KQhp22IdLWLF8L9nyuWIn4BC2HaWBYPYewQRbwz_8LX7NZDERSFjZjga5mDlIG-S/exec';
+  'https://script.google.com/macros/s/AKfycbylfbmYrX0c_QYfHmptdFrHOzUIGoIsndUzCSoYv4ackPUiV6eRC-o3ZQulXbHBuS7l/exec';
 
 const state = {
   currentPersonKey: null,
