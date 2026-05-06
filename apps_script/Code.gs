@@ -1,19 +1,55 @@
 /**
  * Code.gs
- * Apps Script para sincronizar pagamentos pagos no Google Sheets.
+ * Apps Script para sincronizar o status de pagamentos no Google Sheets.
  *
- * Banco simplificado:
- * - Cada linha representa somente um pagamento marcado como pago.
- * - Se a linha existe, o pagamento está pago.
- * - Se a linha não existe, o pagamento está pendente.
+ * Modelo atual da aba Logs:
+ * nome | assinatura | mes | pago
  *
- * Colunas da aba Logs:
- * personKey | paymentKey | paidAt
+ * - nome: nome da pessoa exibido no site.
+ * - assinatura: serviço pago (Disney+ ou HBO Max).
+ * - mes: data da mensalidade/parcela no formato YYYY-MM-DD.
+ * - pago: TRUE quando está pago, FALSE quando está pendente.
+ *
+ * O script também aceita os campos legados personKey/paymentKey para facilitar
+ * a transição do site antigo e sempre devolve o formato usado pelo frontend:
+ * { [personKey]: { [serviceKey:YYYY-MM-DD]: "true" } }
  */
 
 const SPREADSHEET_ID = '1FTSntPaY0ZSNAHdpKFaYpx9B2378jylDmvkhL1Gw-yY';
 const SHEET_NAME = 'Logs';
-const HEADERS = ['personKey', 'paymentKey', 'paidAt'];
+const HEADERS = ['nome', 'assinatura', 'mes', 'pago'];
+
+const PEOPLE_BY_KEY = {
+  andre: 'André Luiz',
+  isabela: 'Bela Lustosa',
+  ianka: 'Ianka Lacerda',
+  sarha: 'Sarha Pedrosa',
+};
+
+const PERSON_KEYS_BY_NAME = {
+  'andre luiz': 'andre',
+  'andré luiz': 'andre',
+  andre: 'andre',
+  'bela lustosa': 'isabela',
+  isabela: 'isabela',
+  'ianka lacerda': 'ianka',
+  ianka: 'ianka',
+  'sarha pedrosa': 'sarha',
+  sarha: 'sarha',
+};
+
+const SERVICES_BY_KEY = {
+  disney: 'Disney+',
+  max: 'HBO Max',
+};
+
+const SERVICE_KEYS_BY_NAME = {
+  disney: 'disney',
+  'disney+': 'disney',
+  'hbo': 'max',
+  max: 'max',
+  'hbo max': 'max',
+};
 
 function doPost(e) {
   try {
@@ -21,10 +57,10 @@ function doPost(e) {
     var removeFlag = payload.remove === true || payload.remove === 'true';
 
     if (removeFlag) {
-      return handleRemove(payload);
+      return handleSetPaidStatus(payload, false);
     }
 
-    return handleAddOrUpdate(payload);
+    return handleSetPaidStatus(payload, true);
   } catch (err) {
     return jsonResponse({ success: false, error: err.toString() });
   }
@@ -38,16 +74,23 @@ function doGet(e) {
       return jsonResponse({ success: true, sheetName: SHEET_NAME, headers: HEADERS });
     }
 
+    if (action === 'rows') {
+      return jsonResponse(readPaymentRows());
+    }
+
     return jsonResponse(readPaidLogs());
   } catch (err) {
     return jsonResponse({ success: false, error: err.toString() });
   }
 }
 
-function handleAddOrUpdate(data) {
-  var normalized = normalizePaymentData(data);
-  if (!normalized.personKey || !normalized.paymentKey) {
-    return jsonResponse({ success: false, error: 'personKey or paymentKey missing' });
+function handleSetPaidStatus(data, paidStatus) {
+  var normalized = normalizePaymentData(data, paidStatus);
+  if (!normalized.personKey || !normalized.serviceKey || !normalized.monthDate) {
+    return jsonResponse({
+      success: false,
+      error: 'nome/personKey, assinatura/serviceKey or mes missing',
+    });
   }
 
   var lock = LockService.getScriptLock();
@@ -60,16 +103,30 @@ function handleAddOrUpdate(data) {
     var updated = false;
 
     for (var i = 0; i < values.length; i++) {
-      var row = values[i];
-      if (String(row[0]) === normalized.personKey && String(row[1]) === normalized.paymentKey) {
-        sheet.getRange(dataStartRow + i, 3).setValue(normalized.paidAt);
+      var rowPayment = normalizeRow(values[i]);
+      if (
+        rowPayment.personKey === normalized.personKey &&
+        rowPayment.serviceKey === normalized.serviceKey &&
+        rowPayment.monthDate === normalized.monthDate
+      ) {
+        sheet.getRange(dataStartRow + i, 1, 1, HEADERS.length).setValues([[
+          normalized.nome,
+          normalized.assinatura,
+          normalized.monthDate,
+          normalized.pago,
+        ]]);
         updated = true;
         break;
       }
     }
 
     if (!updated) {
-      sheet.appendRow([normalized.personKey, normalized.paymentKey, normalized.paidAt]);
+      sheet.appendRow([
+        normalized.nome,
+        normalized.assinatura,
+        normalized.monthDate,
+        normalized.pago,
+      ]);
     }
 
     return jsonResponse({
@@ -82,71 +139,154 @@ function handleAddOrUpdate(data) {
   }
 }
 
-function handleRemove(data) {
-  var normalized = normalizePaymentData(data);
-  if (!normalized.personKey || !normalized.paymentKey) {
-    return jsonResponse({ success: false, error: 'personKey or paymentKey missing' });
-  }
-
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-
-  try {
-    var sheet = getLogsSheet();
-    var dataStartRow = ensureHeader(sheet) + 1;
-    var values = getDataRows(sheet, dataStartRow);
-    var deleted = 0;
-
-    for (var i = values.length - 1; i >= 0; i--) {
-      var row = values[i];
-      if (String(row[0]) === normalized.personKey && String(row[1]) === normalized.paymentKey) {
-        sheet.deleteRow(dataStartRow + i);
-        deleted++;
-      }
-    }
-
-    return jsonResponse({ success: true, action: 'removed', deleted: deleted });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
 function readPaidLogs() {
-  var sheet = getLogsSheet();
-  var dataStartRow = ensureHeader(sheet) + 1;
-  var values = getDataRows(sheet, dataStartRow);
+  var rows = readPaymentRows();
   var logs = {};
 
-  for (var i = 0; i < values.length; i++) {
-    var row = values[i];
-    var personKey = String(row[0] || '').trim();
-    var paymentKey = String(row[1] || '').trim();
-    var paidAt = serializePaidAt(row[2]);
-
-    if (!personKey || !paymentKey) {
+  for (var i = 0; i < rows.length; i++) {
+    var payment = rows[i];
+    if (!payment.pago) {
       continue;
     }
 
-    if (!logs[personKey]) {
-      logs[personKey] = {};
-    }
-
-    logs[personKey][paymentKey] = paidAt || new Date().toISOString();
+    logs[payment.personKey] = logs[payment.personKey] || {};
+    logs[payment.personKey][payment.paymentKey] = 'true';
   }
 
   return logs;
 }
 
-function serializePaidAt(value) {
+function readPaymentRows() {
+  var sheet = getLogsSheet();
+  var dataStartRow = ensureHeader(sheet) + 1;
+  var values = getDataRows(sheet, dataStartRow);
+  var rows = [];
+
+  for (var i = 0; i < values.length; i++) {
+    var payment = normalizeRow(values[i]);
+    if (!payment.personKey || !payment.serviceKey || !payment.monthDate) {
+      continue;
+    }
+
+    rows.push(payment);
+  }
+
+  return rows;
+}
+
+function normalizePaymentData(data, paidStatus) {
+  data = data || {};
+
+  var paymentKeyParts = parsePaymentKey(data.paymentKey);
+  var personKey = normalizePersonKey(data.personKey) || normalizePersonKey(data.nome);
+  var serviceKey = normalizeServiceKey(data.serviceKey) || normalizeServiceKey(data.assinatura) || paymentKeyParts.serviceKey;
+  var monthDate = normalizeMonthDate(data.mes || data.month || data.monthDate || paymentKeyParts.monthDate);
+
+  return {
+    personKey: personKey,
+    paymentKey: serviceKey && monthDate ? serviceKey + ':' + monthDate : '',
+    nome: normalizePersonName(personKey, data.nome),
+    serviceKey: serviceKey,
+    assinatura: normalizeServiceName(serviceKey, data.assinatura),
+    monthDate: monthDate,
+    mes: monthDate,
+    pago: paidStatus === undefined ? normalizeBoolean(data.pago) : paidStatus,
+  };
+}
+
+function normalizeRow(row) {
+  var nome = String(row[0] || '').trim();
+  var assinatura = String(row[1] || '').trim();
+  var legacyPaymentKey = parsePaymentKey(row[1]);
+  var personKey = normalizePersonKey(nome);
+  var serviceKey = normalizeServiceKey(assinatura) || legacyPaymentKey.serviceKey;
+  var monthDate = legacyPaymentKey.monthDate || normalizeMonthDate(row[2]);
+  var legacyPaidRow = legacyPaymentKey.serviceKey && legacyPaymentKey.monthDate && row[3] === '';
+
+  return {
+    personKey: personKey,
+    paymentKey: serviceKey && monthDate ? serviceKey + ':' + monthDate : '',
+    nome: normalizePersonName(personKey, nome),
+    serviceKey: serviceKey,
+    assinatura: normalizeServiceName(serviceKey, assinatura),
+    monthDate: monthDate,
+    mes: monthDate,
+    pago: legacyPaidRow ? true : normalizeBoolean(row[3]),
+  };
+}
+
+function parsePaymentKey(paymentKey) {
+  var parts = String(paymentKey || '').split(':');
+  if (parts.length < 2) {
+    return { serviceKey: '', monthDate: '' };
+  }
+
+  return {
+    serviceKey: normalizeServiceKey(parts[0]),
+    monthDate: normalizeMonthDate(parts.slice(1).join(':')),
+  };
+}
+
+function normalizePersonKey(value) {
+  var normalized = normalizeText(value);
+  return PERSON_KEYS_BY_NAME[normalized] || '';
+}
+
+function normalizePersonName(personKey, fallback) {
+  return PEOPLE_BY_KEY[personKey] || String(fallback || '').trim();
+}
+
+function normalizeServiceKey(value) {
+  var normalized = normalizeText(value);
+  return SERVICE_KEYS_BY_NAME[normalized] || '';
+}
+
+function normalizeServiceName(serviceKey, fallback) {
+  return SERVICES_BY_KEY[serviceKey] || String(fallback || '').trim();
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function normalizeMonthDate(value) {
   if (!value) {
     return '';
   }
 
   if (Object.prototype.toString.call(value) === '[object Date]') {
-    return value.toISOString();
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   }
 
-  return String(value).trim();
+  var text = String(value).trim();
+  var isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return isoMatch[1] + '-' + isoMatch[2] + '-' + isoMatch[3];
+  }
+
+  var brMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (brMatch) {
+    return brMatch[3] + '-' + pad2(brMatch[2]) + '-' + pad2(brMatch[1]);
+  }
+
+  return text;
+}
+
+function normalizeBoolean(value) {
+  if (value === true) {
+    return true;
+  }
+
+  var text = normalizeText(value);
+  return text === 'true' || text === 'sim' || text === '1' || text === 'pago';
+}
+
+function pad2(value) {
+  return String(value).padStart(2, '0');
 }
 
 function parsePayload(e) {
@@ -163,16 +303,6 @@ function parsePayload(e) {
   return e && e.parameter ? e.parameter : {};
 }
 
-function normalizePaymentData(data) {
-  data = data || {};
-
-  return {
-    personKey: String(data.personKey || '').trim(),
-    paymentKey: String(data.paymentKey || '').trim(),
-    paidAt: String(data.paidAt || data.timestamp || new Date().toISOString()).trim(),
-  };
-}
-
 function getLogsSheet() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   return ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
@@ -186,7 +316,7 @@ function ensureHeader(sheet) {
 
   var firstRow = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
   var hasHeader = HEADERS.every(function (header, index) {
-    return String(firstRow[index] || '').trim() === header;
+    return String(firstRow[index] || '').trim().toLowerCase() === header;
   });
 
   if (!hasHeader) {

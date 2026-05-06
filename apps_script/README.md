@@ -1,79 +1,102 @@
 # Apps Script — Sincronização de status de pagamentos
 
-Este Web App é o "banco" da aplicação. Ele guarda apenas os pagamentos que foram marcados como pagos e devolve esses dados para o app sincronizar a tela.
+Este Web App é o "banco" da aplicação. Ele grava uma linha por pessoa + assinatura + mês de cobrança e devolve para o site apenas os pagamentos que estão marcados como pagos.
 
-## Modelo simplificado da planilha
+## Modelo da planilha
 
-Use uma aba chamada `Logs` com três colunas:
+Use uma aba chamada `Logs` com quatro colunas, exatamente nesta ordem:
 
-| personKey | paymentKey | paidAt |
-| --- | --- | --- |
-| andre | disney:2026-05-10 | 2026-05-06T12:00:00.000Z |
+| nome | assinatura | mes | pago |
+| --- | --- | --- | --- |
+| André Luiz | Disney+ | 2026-05-10 | TRUE |
+| Sarha Pedrosa | HBO Max | 2026-05-10 | FALSE |
 
-Regras:
+### Significado das colunas
 
-- **Linha existente = pagamento pago**.
-- **Linha inexistente = pagamento pendente**.
-- `personKey` identifica a pessoa.
-- `paymentKey` identifica a parcela no formato usado pelo app: `servico:AAAA-MM-DD`.
-- `paidAt` registra quando o pagamento foi marcado como pago.
+- `nome`: nome exibido no site. Ex.: `André Luiz`, `Bela Lustosa`, `Ianka Lacerda`, `Sarha Pedrosa`.
+- `assinatura`: assinatura paga. Use `Disney+` ou `HBO Max`.
+- `mes`: data da mensalidade/parcela que está sendo paga, não a data em que o botão foi clicado. O formato recomendado é `YYYY-MM-DD`, por exemplo `2026-05-10`.
+- `pago`: `TRUE` quando está pago e `FALSE` quando está pendente.
 
-Com esse modelo, não é necessário salvar status como `pago`/`pendente`, valor, mês, nome da pessoa ou nome do serviço na planilha. Essas informações já existem no `app.js`, e duplicar esses dados aumenta a chance de divergência.
+> Pode zerar a planilha se quiser. Ao publicar o novo `Code.gs`, o script recria o cabeçalho se a aba estiver vazia.
 
-## Instalação
+## Como o site conversa com o script
 
-1. Abra https://script.google.com e crie um novo projeto.
-2. Cole o conteúdo de `apps_script/Code.gs` no editor.
-3. Substitua `SPREADSHEET_ID` pelo ID da sua planilha, que é a parte do URL entre `/d/` e `/edit`.
-4. Ajuste `SHEET_NAME` se a aba tiver outro nome.
-5. Salve e vá em **Deploy** → **Nova implantação** → selecione **Aplicativo da Web**.
-6. Em **Executar como**, escolha sua conta.
-7. Em **Quem tem acesso**, selecione **Qualquer pessoa** ou **Qualquer pessoa, mesmo anônima**.
-8. Copie a URL que termina em `/exec` e cole como `API_URL` em `app.js`.
-9. Depois de qualquer alteração no Apps Script, crie uma **nova versão/implantação**. Só salvar o arquivo no editor não atualiza o Web App publicado.
+### Marcar como pago
 
-## Endpoints
+O site envia um `POST` com os dados novos e alguns campos legados para compatibilidade:
 
-### Listar pagamentos pagos
-
-```bash
-curl 'https://script.google.com/macros/s/SEU_ID/exec'
+```json
+{
+  "personKey": "andre",
+  "paymentKey": "disney:2026-05-10",
+  "nome": "André Luiz",
+  "serviceKey": "disney",
+  "assinatura": "Disney+",
+  "mes": "2026-05-10",
+  "pago": true
+}
 ```
 
-Resposta esperada:
+O script procura a combinação `nome + assinatura + mes`. Se já existir, atualiza `pago`; se não existir, adiciona uma linha.
+
+### Desmarcar como pago
+
+O site envia o mesmo conjunto de dados, mas com `pago: false` e `remove: true`:
+
+```json
+{
+  "personKey": "andre",
+  "paymentKey": "disney:2026-05-10",
+  "nome": "André Luiz",
+  "serviceKey": "disney",
+  "assinatura": "Disney+",
+  "mes": "2026-05-10",
+  "pago": false,
+  "remove": true
+}
+```
+
+Neste modelo novo, `remove: true` não precisa apagar a linha: ele marca `pago` como `FALSE`. Assim a planilha mantém o histórico de pendências e pagamentos.
+
+### Ler status pagos
+
+O `GET` padrão devolve o formato que o frontend já usa:
 
 ```json
 {
   "andre": {
-    "disney:2026-05-10": "2026-05-06T12:00:00.000Z"
+    "disney:2026-05-10": "true"
   }
 }
 ```
 
-### Marcar como pago
+Somente linhas com `pago` verdadeiro aparecem nessa resposta. Linhas `FALSE` continuam na planilha, mas são consideradas pendentes no site.
 
-```bash
-curl -X POST -H "Content-Type: text/plain;charset=utf-8" \
-  -d '{"personKey":"andre","paymentKey":"disney:2026-05-10","paidAt":"2026-05-06T12:00:00.000Z"}' \
-  'https://script.google.com/macros/s/SEU_ID/exec'
+### Ver linhas brutas
+
+Para depurar a planilha, acesse a URL publicada com `?action=rows`. A resposta traz as linhas normalizadas, incluindo `pago: false`.
+
+### Health check
+
+Para conferir se a publicação está apontando para o código novo, acesse a URL publicada com `?action=health`. A resposta esperada inclui:
+
+```json
+{
+  "success": true,
+  "sheetName": "Logs",
+  "headers": ["nome", "assinatura", "mes", "pago"]
+}
 ```
 
-### Desmarcar pagamento
+## Passos para atualizar no Google Apps Script
 
-```bash
-curl -X POST -H "Content-Type: text/plain;charset=utf-8" \
-  -d '{"personKey":"andre","paymentKey":"disney:2026-05-10","remove":true}' \
-  'https://script.google.com/macros/s/SEU_ID/exec'
-```
+1. Copie o conteúdo de `apps_script/Code.gs` para o arquivo `Código.gs` do Google Apps Script.
+2. Salve o projeto.
+3. Publique uma nova versão do Web App em **Deploy > Manage deployments > Edit > New version**.
+4. Confirme que o acesso continua como **Anyone** / **Qualquer pessoa** se o site público precisar consultar os dados.
+5. Abra a URL `/exec?action=health` e confirme que os cabeçalhos são `nome`, `assinatura`, `mes`, `pago`.
 
-### Diagnóstico rápido
+## Observação sobre a lógica
 
-```bash
-curl 'https://script.google.com/macros/s/SEU_ID/exec?action=health'
-```
-
-## Observações importantes
-
-- O `doGet` precisa devolver o objeto de pagamentos. Se ele devolver somente `{ "ok": true }`, o app não consegue sincronizar status.
-- O app usa `POST` com `no-cors`; por isso, ele atualiza a tela de forma otimista e confirma os dados na próxima leitura via `GET`.
-- Faça backup da planilha antes de trocar o script em produção.
+Sua ideia de gravar `nome`, `assinatura`, `mes` e `pago` é melhor do que guardar apenas `personKey`, `paymentKey` e a data atual do clique, porque a planilha fica legível e o mês pago fica explícito. O ponto importante é tratar `nome + assinatura + mes` como uma chave única: sem isso, a mesma parcela poderia aparecer duplicada. O `Code.gs` faz essa busca antes de atualizar ou adicionar linhas.
