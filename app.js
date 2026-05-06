@@ -1267,6 +1267,38 @@ function savePaidLogs(logs) {
   writeJson(STORAGE_KEYS.paid, logs);
 }
 
+function isValidPaidLogsResponse(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+  if (data.success === false || data.ok === true || data.action) return false;
+
+  return Object.values(data).every((personLogs) => {
+    if (!personLogs || typeof personLogs !== 'object' || Array.isArray(personLogs)) {
+      return false;
+    }
+
+    return Object.values(personLogs).every((paidAt) => typeof paidAt === 'string');
+  });
+}
+
+function normalizePaidLogs(data) {
+  return Object.entries(data).reduce((logs, [personKey, personLogs]) => {
+    const normalizedPersonKey = String(personKey || '').trim();
+    if (!normalizedPersonKey || !personLogs || typeof personLogs !== 'object') {
+      return logs;
+    }
+
+    Object.entries(personLogs).forEach(([paymentKey, paidAt]) => {
+      const normalizedPaymentKey = String(paymentKey || '').trim();
+      if (!normalizedPaymentKey) return;
+
+      logs[normalizedPersonKey] = logs[normalizedPersonKey] ?? {};
+      logs[normalizedPersonKey][normalizedPaymentKey] = String(paidAt || new Date().toISOString());
+    });
+
+    return logs;
+  }, {});
+}
+
 async function fetchPaidLogs(retryCount = 0) {
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     paidLogsCache = getPaidLogs();
@@ -1301,16 +1333,18 @@ async function fetchPaidLogs(retryCount = 0) {
       throw new Error('JSON_ERROR');
     }
 
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      paidLogsCache = data;
-      savePaidLogs(paidLogsCache);
-      
-      // SE mudou algo, atualizamos a interface
-      if (state.currentPersonKey) {
-        refreshCurrentDates();
-        renderSubscriptionCards(state.currentPersonKey);
-        if (state.selectedServiceKey) renderDetails();
-      }
+    if (!isValidPaidLogsResponse(data)) {
+      throw new Error(data?.error || 'INVALID_SYNC_RESPONSE');
+    }
+
+    paidLogsCache = normalizePaidLogs(data);
+    savePaidLogs(paidLogsCache);
+    
+    // SE mudou algo, atualizamos a interface
+    if (state.currentPersonKey) {
+      refreshCurrentDates();
+      renderSubscriptionCards(state.currentPersonKey);
+      if (state.selectedServiceKey) renderDetails();
     }
   } catch (error) {
     console.warn(`Tentativa ${retryCount + 1} falhou:`, error);
@@ -1356,7 +1390,7 @@ async function markPaymentAsPaid(personKey, payment) {
       headers: {
         'Content-Type': 'text/plain;charset=utf-8',
       },
-      body: JSON.stringify({ personKey, paymentKey, timestamp }),
+      body: JSON.stringify({ personKey, paymentKey, paidAt: timestamp }),
     });
     
     setNotificationStatus('Parcela marcada como paga e salva.');
