@@ -373,28 +373,40 @@ async function openDashboard(personKey) {
   changeProfileButton.classList.remove('is-hidden');
   detailsPanel.classList.add('is-hidden');
 
-  // Inicializa com dados locais e dispara busca no servidor
+  // Inicializa com dados locais IMEDIATAMENTE
+  paidLogsCache = getPaidLogs();
   renderSubscriptionCards(personKey);
   updateNotificationButton();
   updateNotificationStatus();
   
-  try {
-    const isSyncingManual = syncSheetsButton.classList.contains('is-syncing');
-    if (!isSyncingManual) {
-      setNotificationStatus('Sincronizando com o servidor...');
+  // Tenta sincronizar "no fundo"
+  void (async () => {
+    try {
+      const isSyncingManual = syncSheetsButton.classList.contains('is-syncing');
+      if (!isSyncingManual) {
+        setNotificationStatus('Sincronizando...');
+      }
+      
+      await fetchPaidLogs();
+      
+      // Força a atualização da tela após o download bem-sucedido
+      renderSubscriptionCards(personKey);
+      if (state.selectedServiceKey) {
+        renderDetails();
+      }
+      
+      if (!isSyncingManual) {
+        setNotificationStatus('');
+      }
+    } catch (error) {
+      console.error('Sincronização em segundo plano falhou:', error);
+      // Não mostramos erro gritante aqui para não atrapalhar o uso dos dados locais
+      if (notificationStatus && notificationStatus.textContent === 'Sincronizando...') {
+        setNotificationStatus('Modo offline (dados locais)');
+      }
     }
-    
-    await fetchPaidLogs();
-    
-    if (!isSyncingManual) {
-      setNotificationStatus('');
-    }
-  } catch (error) {
-    console.error('Falha ao sincronizar dados iniciais:', error);
-    setNotificationStatus(error.message || 'Conexão limitada. Usando dados locais.', true);
-  }
+  })();
 
-  renderSubscriptionCards(personKey); 
   startSessionLoops();
   void checkPaymentReminders();
 }
@@ -1264,56 +1276,57 @@ async function fetchPaidLogs(retryCount = 0) {
   const MAX_RETRIES = 2;
 
   try {
-    // Para GET no Google Script, precisamos seguir redirecionamentos e usar CORS.
-    const response = await fetch(API_URL, {
+    // Adicionamos um timestamp (t=) para evitar que o navegador use um erro 404 cacheado
+    const urlWithCacheBuster = `${API_URL}${API_URL.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    
+    const response = await fetch(urlWithCacheBuster, {
       method: 'GET',
       mode: 'cors',
-      redirect: 'follow'
+      redirect: 'follow',
+      cache: 'no-store' // Força o navegador a não guardar o resultado dessa requisição
     });
     
-    if (!response.ok) throw new Error(`Erro no servidor Google (${response.status})`);
+    if (!response.ok) throw new Error(`Erro ${response.status}`);
     
     const textData = (await response.text()).trim();
-    if (!textData) throw new Error('O banco de dados retornou uma resposta vazia.');
+    if (!textData) throw new Error('Vazio');
 
     let data;
     try {
       data = JSON.parse(textData);
     } catch (e) {
       if (textData.includes('<html') || textData.includes('<!DOCTYPE')) {
-        throw new Error('O Google retornou uma página HTML. Verifique se o Script foi publicado como "Qualquer pessoa" (Anyone).');
+        throw new Error('HTML_ERROR');
       }
-      throw new Error('Formato de dados inválido vindo do Google.');
+      throw new Error('JSON_ERROR');
     }
 
     if (data && typeof data === 'object' && !Array.isArray(data)) {
       paidLogsCache = data;
       savePaidLogs(paidLogsCache);
       
+      // SE mudou algo, atualizamos a interface
       if (state.currentPersonKey) {
         refreshCurrentDates();
+        renderSubscriptionCards(state.currentPersonKey);
+        if (state.selectedServiceKey) renderDetails();
       }
-    } else {
-      throw new Error('Os dados recebidos estão em um formato desconhecido.');
     }
   } catch (error) {
-    console.warn(`Tentativa de sincronização ${retryCount + 1} falhou:`, error);
+    console.warn(`Tentativa ${retryCount + 1} falhou:`, error);
     
     if (retryCount < MAX_RETRIES) {
-      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       return fetchPaidLogs(retryCount + 1);
     }
 
-    // Se falhou definitivamente, usamos o que temos no localStorage
     paidLogsCache = getPaidLogs();
-    console.error('Falha na sincronização:', error);
     
-    // Tratamento de mensagens para o usuário
-    let userMessage = 'Erro de conexão com o banco de dados. Usando dados locais.';
-    if (error.message.includes('html') || error.message.includes('HTML')) {
-      userMessage = 'Erro no Script do Google (retornou HTML). Verifique as permissões.';
+    let userMessage = 'Erro de sincronização. Usando dados locais.';
+    if (error.message === 'HTML_ERROR') {
+      userMessage = 'O Google Script não está configurado corretamente (retornou página em vez de dados).';
     } else if (error.message.includes('fetch') || error.message.includes('Network')) {
-      userMessage = 'Acesso bloqueado pelo navegador. Tente desativar bloqueadores de anúncios ou use o Chrome/Edge.';
+      userMessage = 'Conexão bloqueada. Verifique se há bloqueadores de anúncios ativos.';
     }
     
     throw new Error(userMessage);
