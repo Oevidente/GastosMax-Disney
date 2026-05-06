@@ -358,10 +358,10 @@ button {
 
 .service-preview {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   order: 3;
 }
 
@@ -385,6 +385,10 @@ button {
 
 .preview-max {
   background: rgba(0, 0, 0, 0.8);
+}
+
+.preview-spotify {
+  background: rgba(29, 185, 84, 0.8);
 }
 
 .service-symbol {
@@ -690,6 +694,25 @@ button {
   pointer-events: none;
 }
 
+.subscription-card.service-spotify {
+  background: rgba(29, 185, 84, 0.85);
+}
+
+.subscription-card.service-spotify::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 120px;
+  height: 120px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23fff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.84.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-.96-.18-1.08-.659-.12-.48.18-.96.659-1.08 4.26-1.32 9.72-.66 13.32 1.56.42.24.54.84.302 1.259zm.12-3.36C15.24 8.28 8.82 8.04 5.16 9.18c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.539.3.719 1.02.419 1.56-.239.54-.959.72-1.559.42z"/></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.11;
+  pointer-events: none;
+}
+
 .subscription-top,
 .payment-line {
   display: flex;
@@ -770,12 +793,17 @@ button {
   color: white;
 }
 
-.details-panel.details-max {
+.details-panel.details-max, .details-panel.details-spotify {
   background: rgba(0, 0, 0, 0.8);
   color: white;
 }
+.details-panel.details-spotify {
+  background: rgba(29, 185, 84, 0.8);
+}
 .details-panel.details-max .details-header h2,
-.details-panel.details-max .eyebrow {
+.details-panel.details-spotify .details-header h2,
+.details-panel.details-max .eyebrow,
+.details-panel.details-spotify .eyebrow {
   color: white;
 }
 
@@ -810,7 +838,8 @@ button {
 }
 
 .details-panel.details-disney .icon-button,
-.details-panel.details-max .icon-button {
+.details-panel.details-max .icon-button,
+.details-panel.details-spotify .icon-button {
   background: rgba(255,255,255,0.1);
   color: white;
 }
@@ -834,7 +863,8 @@ button {
 }
 
 .details-panel.details-disney .tabs,
-.details-panel.details-max .tabs {
+.details-panel.details-max .tabs,
+.details-panel.details-spotify .tabs {
   background: rgba(255,255,255,0.1);
 }
 
@@ -848,7 +878,8 @@ button {
 }
 
 .details-panel.details-disney .tab-button,
-.details-panel.details-max .tab-button {
+.details-panel.details-max .tab-button,
+.details-panel.details-spotify .tab-button {
   color: rgba(255,255,255,0.6);
 }
 
@@ -859,7 +890,8 @@ button {
 }
 
 .details-panel.details-disney .tab-button.is-active,
-.details-panel.details-max .tab-button.is-active {
+.details-panel.details-max .tab-button.is-active,
+.details-panel.details-spotify .tab-button.is-active {
   background: rgba(255,255,255,0.2);
   color: white;
 }
@@ -903,7 +935,8 @@ button {
 }
 
 .details-panel.details-disney .year-controls strong,
-.details-panel.details-max .year-controls strong {
+.details-panel.details-max .year-controls strong,
+.details-panel.details-spotify .year-controls strong {
   background: rgba(255,255,255,0.1);
   border-color: rgba(255,255,255,0.2);
 }
@@ -947,13 +980,15 @@ button {
 }
 
 .details-panel.details-disney .payment-item,
-.details-panel.details-max .payment-item {
+.details-panel.details-max .payment-item,
+.details-panel.details-spotify .payment-item {
   background: rgba(255,255,255,0.05);
   border-color: rgba(255,255,255,0.1);
 }
 
 .details-panel.details-disney .payment-item:hover,
-.details-panel.details-max .payment-item:hover {
+.details-panel.details-max .payment-item:hover,
+.details-panel.details-spotify .payment-item:hover {
   background: rgba(255,255,255,0.1);
 }
 
@@ -967,8 +1002,10 @@ button {
 
 .details-panel.details-disney .payment-item strong,
 .details-panel.details-max .payment-item strong,
+.details-panel.details-spotify .payment-item strong,
 .details-panel.details-disney .empty-state strong,
-.details-panel.details-max .empty-state strong {
+.details-panel.details-max .empty-state strong,
+.details-panel.details-spotify .empty-state strong {
   color: white;
 }
 
@@ -983,8 +1020,10 @@ button {
 
 .details-panel.details-disney .payment-item span,
 .details-panel.details-max .payment-item span,
+.details-panel.details-spotify .payment-item span,
 .details-panel.details-disney .empty-state span,
-.details-panel.details-max .empty-state span {
+.details-panel.details-max .empty-state span,
+.details-panel.details-spotify .empty-state span {
   color: rgba(255,255,255,0.7);
 }
 
@@ -997,7 +1036,8 @@ button {
 }
 
 .details-panel.details-disney .amount,
-.details-panel.details-max .amount {
+.details-panel.details-max .amount,
+.details-panel.details-spotify .amount {
   color: white;
 }
 
@@ -1024,7 +1064,8 @@ button {
 }
 
 .details-panel.details-disney .table-responsive,
-.details-panel.details-max .table-responsive {
+.details-panel.details-max .table-responsive,
+.details-panel.details-spotify .table-responsive {
   background: rgba(255,255,255,0.02);
   border-color: rgba(255,255,255,0.1);
 }
@@ -1052,8 +1093,10 @@ button {
 
 .details-panel.details-disney .sheet-table th,
 .details-panel.details-max .sheet-table th,
+.details-panel.details-spotify .sheet-table th,
 .details-panel.details-disney .sheet-table td,
-.details-panel.details-max .sheet-table td {
+.details-panel.details-max .sheet-table td,
+.details-panel.details-spotify .sheet-table td {
   border-bottom-color: rgba(255, 255, 255, 0.05);
   border-right-color: rgba(255, 255, 255, 0.05);
 }
@@ -1069,7 +1112,8 @@ button {
 }
 
 .details-panel.details-disney .sheet-table th,
-.details-panel.details-max .sheet-table th {
+.details-panel.details-max .sheet-table th,
+.details-panel.details-spotify .sheet-table th {
   background: rgba(255,255,255,0.05);
   color: rgba(255,255,255,0.5);
   border-bottom-color: rgba(255,255,255,0.1);
@@ -1085,7 +1129,8 @@ button {
   background: var(--surface-hover);
 }
 .details-panel.details-disney .sheet-table tbody tr:hover,
-.details-panel.details-max .sheet-table tbody tr:hover {
+.details-panel.details-max .sheet-table tbody tr:hover,
+.details-panel.details-spotify .sheet-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -1135,7 +1180,8 @@ button {
   color: var(--danger);
 }
 .details-panel.details-disney .status-pill.status-passou,
-.details-panel.details-max .status-pill.status-passou {
+.details-panel.details-max .status-pill.status-passou,
+.details-panel.details-spotify .status-pill.status-passou {
   background: rgba(225, 29, 72, 0.2);
   color: #ffa4bc;
 }
@@ -1145,7 +1191,8 @@ button {
   color: var(--accent-strong);
 }
 .details-panel.details-disney .status-pill.status-pago,
-.details-panel.details-max .status-pill.status-pago {
+.details-panel.details-max .status-pill.status-pago,
+.details-panel.details-spotify .status-pill.status-pago {
   background: rgba(92, 198, 208, 0.2);
   color: #93e3ea;
 }
@@ -1155,7 +1202,8 @@ button {
   color: #2b6fbf;
 }
 .details-panel.details-disney .status-pill.status-futuro,
-.details-panel.details-max .status-pill.status-futuro {
+.details-panel.details-max .status-pill.status-futuro,
+.details-panel.details-spotify .status-pill.status-futuro {
   background: rgba(96, 165, 250, 0.2);
   color: #93c5fd;
 }
@@ -1293,7 +1341,8 @@ button {
   }
 
   .details-panel.details-disney .sheet-table tr,
-  .details-panel.details-max .sheet-table tr {
+  .details-panel.details-max .sheet-table tr,
+  .details-panel.details-spotify .sheet-table tr {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
   }
@@ -1311,7 +1360,8 @@ button {
   }
 
   .details-panel.details-disney .sheet-table td,
-  .details-panel.details-max .sheet-table td {
+  .details-panel.details-max .sheet-table td,
+  .details-panel.details-spotify .sheet-table td {
     border-bottom-color: rgba(255, 255, 255, 0.05);
   }
 
@@ -1335,7 +1385,8 @@ button {
   }
 
   .details-panel.details-disney .sheet-table td::before,
-  .details-panel.details-max .sheet-table td::before {
+  .details-panel.details-max .sheet-table td::before,
+  .details-panel.details-spotify .sheet-table td::before {
     color: rgba(255, 255, 255, 0.5);
   }
 }

@@ -1,20 +1,3 @@
-/**
- * Code.gs
- * Apps Script para sincronizar o status de pagamentos no Google Sheets.
- *
- * Modelo atual da aba Logs:
- * nome | assinatura | mes | pago
- *
- * - nome: nome da pessoa exibido no site.
- * - assinatura: serviço pago (Disney+ ou HBO Max).
- * - mes: data da mensalidade/parcela no formato YYYY-MM-DD.
- * - pago: TRUE quando está pago, FALSE quando está pendente.
- *
- * O script também aceita os campos legados personKey/paymentKey para facilitar
- * a transição do site antigo e sempre devolve o formato usado pelo frontend:
- * { [personKey]: { [serviceKey:YYYY-MM-DD]: "true" } }
- */
-
 const SPREADSHEET_ID = '1FTSntPaY0ZSNAHdpKFaYpx9B2378jylDmvkhL1Gw-yY';
 const SHEET_NAME = 'Logs';
 const HEADERS = ['nome', 'assinatura', 'mes', 'pago'];

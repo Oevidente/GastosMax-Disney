@@ -14,14 +14,14 @@ const PEOPLE = {
   andre: {
     name: 'André Luiz',
     aliases: ['andre', 'andré'],
-    subscriptions: ['disney', 'max'],
+    subscriptions: ['disney', 'max', 'spotify'],
     color: '#4f46e5',
     avatar: 'AL',
   },
   isabela: {
     name: 'Bela Lustosa',
     aliases: ['isabela'],
-    subscriptions: ['disney', 'max'],
+    subscriptions: ['disney', 'max', 'spotify'],
     color: '#ec4899',
     avatar: 'BL',
   },
@@ -60,6 +60,15 @@ const SERVICES = {
     amount: 22.45,
     participants: ['andre', 'isabela', 'ianka', 'sarha'],
   },
+  spotify: {
+    name: 'Spotify',
+    shortName: 'S',
+    cssClass: 'service-spotify',
+    model: 'monthly',
+    modelLabel: 'Todo mês',
+    amount: 15.95,
+    participants: ['andre', 'isabela'],
+  },
 };
 
 const MONTHS = [
@@ -87,7 +96,7 @@ const STORAGE_KEYS = {
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbylfbmYrX0c_QYfHmptdFrHOzUIGoIsndUzCSoYv4ackPUiV6eRC-o3ZQulXbHBuS7l/exec';
+  'https://script.google.com/macros/s/AKfycbywpqhAarWGZhehpjHZ6KfSqvtyU_aGeUVcE87gNhv4Cg0oJsqXN5KeTMbfIrsG7YZD/exec';
 
 const state = {
   currentPersonKey: null,
@@ -479,7 +488,7 @@ async function openServiceDetails(serviceKey) {
 
   detailsService.textContent = service.name;
   detailsTitle.textContent = `${person.name}, estes são os pagamentos dessa assinatura`;
-  detailsPanel.classList.remove('details-disney', 'details-max');
+  detailsPanel.className = 'details-panel is-hidden';
   detailsPanel.classList.add(`details-${serviceKey}`);
   detailsPanel.classList.remove('is-hidden');
   setActiveTab('upcoming');
