@@ -84,7 +84,8 @@ const STORAGE_KEYS = {
   paid: 'streaming-payments-paid-v1', // Revertido para v1 para tentar recuperar dados locais se ainda existirem
 };
 
-const API_URL = '/api/sync-paid';
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbz-KQhp22IdLWLF8L9nyuWIn4BC2HaWBYPYewQRbwz_8LX7NZDERSFjZjga5mDlIG-S/exec';
 
 const state = {
   currentPersonKey: null,
@@ -1263,30 +1264,29 @@ async function fetchPaidLogs(retryCount = 0) {
   const MAX_RETRIES = 2;
 
   try {
-    // FETCH SIMPLIFICADO: Deixamos o navegador decidir os melhores cabeçalhos e modo.
-    // Isso costuma ter melhor taxa de sucesso em navegadores com proteções estritas.
+    // Para GET no Google Script, precisamos seguir redirecionamentos e usar CORS.
     const response = await fetch(API_URL, {
       method: 'GET',
+      mode: 'cors',
       redirect: 'follow'
     });
     
-    if (!response.ok) throw new Error(`Erro de conexão (${response.status})`);
+    if (!response.ok) throw new Error(`Erro no servidor Google (${response.status})`);
     
     const textData = (await response.text()).trim();
-    if (!textData) throw new Error('O servidor retornou uma resposta vazia.');
+    if (!textData) throw new Error('O banco de dados retornou uma resposta vazia.');
 
     let data;
     try {
       data = JSON.parse(textData);
     } catch (e) {
       if (textData.includes('<html') || textData.includes('<!DOCTYPE')) {
-        throw new Error('O Google retornou uma página de erro (HTML). Verifique se o script está publicado como "Anyone".');
+        throw new Error('O Google retornou uma página HTML. Verifique se o Script foi publicado como "Qualquer pessoa" (Anyone).');
       }
-      throw new Error('Não foi possível ler os dados do banco (formato inválido).');
+      throw new Error('Formato de dados inválido vindo do Google.');
     }
 
     if (data && typeof data === 'object' && !Array.isArray(data)) {
-      // Sincronização bem-sucedida
       paidLogsCache = data;
       savePaidLogs(paidLogsCache);
       
@@ -1297,7 +1297,7 @@ async function fetchPaidLogs(retryCount = 0) {
       throw new Error('Os dados recebidos estão em um formato desconhecido.');
     }
   } catch (error) {
-    console.warn(`Tentativa ${retryCount + 1} falhou:`, error);
+    console.warn(`Tentativa de sincronização ${retryCount + 1} falhou:`, error);
     
     if (retryCount < MAX_RETRIES) {
       await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
@@ -1309,13 +1309,11 @@ async function fetchPaidLogs(retryCount = 0) {
     console.error('Falha na sincronização:', error);
     
     // Tratamento de mensagens para o usuário
-    let userMessage = 'Houve um erro ao sincronizar com o Google. Usando dados salvos no aparelho.';
+    let userMessage = 'Erro de conexão com o banco de dados. Usando dados locais.';
     if (error.message.includes('html') || error.message.includes('HTML')) {
-      userMessage = 'Erro no Script do Google: Ele não retornou dados. Verifique a URL e as permissões.';
-    } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-      userMessage = 'O navegador bloqueou a conexão com o Google. Tente o Chrome ou Edge.';
-    } else {
-      userMessage = error.message;
+      userMessage = 'Erro no Script do Google (retornou HTML). Verifique as permissões.';
+    } else if (error.message.includes('fetch') || error.message.includes('Network')) {
+      userMessage = 'Acesso bloqueado pelo navegador. Tente desativar bloqueadores de anúncios ou use o Chrome/Edge.';
     }
     
     throw new Error(userMessage);
@@ -1341,8 +1339,9 @@ async function markPaymentAsPaid(personKey, payment) {
     setNotificationStatus('Salvando no banco de dados...');
     await fetch(API_URL, {
       method: 'POST',
+      mode: 'no-cors',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain;charset=utf-8',
       },
       body: JSON.stringify({ personKey, paymentKey, timestamp }),
     });
@@ -1379,8 +1378,9 @@ async function unmarkPayment(personKey, payment) {
     setNotificationStatus('Removendo do banco de dados...');
     await fetch(API_URL, {
       method: 'POST',
+      mode: 'no-cors',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain;charset=utf-8',
       },
       body: JSON.stringify({ personKey, paymentKey, remove: true }),
     });
