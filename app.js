@@ -84,6 +84,8 @@ const STORAGE_KEYS = {
   paid: 'streaming-payments-paid-v1', // Revertido para v1 para tentar recuperar dados locais se ainda existirem
 };
 
+// Esta é a API publicada no Google Apps Script.
+// O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
   'https://script.google.com/macros/s/AKfycbz-KQhp22IdLWLF8L9nyuWIn4BC2HaWBYPYewQRbwz_8LX7NZDERSFjZjga5mDlIG-S/exec';
 
