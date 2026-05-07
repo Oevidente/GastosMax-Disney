@@ -26,17 +26,14 @@
       </div>
 
       <div class="top-actions">
-        <button class="ghost-button top-icon-button" id="themeButton" type="button" aria-pressed="false" aria-label="Alternar tema"></button>
-        <button class="ghost-button is-hidden" id="notificationButton" type="button">
+        <button class="ghost-button top-icon-button" id="tutorialButton" type="button" aria-label="Tutorial" title="Como usar">
+          <img src="icones/icons8-help-100.png" alt="" class="top-icon" />
+        </button>
+        <button class="ghost-button top-icon-button is-hidden" id="notificationButton" type="button">
           Ativar notificações
         </button>
         <button class="ghost-button top-icon-button is-hidden" id="changeProfileButton" type="button" aria-label="Trocar usuário" title="Trocar usuário">
-          <svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
+          <img src="icones/icons8-profile-100.png" alt="" class="top-icon" />
         </button>
       </div>
     </header>
@@ -93,9 +90,15 @@
             <p class="greeting-text">Olá, <strong id="personName"></strong></p>
             <h1>Suas próximas parcelas</h1>
           </div>
-          <div class="summary-pill">
-            <strong id="summaryCount">0</strong>
-            <span id="summaryLabel">assinaturas</span>
+          <div class="welcome-summary">
+            <div class="summary-pill">
+              <strong id="summaryCount">0</strong>
+              <span id="summaryLabel">assinaturas</span>
+            </div>
+            <div class="summary-pill id-total-pill">
+              <strong id="totalMonthAmount">R$ 0,00</strong>
+              <span>A pagar no mês</span>
+            </div>
           </div>
         </div>
 
@@ -104,43 +107,122 @@
         <div class="subscription-list" id="subscriptionList"></div>
 
         <section class="details-panel is-hidden" id="detailsPanel">
-          <div class="details-header">
-            <div>
-              <p class="eyebrow" id="detailsService"></p>
-              <h2 id="detailsTitle"></h2>
+          <div class="details-loading-state is-hidden" id="detailsLoadingState">
+            <div class="loader-spinner"></div>
+            <p>Carregando pagamentos...</p>
+          </div>
+
+          <div class="details-content" id="detailsContent">
+            <div class="details-header">
+              <div>
+                <p class="eyebrow" id="detailsService"></p>
+                <h2 id="detailsTitle"></h2>
+              </div>
+              <button class="icon-button" id="closeDetailsButton" type="button" aria-label="Fechar detalhes">
+                &times;
+              </button>
             </div>
-            <button class="icon-button" id="closeDetailsButton" type="button" aria-label="Fechar detalhes">
-              &times;
-            </button>
-          </div>
 
-          <div class="tabs" role="tablist" aria-label="Detalhes da assinatura">
-            <button class="tab-button is-active" id="upcomingTab" type="button" role="tab" aria-selected="true" aria-controls="upcomingPanel" data-panel="upcoming">
-              Meus próximos pagamentos
-            </button>
-            <button class="tab-button" id="fullTab" type="button" role="tab" aria-selected="false" aria-controls="fullPanel" data-panel="full">
-              Planilha completa
-            </button>
-          </div>
+            <div class="tabs" role="tablist" aria-label="Detalhes da assinatura">
+              <button class="tab-button is-active" id="upcomingTab" type="button" role="tab" aria-selected="true" aria-controls="upcomingPanel" data-panel="upcoming">
+                Meus próximos pagamentos
+              </button>
+              <button class="tab-button" id="fullTab" type="button" role="tab" aria-selected="false" aria-controls="fullPanel" data-panel="full">
+                Planilha completa
+              </button>
+            </div>
 
-          <div class="year-controls is-hidden" id="yearControls" aria-label="Ano da planilha">
-            <button class="ghost-button" id="previousYearButton" type="button">
-              Ano anterior
-            </button>
-            <strong id="selectedYearLabel">2026</strong>
-            <button class="ghost-button" id="nextYearButton" type="button">
-              Próximo ano
-            </button>
-            <button class="ghost-button" id="syncSheetsButton" type="button" title="Sincronizar com o Google Sheets">
-              <span class="sync-icon">↻</span> Sincronizar
-            </button>
-          </div>
+            <div class="year-controls is-hidden" id="yearControls" aria-label="Ano da planilha">
+              <button class="ghost-button top-icon-button" id="previousYearButton" type="button" aria-label="Ano anterior" title="Ano anterior">
+                <img src="icones/icons8-back-100.png" alt="" class="btn-icon" />
+              </button>
+              <strong id="selectedYearLabel">2026</strong>
+              <button class="ghost-button top-icon-button" id="nextYearButton" type="button" aria-label="Próximo ano" title="Próximo ano">
+                <img src="icones/icons8-forward-100.png" alt="" class="btn-icon" />
+              </button>
+              <button class="ghost-button" id="syncSheetsButton" type="button" title="Sincronizar com o Google Sheets">
+                <img src="icones/icons8-sync-100.png" alt="" class="sync-icon-img" /> Sincronizar
+              </button>
+            </div>
 
-          <div class="tab-panel" id="upcomingPanel" role="tabpanel" aria-labelledby="upcomingTab"></div>
-          <div class="tab-panel is-hidden" id="fullPanel" role="tabpanel" aria-labelledby="fullTab"></div>
+            <div class="tab-panel" id="upcomingPanel" role="tabpanel" aria-labelledby="upcomingTab"></div>
+            <div class="tab-panel is-hidden" id="fullPanel" role="tabpanel" aria-labelledby="fullTab"></div>
+          </div>
         </section>
       </section>
     </main>
+
+    <div class="modal-overlay is-hidden" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationModalTitle">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="notificationModalTitle">Ativar Notificações</h2>
+          <button class="icon-button" id="closeNotificationModal" type="button" aria-label="Fechar">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Receba lembretes sobre os pagamentos, datas de vencimento e atualizações das suas assinaturas compartilhadas.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="primary-button" id="allowNotificationsButton" type="button">Ativar notificações</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay is-hidden" id="tutorialModal" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
+      <div class="modal tutorial-modal">
+        <div class="modal-header">
+          <h2 id="tutorialModalTitle">Como usar o site</h2>
+          <button class="icon-button" id="closeTutorialModal" type="button" aria-label="Fechar">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body tutorial-body">
+          <div class="tutorial-item">
+            <div class="tutorial-icon-wrapper">
+              <img src="icones/icons8-profile-100.png" alt="" class="tutorial-icon" />
+            </div>
+            <div class="tutorial-text">
+              <strong>Trocar Usuário</strong>
+              <p>Volta para a tela inicial onde você pode selecionar qual perfil de usuário está acessando o site para ver as assinaturas dele.</p>
+            </div>
+          </div>
+          <div class="tutorial-item">
+            <div class="tutorial-icon-wrapper">
+               <span class="tutorial-button-example mark-example">
+                 <img src="icones/icons8-pay-100.png" alt="" />
+               </span>
+            </div>
+            <div class="tutorial-text">
+              <strong>Marcar como Pago</strong>
+              <p>Confirma que você realizou o pagamento desta parcela.</p>
+            </div>
+          </div>
+          <div class="tutorial-item">
+            <div class="tutorial-icon-wrapper">
+               <span class="tutorial-button-example unmark-example">
+                 <img src="icones/icons8-undo-pay-100.png" alt="" />
+               </span>
+            </div>
+            <div class="tutorial-text">
+              <strong>Desmarcar Pagamento</strong>
+              <p>Desfaz a marcação de pagamento na parcela correspondente.</p>
+            </div>
+          </div>
+          <div class="tutorial-item">
+            <div class="tutorial-icon-wrapper">
+               <span class="tutorial-button-example sync-example">
+                 <img src="icones/icons8-sync-100.png" alt="" class="tutorial-icon" style="filter: none" />
+               </span>
+            </div>
+            <div class="tutorial-text">
+              <strong>Sincronizar</strong>
+              <p>Busca e atualiza imediatamente os dados caso a planilha Google Sheets tenha sido alterada fora do site.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="app.js" defer></script>

@@ -14,7 +14,7 @@ const PEOPLE = {
   andre: {
     name: 'André Luiz',
     aliases: ['andre', 'andré'],
-    subscriptions: ['disney', 'max', 'spotify'],
+    subscriptions: ['disney', 'max', 'spotify', 'crunchyroll', 'prime_video', 'google_one', 'f1_tv_pro', 'globoplay'],
     color: '#4f46e5',
     avatar: 'AL',
   },
@@ -69,6 +69,51 @@ const SERVICES = {
     amount: 15.95,
     participants: ['andre', 'isabela'],
   },
+  crunchyroll: {
+    name: 'Crunchyroll',
+    shortName: 'CR',
+    cssClass: 'service-crunchyroll',
+    model: 'monthly',
+    modelLabel: 'Todo mês',
+    amount: 19.90,
+    participants: ['andre'],
+  },
+  prime_video: {
+    name: 'Prime Video',
+    shortName: 'PV',
+    cssClass: 'service-prime',
+    model: 'monthly',
+    modelLabel: 'Todo mês',
+    amount: 9.95,
+    participants: ['andre'],
+  },
+  google_one: {
+    name: 'Google One',
+    shortName: 'G1',
+    cssClass: 'service-google',
+    model: 'monthly',
+    modelLabel: 'Todo mês',
+    amount: 10.00,
+    participants: ['andre'],
+  },
+  f1_tv_pro: {
+    name: 'F1 TV Pro',
+    shortName: 'F1',
+    cssClass: 'service-f1',
+    model: 'monthly',
+    modelLabel: 'Todo mês',
+    amount: 29.00,
+    participants: ['andre'],
+  },
+  globoplay: {
+    name: 'Globoplay',
+    shortName: 'GP',
+    cssClass: 'service-globoplay',
+    model: 'monthly',
+    modelLabel: 'Todo mês',
+    amount: 20.00,
+    participants: ['andre'],
+  },
 };
 
 const MONTHS = [
@@ -96,7 +141,7 @@ const STORAGE_KEYS = {
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbywpqhAarWGZhehpjHZ6KfSqvtyU_aGeUVcE87gNhv4Cg0oJsqXN5KeTMbfIrsG7YZD/exec';
+  'https://script.google.com/macros/s/AKfycbzGXlEF0PCOS1KW2SlAWIrcgjg_9rjomXq55jAGEkWm9IRQeqHH130Vvi68OHs6pHOd/exec';
 
 const state = {
   currentPersonKey: null,
@@ -116,15 +161,17 @@ const profileGrid = document.querySelector('#profileGrid');
 const profileForm = document.querySelector('#profileForm');
 const profileNameInput = document.querySelector('#profileNameInput');
 const profileMessage = document.querySelector('#profileMessage');
-const themeButton = document.querySelector('#themeButton');
 const notificationButton = document.querySelector('#notificationButton');
 const notificationStatus = document.querySelector('#notificationStatus');
 const changeProfileButton = document.querySelector('#changeProfileButton');
 const personName = document.querySelector('#personName');
 const summaryCount = document.querySelector('#summaryCount');
 const summaryLabel = document.querySelector('#summaryLabel');
+const totalMonthAmount = document.querySelector('#totalMonthAmount');
 const subscriptionList = document.querySelector('#subscriptionList');
 const detailsPanel = document.querySelector('#detailsPanel');
+const detailsLoadingState = document.querySelector('#detailsLoadingState');
+const detailsContent = document.querySelector('#detailsContent');
 const detailsService = document.querySelector('#detailsService');
 const detailsTitle = document.querySelector('#detailsTitle');
 const upcomingPanel = document.querySelector('#upcomingPanel');
@@ -136,16 +183,31 @@ const previousYearButton = document.querySelector('#previousYearButton');
 const nextYearButton = document.querySelector('#nextYearButton');
 const selectedYearLabel = document.querySelector('#selectedYearLabel');
 const syncSheetsButton = document.querySelector('#syncSheetsButton');
+const notificationModal = document.querySelector('#notificationModal');
+const closeNotificationModal = document.querySelector('#closeNotificationModal');
+const allowNotificationsButton = document.querySelector('#allowNotificationsButton');
+const tutorialButton = document.querySelector('#tutorialButton');
+const tutorialModal = document.querySelector('#tutorialModal');
+const closeTutorialModal = document.querySelector('#closeTutorialModal');
 
 const moneyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 });
 
-initTheme();
 bindEvents();
 restoreProfile();
 renderProfileSelection();
+checkInitialNotificationPermission();
+
+function checkInitialNotificationPermission() {
+  const capability = getNotificationCapability();
+  if (!capability.available) return;
+
+  if (Notification.permission === 'default') {
+    notificationModal.classList.remove('is-hidden');
+  }
+}
 
 function bindEvents() {
   profileForm.addEventListener('submit', (event) => {
@@ -153,15 +215,52 @@ function bindEvents() {
     void handleProfileSubmit();
   });
 
-  themeButton.addEventListener('click', () => {
-    const nextTheme =
-      document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    applyTheme(nextTheme);
-    saveTheme(nextTheme);
+  notificationButton.addEventListener('click', () => {
+    const capability = getNotificationCapability();
+    if (capability.available && Notification.permission === 'default') {
+      notificationModal.classList.remove('is-hidden');
+    } else {
+      void requestNotificationAccess();
+    }
   });
 
-  notificationButton.addEventListener('click', () => {
-    void requestNotificationAccess();
+  closeNotificationModal.addEventListener('click', () => {
+    notificationModal.classList.add('is-hidden');
+  });
+
+  tutorialButton.addEventListener('click', () => {
+    tutorialModal.classList.remove('is-hidden');
+  });
+
+  closeTutorialModal.addEventListener('click', () => {
+    tutorialModal.classList.add('is-hidden');
+  });
+
+  tutorialModal.addEventListener('click', (event) => {
+    if (event.target === tutorialModal) {
+      tutorialModal.classList.add('is-hidden');
+    }
+  });
+
+  allowNotificationsButton.addEventListener('click', async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'default') {
+        notificationModal.classList.add('is-hidden');
+        updateNotificationButton();
+        if (state.currentPersonKey) {
+          updateNotificationStatus();
+        }
+        if (permission === 'granted') {
+          await registerServiceWorker();
+          if (state.currentPersonKey) {
+            await checkPaymentReminders();
+          }
+        }
+      }
+    } catch {
+      notificationModal.classList.add('is-hidden');
+    }
   });
 
   upcomingPanel.addEventListener('click', async (event) => {
@@ -195,9 +294,13 @@ function bindEvents() {
       const paid = isPaymentPaid(state.currentPersonKey, payment);
 
       if (paid) {
+        markButton.classList.add('pulse-success');
+        setTimeout(() => markButton.classList.remove('pulse-success'), 600);
         await unmarkPayment(state.currentPersonKey, payment);
         setNotificationStatus('Parcela desmarcada como paga.');
       } else {
+        markButton.classList.add('pulse-success');
+        setTimeout(() => markButton.classList.remove('pulse-success'), 600);
         await markPaymentAsPaid(state.currentPersonKey, payment);
         setNotificationStatus('Parcela marcada como paga.');
       }
@@ -225,9 +328,13 @@ function bindEvents() {
     const paid = isPaymentPaid(personKey, payment);
 
     if (paid) {
+      toggleButton.classList.add('pulse-success');
+      setTimeout(() => toggleButton.classList.remove('pulse-success'), 600);
       await unmarkPayment(personKey, payment);
       setNotificationStatus('Parcela desmarcada como paga.');
     } else {
+      toggleButton.classList.add('pulse-success');
+      setTimeout(() => toggleButton.classList.remove('pulse-success'), 600);
       await markPaymentAsPaid(personKey, payment);
       setNotificationStatus('Parcela marcada como paga.');
     }
@@ -285,15 +392,19 @@ function bindEvents() {
 
   window.addEventListener('focus', () => {
     refreshCurrentDates();
-    void fetchPaidLogs().catch(() => {});
-    void checkPaymentReminders();
+    void (async () => {
+      await fetchPaidLogs().catch(() => {});
+      void checkPaymentReminders();
+    })();
   });
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       refreshCurrentDates();
-      void fetchPaidLogs().catch(() => {});
-      void checkPaymentReminders();
+      void (async () => {
+        await fetchPaidLogs().catch(() => {});
+        void checkPaymentReminders();
+      })();
     }
   });
 }
@@ -359,6 +470,7 @@ function changeProfile() {
   state.selectedServiceKey = null;
   state.selectedYear = getToday().getFullYear();
   dashboard.classList.add('is-hidden');
+  subscriptionList.classList.remove('is-ready');
   detailsPanel.classList.add('is-hidden');
   notificationButton.classList.add('is-hidden');
   changeProfileButton.classList.add('is-hidden');
@@ -386,7 +498,15 @@ async function openDashboard(personKey) {
 
   // Inicializa com dados locais IMEDIATAMENTE
   paidLogsCache = getPaidLogs();
+  updateMonthlyTotal(personKey);
+  subscriptionList.classList.remove('is-ready');
   renderSubscriptionCards(personKey);
+  
+  // Marca como ready após o primeiro render para evitar redunância de animação no sync
+  setTimeout(() => {
+    subscriptionList.classList.add('is-ready');
+  }, 1000);
+
   updateNotificationButton();
   updateNotificationStatus();
   
@@ -415,11 +535,12 @@ async function openDashboard(personKey) {
       if (notificationStatus && notificationStatus.textContent === 'Sincronizando...') {
         setNotificationStatus('Modo offline (dados locais)');
       }
+    } finally {
+      void checkPaymentReminders();
     }
   })();
 
   startSessionLoops();
-  void checkPaymentReminders();
 }
 
 function renderSubscriptionCards(personKey) {
@@ -427,6 +548,11 @@ function renderSubscriptionCards(personKey) {
   const sortedServices = [...person.subscriptions].sort((a, b) =>
     SERVICES[a].name.localeCompare(SERVICES[b].name, 'pt-BR'),
   );
+
+  // Preserve detailsPanel if it has been moved inside subscriptionList
+  if (detailsPanel.parentElement === subscriptionList) {
+    subscriptionList.insertAdjacentElement('afterend', detailsPanel);
+  }
 
   subscriptionList.innerHTML = sortedServices
     .map((serviceKey) => createSubscriptionCard(serviceKey, personKey))
@@ -437,6 +563,37 @@ function renderSubscriptionCards(personKey) {
       void openServiceDetails(card.dataset.service);
     });
   });
+
+  if (state.selectedServiceKey) {
+    document.querySelectorAll('.subscription-card').forEach((card) => {
+      card.classList.toggle('is-selected', card.dataset.service === state.selectedServiceKey);
+    });
+    positionDetailsPanel();
+  }
+}
+
+function updateMonthlyTotal(personKey) {
+  if (!totalMonthAmount) return;
+
+  const today = getToday();
+  const currentMonthIndex = today.getMonth();
+  const currentYear = today.getFullYear();
+  const person = PEOPLE[personKey];
+  
+  if (!person) return;
+
+  let total = 0;
+  person.subscriptions.forEach((serviceKey) => {
+    if (personPaysInMonth(serviceKey, personKey, currentMonthIndex)) {
+      const date = createPaymentDate(currentYear, currentMonthIndex);
+      const paid = isPaymentPaid(personKey, { serviceKey, date });
+      if (!paid) {
+        total += SERVICES[serviceKey].amount;
+      }
+    }
+  });
+
+  totalMonthAmount.textContent = moneyFormatter.format(total);
 }
 
 function createSubscriptionCard(serviceKey, personKey) {
@@ -488,14 +645,32 @@ async function openServiceDetails(serviceKey) {
 
   detailsService.textContent = service.name;
   detailsTitle.textContent = `${person.name}, estes são os pagamentos dessa assinatura`;
+  
   detailsPanel.className = 'details-panel is-hidden';
   detailsPanel.classList.add(`details-${serviceKey}`);
   detailsPanel.classList.remove('is-hidden');
+  
+  // Exibir loading e esconder conteúdo
+  detailsContent.classList.add('is-hidden');
+  detailsLoadingState.classList.remove('is-hidden');
+  
+  positionDetailsPanel();
+  
   setActiveTab('upcoming');
 
-  await fetchPaidLogs();
-  renderDetails();
-  detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    await fetchPaidLogs();
+    renderDetails();
+  } finally {
+    // Esconder loading e mostrar conteúdo
+    detailsLoadingState.classList.add('is-hidden');
+    detailsContent.classList.remove('is-hidden');
+    
+    // Pequeno delay para garantir que o layout mobile se ajustou se o conteúdo for grande
+    setTimeout(() => {
+      detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
 }
 
 function renderDetails() {
@@ -543,11 +718,11 @@ function renderUpcomingPayments(serviceKey, personKey) {
           const paid = isPaymentPaid(personKey, payment);
           return `
             <li class="payment-item">
-              <span>
+              <span class="payment-info-group">
                 <strong>${capitalize(MONTHS[payment.date.getMonth()])}</strong>
                 <span>${formatLongDate(payment.date)}</span>
               </span>
-              <span>
+              <span class="payment-item-right">
                 <span class="amount">${moneyFormatter.format(payment.amount)}</span>
                 ${
                   paid
@@ -588,8 +763,8 @@ function renderMonthlySheet(serviceKey, year) {
         : false;
       const rowStatus = currentPersonPaid ? 'pago' : status;
       const statusClass =
-        rowStatus === 'passou'
-          ? ' status-passou'
+        rowStatus === 'atrasada'
+          ? ' status-atrasada'
           : rowStatus === 'pago'
             ? ' status-pago'
             : rowStatus === 'futuro'
@@ -646,8 +821,8 @@ function renderRotationSheet(serviceKey, year) {
       const paid = isPaymentPaid(payerKey, { serviceKey, date });
       const status = paid ? 'pago' : baseStatus;
       const statusClass =
-        status === 'passou'
-          ? ' status-passou'
+        status === 'atrasada'
+          ? ' status-atrasada'
           : status === 'pago'
             ? ' status-pago'
             : status === 'futuro'
@@ -851,7 +1026,7 @@ function getDateStatus(date) {
   const paymentDate = startOfDay(date);
 
   if (paymentDate < today) {
-    return 'passou';
+    return 'atrasada';
   }
 
   return paymentDate.getTime() === today.getTime() ? 'vence hoje' : 'futuro';
@@ -901,6 +1076,7 @@ function refreshCurrentDates() {
     return;
   }
 
+  updateMonthlyTotal(state.currentPersonKey);
   renderSubscriptionCards(state.currentPersonKey);
 
   if (state.selectedServiceKey) {
@@ -1001,25 +1177,25 @@ function updateNotificationButton() {
 function setNotificationButtonState(stateName) {
   const stateConfig = {
     unavailable: {
-      icon: `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>`,
+      icon: `<img src="icones/icons8-no-reminders-100.png" class="top-icon" alt="" />`,
       ariaLabel: 'Notificações indisponíveis neste dispositivo',
       title: 'Notificações indisponíveis',
       disabled: true,
     },
     enabled: {
-      icon: `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`,
+      icon: `<img src="icones/icons8-notification-100.png" class="top-icon" alt="" />`,
       ariaLabel: 'Notificações ativas',
       title: 'Notificações ativas',
       disabled: false,
     },
     blocked: {
-      icon: `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>`,
+      icon: `<img src="icones/icons8-no-reminders-100.png" class="top-icon" alt="" />`,
       ariaLabel: 'Notificações bloqueadas',
       title: 'Notificações bloqueadas',
       disabled: true,
     },
     prompt: {
-      icon: `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><circle cx="18" cy="6" r="3"></circle></svg>`,
+      icon: `<img src="icones/icons8-notification-100.png" class="top-icon" alt="" />`,
       ariaLabel: 'Ativar notificações',
       title: 'Ativar notificações',
       disabled: false,
@@ -1040,30 +1216,10 @@ function updateNotificationStatus() {
     return;
   }
 
-  const capability = getNotificationCapability();
-
-  if (!capability.available) {
-    setNotificationStatus(capability.message);
-    return;
-  }
-
-  if (Notification.permission === 'granted') {
-    setNotificationStatus(
-      'Notificações permitidas. Use o botão de teste em Meus próximos pagamentos para ver como elas aparecem.',
-    );
-    return;
-  }
-
-  if (Notification.permission === 'denied') {
-    setNotificationStatus(
-      'Notificações bloqueadas para este site. Libere nas configurações do navegador se quiser receber avisos.',
-    );
-    return;
-  }
-
-  setNotificationStatus(
-    'Ative as notificações para receber aviso quando uma parcela estiver perto do vencimento.',
-  );
+  // We intentionally leave the notification status empty by default.
+  // The notification icon in the topbar and the modal handle the UX.
+  // Status text should only be used for transient feedback (like 'Parcela paga').
+  setNotificationStatus('');
 }
 
 async function checkPaymentReminders() {
@@ -1079,25 +1235,84 @@ async function checkPaymentReminders() {
   reminderCheckInProgress = true;
 
   try {
+    await syncLogsFromSW();
     const personKey = state.currentPersonKey;
     const logs = getNotificationLogs();
     const personLog = logs[personKey] ?? {};
-    const reminders = getReminderCandidates(personKey).filter(
-      (payment) => !personLog[getPaymentNotificationKey(payment)],
+    const rawReminders = getReminderCandidates(personKey);
+    const remindersToProcess = rawReminders.filter(
+      (payment) => 
+        !personLog[getReminderNotificationKey(payment)] && 
+        !isPaymentPaid(personKey, payment)
     );
 
-    for (const payment of reminders) {
+    if (remindersToProcess.length === 0) {
+      void syncRemindersToSW();
+      return;
+    }
+
+    const groupedReminders = {};
+    for (const payment of remindersToProcess) {
+       const dateKey = formatDateKey(payment.date);
+       if (!groupedReminders[dateKey]) {
+          groupedReminders[dateKey] = {
+             payments: [],
+             daysUntil: payment.daysUntil,
+             date: payment.date
+          };
+       }
+       groupedReminders[dateKey].payments.push(payment);
+    }
+
+    for (const dateKey in groupedReminders) {
+      const group = groupedReminders[dateKey];
       try {
-        await showPaymentNotification(personKey, payment);
-        markPaymentAsNotified(personKey, payment);
+        await showGroupedPaymentNotification(personKey, group);
+        for (const payment of group.payments) {
+          markPaymentAsNotified(personKey, payment);
+        }
       } catch {
         setNotificationStatus(
           'Não foi possível exibir um lembrete agora. Use o botão de teste para diagnosticar.',
         );
       }
     }
+    
+    void syncRemindersToSW();
   } finally {
     reminderCheckInProgress = false;
+  }
+}
+
+async function syncRemindersToSW() {
+  if (!('caches' in window) || !state.currentPersonKey) return;
+  
+  const reminders = {
+    personKey: state.currentPersonKey,
+    personName: PEOPLE[state.currentPersonKey].name,
+    candidates: PEOPLE[state.currentPersonKey].subscriptions.flatMap((serviceKey) =>
+      getUpcomingPaymentsForPerson(serviceKey, state.currentPersonKey, 12).map((payment) => ({
+        serviceKey: payment.serviceKey,
+        serviceName: SERVICES[payment.serviceKey].name,
+        dateMs: payment.date.getTime(),
+        amount: payment.amount,
+        baseKey: getPaymentNotificationKey(payment),
+      }))
+    ),
+    logs: getNotificationLogs()[state.currentPersonKey] ?? {},
+    paidLogs: getPaidLogs()[state.currentPersonKey] ?? {},
+    settings: {
+      reminderDaysBefore: SETTINGS.reminderDaysBefore
+    }
+  };
+
+  try {
+    const cache = await caches.open('payment-reminders-data');
+    await cache.put('/reminders.json', new Response(JSON.stringify(reminders), {
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  } catch (err) {
+    // Ignorar falhas silenciosamente
   }
 }
 
@@ -1116,17 +1331,27 @@ function getReminderCandidates(personKey) {
   );
 }
 
-async function showPaymentNotification(personKey, payment) {
-  const service = SERVICES[payment.serviceKey];
-  const when =
-    payment.daysUntil === 0
-      ? 'vence hoje'
-      : `vence em ${payment.daysUntil} ${payment.daysUntil === 1 ? 'dia' : 'dias'}`;
-  const title = `${service.name}: pagamento ${when}`;
-  const body = `${PEOPLE[personKey].name}, ${formatLongDate(payment.date)} - ${moneyFormatter.format(payment.amount)}.`;
+async function showGroupedPaymentNotification(personKey, group) {
+  const serviceNames = group.payments.map(p => SERVICES[p.serviceKey].name).join(', ');
+  const whenPlural = group.daysUntil === 0 ? "vencem hoje" : `vencem em ${group.daysUntil} ${group.daysUntil === 1 ? 'dia' : 'dias'}`;
+  const whenSingular = group.daysUntil === 0 ? "vence hoje" : `vence em ${group.daysUntil} ${group.daysUntil === 1 ? 'dia' : 'dias'}`;
+
+  const title = group.payments.length === 1
+    ? `${serviceNames}: pagamento ${whenSingular}`
+    : `Assinaturas: pagamentos ${whenPlural}`;
+    
+  let body = '';
+  if (group.payments.length === 1) {
+    body = `${PEOPLE[personKey].name}, a sua assinatura ${serviceNames} ${whenSingular}. Clique para ver as assinaturas no site.`;
+  } else {
+    body = `${PEOPLE[personKey].name}, as suas assinaturas ${serviceNames} ${whenPlural}. Clique para ver as assinaturas no site.`;
+  }
+
+  const baseTag = `group-reminder:${personKey}:${formatDateKey(group.date)}:remind-${group.daysUntil}`;
+
   const options = {
     body,
-    tag: getPaymentNotificationKey(payment),
+    tag: baseTag,
     renotify: false,
   };
 
@@ -1200,7 +1425,22 @@ async function registerServiceWorker() {
   if (!serviceWorkerRegistrationPromise) {
     serviceWorkerRegistrationPromise = navigator.serviceWorker
       .register('./sw.js')
-      .then(() => navigator.serviceWorker.ready)
+      .then(async (reg) => {
+        await navigator.serviceWorker.ready;
+        if ('periodicSync' in reg) {
+          try {
+            const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+            if (status.state === 'granted') {
+              await reg.periodicSync.register('check-payments', {
+                minInterval: 12 * 60 * 60 * 1000,
+              });
+            }
+          } catch (err) {
+            // Permission not found or denied, ignore.
+          }
+        }
+        return reg;
+      })
       .catch(() => null);
   }
 
@@ -1253,9 +1493,13 @@ function markPaymentAsNotified(personKey, payment) {
   const logs = getNotificationLogs();
 
   logs[personKey] = logs[personKey] ?? {};
-  logs[personKey][getPaymentNotificationKey(payment)] =
+  logs[personKey][getReminderNotificationKey(payment)] =
     new Date().toISOString();
   saveNotificationLogs(logs);
+}
+
+function getReminderNotificationKey(payment) {
+  return `${payment.serviceKey}:${formatDateKey(payment.date)}:remind-${payment.daysUntil}`;
 }
 
 function getPaymentNotificationKey(payment) {
@@ -1279,7 +1523,28 @@ function getPaymentSyncPayload(personKey, payment, paid) {
 }
 
 function getNotificationLogs() {
-  return readJson(STORAGE_KEYS.notifications, {});
+  const localLogs = readJson(STORAGE_KEYS.notifications, {});
+  return localLogs;
+}
+
+// Background sync from SW cache
+async function syncLogsFromSW() {
+  if (!('caches' in window) || !state.currentPersonKey) return;
+  try {
+    const cache = await caches.open('payment-reminders-data');
+    const response = await cache.match('/reminders.json');
+    if (response) {
+      const data = await response.json();
+      if (data && data.logs) {
+        const localLogs = readJson(STORAGE_KEYS.notifications, {});
+        localLogs[state.currentPersonKey] = {
+          ...localLogs[state.currentPersonKey],
+          ...data.logs
+        };
+        saveNotificationLogs(localLogs);
+      }
+    }
+  } catch (err) {}
 }
 
 function saveNotificationLogs(logs) {
@@ -1372,6 +1637,7 @@ async function fetchPaidLogs(retryCount = 0) {
       refreshCurrentDates();
       renderSubscriptionCards(state.currentPersonKey);
       if (state.selectedServiceKey) renderDetails();
+      void syncRemindersToSW();
     }
   } catch (error) {
     console.warn(`Tentativa ${retryCount + 1} falhou:`, error);
@@ -1404,6 +1670,7 @@ async function markPaymentAsPaid(personKey, payment) {
   savePaidLogs(paidLogsCache);
   renderDetails();
   refreshCurrentDates();
+  void syncRemindersToSW();
 
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     return;
@@ -1443,6 +1710,7 @@ async function unmarkPayment(personKey, payment) {
   savePaidLogs(paidLogsCache);
   renderDetails();
   refreshCurrentDates();
+  void syncRemindersToSW();
   
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     return;
@@ -1591,46 +1859,19 @@ function getToday() {
   return new Date();
 }
 
-function initTheme() {
-  const storedTheme = getStoredTheme();
-  const prefersDark = window.matchMedia?.(
-    '(prefers-color-scheme: dark)',
-  ).matches;
-  applyTheme(storedTheme ?? (prefersDark ? 'dark' : 'light'));
-}
+function positionDetailsPanel() {
+  if (!state.selectedServiceKey) return;
+  const activeCard = Array.from(subscriptionList.querySelectorAll('.subscription-card')).find(c => c.dataset.service === state.selectedServiceKey);
 
-function updateThemeButton(theme) {
-  const isDarkTheme = theme === 'dark';
-  const icon = isDarkTheme
-    ? `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`
-    : `<svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-  const nextActionLabel = isDarkTheme
-    ? 'Ativar modo claro'
-    : 'Ativar modo escuro';
-
-  themeButton.innerHTML = icon;
-  themeButton.setAttribute('aria-label', nextActionLabel);
-  themeButton.setAttribute('aria-pressed', String(isDarkTheme));
-}
-
-function applyTheme(theme) {
-  const normalizedTheme = theme === 'dark' ? 'dark' : 'light';
-
-  document.documentElement.dataset.theme = normalizedTheme;
-  updateThemeButton(normalizedTheme);
-}
-
-function getStoredTheme() {
-  try {
-    return localStorage.getItem(STORAGE_KEYS.theme);
-  } catch {
-    return null;
+  if (activeCard) {
+    activeCard.insertAdjacentElement('afterend', detailsPanel);
+  } else {
+    subscriptionList.insertAdjacentElement('afterend', detailsPanel);
   }
 }
 
-function saveTheme(theme) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.theme, theme);
-  } catch {
+window.addEventListener('resize', () => {
+  if (!detailsPanel.classList.contains('is-hidden')) {
+    positionDetailsPanel();
   }
-}
+});

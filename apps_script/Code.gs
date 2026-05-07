@@ -212,20 +212,20 @@ function parsePaymentKey(paymentKey) {
 
 function normalizePersonKey(value) {
   var normalized = normalizeText(value);
-  return PERSON_KEYS_BY_NAME[normalized] || '';
+  return PERSON_KEYS_BY_NAME[normalized] || normalized.replace(/\s+/g, '_');
 }
 
 function normalizePersonName(personKey, fallback) {
-  return PEOPLE_BY_KEY[personKey] || String(fallback || '').trim();
+  return PEOPLE_BY_KEY[personKey] || String(fallback || personKey || '').trim();
 }
 
 function normalizeServiceKey(value) {
   var normalized = normalizeText(value);
-  return SERVICE_KEYS_BY_NAME[normalized] || '';
+  return SERVICE_KEYS_BY_NAME[normalized] || normalized.replace(/\s+/g, '_');
 }
 
 function normalizeServiceName(serviceKey, fallback) {
-  return SERVICES_BY_KEY[serviceKey] || String(fallback || '').trim();
+  return SERVICES_BY_KEY[serviceKey] || String(fallback || serviceKey || '').trim();
 }
 
 function normalizeText(value) {
