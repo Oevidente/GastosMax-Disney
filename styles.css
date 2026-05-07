@@ -2136,3 +2136,28 @@ html[data-theme="dark"] .modal {
     width: max-content;
   }
 }
+
+/* Estilos para Reordenação (SortableJS) */
+.subscription-card {
+  cursor: grab !important;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.subscription-card:active {
+  cursor: grabbing !important;
+}
+
+.sortable-ghost {
+  opacity: 0.3;
+  transform: scale(0.95);
+  border: 2px dashed var(--accent) !important;
+  background: var(--soft) !important;
+}
+
+.sortable-drag {
+  opacity: 0.9;
+  transform: rotate(2deg) scale(1.05);
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6) !important;
+  z-index: 1000;
+}

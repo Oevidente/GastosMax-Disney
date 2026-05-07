@@ -38,12 +38,13 @@ function doPost(e) {
   try {
     var payload = parsePayload(e);
     var removeFlag = payload.remove === true || payload.remove === 'true';
+    var sheetName = payload.sheetName || SHEET_NAME;
 
     if (removeFlag) {
-      return handleSetPaidStatus(payload, false);
+      return handleSetPaidStatus(payload, false, sheetName);
     }
 
-    return handleSetPaidStatus(payload, true);
+    return handleSetPaidStatus(payload, true, sheetName);
   } catch (err) {
     return jsonResponse({ success: false, error: err.toString() });
   }
@@ -52,22 +53,23 @@ function doPost(e) {
 function doGet(e) {
   try {
     var action = e && e.parameter && e.parameter.action ? String(e.parameter.action) : '';
+    var sheetName = e && e.parameter && e.parameter.sheetName ? String(e.parameter.sheetName) : SHEET_NAME;
 
     if (action === 'health') {
-      return jsonResponse({ success: true, sheetName: SHEET_NAME, headers: HEADERS });
+      return jsonResponse({ success: true, sheetName: sheetName, headers: HEADERS });
     }
 
     if (action === 'rows') {
-      return jsonResponse(readPaymentRows());
+      return jsonResponse(readPaymentRows(sheetName));
     }
 
-    return jsonResponse(readPaidLogs());
+    return jsonResponse(readPaidLogs(sheetName));
   } catch (err) {
     return jsonResponse({ success: false, error: err.toString() });
   }
 }
 
-function handleSetPaidStatus(data, paidStatus) {
+function handleSetPaidStatus(data, paidStatus, sheetName) {
   var normalized = normalizePaymentData(data, paidStatus);
   if (!normalized.personKey || !normalized.serviceKey || !normalized.monthDate) {
     return jsonResponse({
@@ -80,7 +82,7 @@ function handleSetPaidStatus(data, paidStatus) {
   lock.waitLock(10000);
 
   try {
-    var sheet = getLogsSheet();
+    var sheet = getSheetByName(sheetName || SHEET_NAME);
     var dataStartRow = ensureHeader(sheet) + 1;
     var values = getDataRows(sheet, dataStartRow);
     var updated = false;
@@ -122,8 +124,8 @@ function handleSetPaidStatus(data, paidStatus) {
   }
 }
 
-function readPaidLogs() {
-  var rows = readPaymentRows();
+function readPaidLogs(sheetName) {
+  var rows = readPaymentRows(sheetName);
   var logs = {};
 
   for (var i = 0; i < rows.length; i++) {
@@ -139,8 +141,8 @@ function readPaidLogs() {
   return logs;
 }
 
-function readPaymentRows() {
-  var sheet = getLogsSheet();
+function readPaymentRows(sheetName) {
+  var sheet = getSheetByName(sheetName || SHEET_NAME);
   var dataStartRow = ensureHeader(sheet) + 1;
   var values = getDataRows(sheet, dataStartRow);
   var rows = [];
@@ -286,9 +288,10 @@ function parsePayload(e) {
   return e && e.parameter ? e.parameter : {};
 }
 
-function getLogsSheet() {
+function getSheetByName(name) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  return ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+  var sheetName = name || SHEET_NAME;
+  return ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
 }
 
 function ensureHeader(sheet) {

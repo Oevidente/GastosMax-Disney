@@ -136,12 +136,13 @@ const STORAGE_KEYS = {
   notifications: 'streaming-payments-notifications-v2',
   theme: 'streaming-payments-theme',
   paid: 'streaming-payments-paid-v2',
+  order: 'streaming-payments-order-v3',
 };
 
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbzGXlEF0PCOS1KW2SlAWIrcgjg_9rjomXq55jAGEkWm9IRQeqHH130Vvi68OHs6pHOd/exec';
+  'https://script.google.com/macros/s/AKfycbyeS1xbwLnRyZQ-iuQuZGl1473JlKQZ4r9F58KIegp87bRyL7XRegh5ywiduA8A6kTo/exec';
 
 const state = {
   currentPersonKey: null,
@@ -153,6 +154,7 @@ let refreshIntervalId = null;
 let reminderCheckInProgress = false;
 let serviceWorkerRegistrationPromise = null;
 let paidLogsCache = {};
+let sortableInstance = null;
 
 const profileScreen = document.querySelector('#profileScreen');
 const dashboard = document.querySelector('#dashboard');
@@ -500,7 +502,10 @@ async function openDashboard(personKey) {
   paidLogsCache = getPaidLogs();
   updateMonthlyTotal(personKey);
   subscriptionList.classList.remove('is-ready');
+  
+  // Initialize Sortable after first render
   renderSubscriptionCards(personKey);
+  initSortable(personKey);
   
   // Marca como ready após o primeiro render para evitar redunância de animação no sync
   setTimeout(() => {
@@ -545,9 +550,23 @@ async function openDashboard(personKey) {
 
 function renderSubscriptionCards(personKey) {
   const person = PEOPLE[personKey];
-  const sortedServices = [...person.subscriptions].sort((a, b) =>
-    SERVICES[a].name.localeCompare(SERVICES[b].name, 'pt-BR'),
-  );
+  
+  // Buscar ordem salva (Nuvem ou Local)
+  let savedOrder = getSavedSubscriptionOrder(personKey);
+  
+  let sortedServices;
+  if (savedOrder && savedOrder.length > 0) {
+    // Filtrar apenas assinaturas que a pessoa realmente tem
+    sortedServices = savedOrder.filter(s => person.subscriptions.includes(s));
+    // Adicionar novas assinaturas que não estavam na ordem salva
+    const missing = person.subscriptions.filter(s => !sortedServices.includes(s));
+    sortedServices = [...sortedServices, ...missing];
+  } else {
+    // Padrão alfabético
+    sortedServices = [...person.subscriptions].sort((a, b) =>
+      SERVICES[a].name.localeCompare(SERVICES[b].name, 'pt-BR'),
+    );
+  }
 
   // Preserve detailsPanel if it has been moved inside subscriptionList
   if (detailsPanel.parentElement === subscriptionList) {
@@ -569,6 +588,130 @@ function renderSubscriptionCards(personKey) {
       card.classList.toggle('is-selected', card.dataset.service === state.selectedServiceKey);
     });
     positionDetailsPanel();
+  }
+}
+
+function initSortable(personKey) {
+  if (typeof Sortable === 'undefined') {
+    console.warn('SortableJS não carregado. Reordenação desativada.');
+    return;
+  }
+
+  if (sortableInstance) {
+    sortableInstance.destroy();
+  }
+
+  try {
+    sortableInstance = new Sortable(subscriptionList, {
+      draggable: '.subscription-card',
+      animation: 250,
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag',
+      handle: '.subscription-card', // Mudado para garantir que o clique no card arraste
+      forceFallback: false,
+      delay: 150,
+      delayOnTouchOnly: true,
+      onEnd: () => {
+        try {
+          if (!detailsPanel.classList.contains('is-hidden')) {
+            positionDetailsPanel();
+          }
+          
+          const newOrder = Array.from(subscriptionList.querySelectorAll('.subscription-card'))
+            .map(card => card.dataset.service)
+            .filter(Boolean);
+          
+          if (newOrder.length > 0) {
+            void saveSubscriptionOrder(personKey, newOrder);
+          }
+        } catch (e) {
+          console.error('Erro ao salvar ordem após arraste:', e);
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Falha ao inicializar Sortable:', err);
+  }
+}
+
+function getSavedSubscriptionOrder(personKey) {
+  // 1. Tentar da Nuvem (Configuracoes ou Logs) - Pegar o mais recente pelo timestamp
+  if (paidLogsCache[personKey]) {
+    const orderKeys = Object.keys(paidLogsCache[personKey])
+      .filter(k => k.includes(':ui_order|'))
+      .sort()
+      .reverse();
+    
+    if (orderKeys.length > 0) {
+      try {
+        const winningKey = orderKeys[0];
+        const segments = winningKey.split('|');
+        if (segments.length >= 3) {
+          // A ordem está do index 2 em diante (pode conter vírgulas)
+          const listStr = segments.slice(2).join('|').trim();
+          if (listStr) {
+            return listStr.split(',').map(s => s.trim()).filter(Boolean);
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao processar ordem da nuvem:', e);
+      }
+    }
+  }
+
+  // 2. Tentar LocalStorage
+  const local = localStorage.getItem(`${STORAGE_KEYS.order}-${personKey}`);
+  if (local) {
+    try {
+      const parsed = JSON.parse(local);
+      if (Array.isArray(parsed)) return parsed.map(s => s.trim()).filter(Boolean);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+async function saveSubscriptionOrder(personKey, order) {
+  // Limpar e validar a ordem antes de salvar
+  const cleanOrder = order.map(s => s.trim()).filter(Boolean);
+  if (cleanOrder.length === 0) return;
+
+  const timestamp = new Date().toISOString(); 
+  const orderString = cleanOrder.join(',');
+  const mesValue = `ui_order|${timestamp}|${orderString}`;
+
+  localStorage.setItem(`${STORAGE_KEYS.order}-${personKey}`, JSON.stringify(cleanOrder));
+
+  try {
+    // Garante que o cache local tem o objeto da pessoa
+    paidLogsCache[personKey] = paidLogsCache[personKey] || {};
+    // Remove ordens antigas do cache local para evitar acúmulo e garantir que a nova seja a única relevante
+    Object.keys(paidLogsCache[personKey]).forEach(k => {
+      if (k.includes(':ui_order|')) delete paidLogsCache[personKey][k];
+    });
+    // Adiciona a nova
+    paidLogsCache[personKey][`ui_order:${mesValue}`] = 'true';
+
+    // Salva na planilha "Configuracoes"
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        personKey: personKey,
+        serviceKey: 'ui_order',
+        mes: mesValue,
+        pago: true,
+        sheetName: 'Configuracoes'
+      }),
+    });
+    
+    setNotificationStatus('Ordem sincronizada na nuvem.');
+  } catch (err) {
+    console.error('Erro ao salvar ordem na nuvem:', err);
+    setNotificationStatus('Ordem salva apenas localmente.', true);
   }
 }
 
@@ -1600,14 +1743,15 @@ async function fetchPaidLogs(retryCount = 0) {
   const MAX_RETRIES = 2;
 
   try {
-    // Adicionamos um timestamp (t=) para evitar que o navegador use um erro 404 cacheado
-    const urlWithCacheBuster = `${API_URL}${API_URL.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    const timestamp = Date.now();
+    const urlWithCacheBuster = `${API_URL}${API_URL.includes('?') ? '&' : '?'}t=${timestamp}`;
     
+    // 1. Fetch logs (pagamentos) da aba padrão
     const response = await fetch(urlWithCacheBuster, {
       method: 'GET',
       mode: 'cors',
       redirect: 'follow',
-      cache: 'no-store' // Força o navegador a não guardar o resultado dessa requisição
+      cache: 'no-store'
     });
     
     if (!response.ok) throw new Error(`Erro ${response.status}`);
@@ -1629,10 +1773,38 @@ async function fetchPaidLogs(retryCount = 0) {
       throw new Error(data?.error || 'INVALID_SYNC_RESPONSE');
     }
 
-    paidLogsCache = normalizePaidLogs(data);
+    // 2. Fetch config (ordem dos cards) da aba Configuracoes
+    let configData = {};
+    try {
+      const configRes = await fetch(`${urlWithCacheBuster}&sheetName=Configuracoes`, {
+        method: 'GET',
+        mode: 'cors',
+        redirect: 'follow',
+        cache: 'no-store'
+      });
+      
+      if (configRes.ok) {
+        const configText = (await configRes.text()).trim();
+        if (configText && !configText.includes('<html')) {
+          configData = JSON.parse(configText);
+        }
+      }
+    } catch (e) {
+      console.warn('Não foi possível buscar a aba Configuracoes:', e);
+    }
+
+    // Unir os dados das duas planilhas com segurança
+    const mergedData = { ...data };
+    Object.entries(configData).forEach(([person, logs]) => {
+      if (person === 'success' || person === 'action' || person === 'error') return;
+      if (typeof logs === 'object' && logs !== null && !Array.isArray(logs)) {
+        mergedData[person] = { ...(mergedData[person] || {}), ...logs };
+      }
+    });
+
+    paidLogsCache = normalizePaidLogs(mergedData);
     savePaidLogs(paidLogsCache);
     
-    // SE mudou algo, atualizamos a interface
     if (state.currentPersonKey) {
       refreshCurrentDates();
       renderSubscriptionCards(state.currentPersonKey);
