@@ -237,6 +237,27 @@ function parsePaymentKey(paymentKey) {
   };
 }
 
+<<<<<<< HEAD
+=======
+function normalizePersonKey(value) {
+  var normalized = normalizeText(value);
+  return PERSON_KEYS_BY_NAME[normalized] || normalized.replace(/\s+/g, '_');
+}
+
+function normalizePersonName(personKey, fallback) {
+  return PEOPLE_BY_KEY[personKey] || String(fallback || personKey || '').trim();
+}
+
+function normalizeServiceKey(value) {
+  var normalized = normalizeText(value);
+  return SERVICE_KEYS_BY_NAME[normalized] || normalized.replace(/\s+/g, '_');
+}
+
+function normalizeServiceName(serviceKey, fallback) {
+  return SERVICES_BY_KEY[serviceKey] || String(fallback || serviceKey || '').trim();
+}
+
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 function normalizeText(value) {
   return String(value || '')
     .trim()

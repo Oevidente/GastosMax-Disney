@@ -25,6 +25,7 @@ let PEOPLE = {
   andre: {
     name: 'André Luiz',
     aliases: ['andre', 'andré'],
+<<<<<<< HEAD
     subscriptions: [
       'disney',
       'max',
@@ -35,6 +36,9 @@ let PEOPLE = {
       'f1_tv_pro',
       'globoplay',
     ],
+=======
+    subscriptions: ['disney', 'max', 'spotify', 'crunchyroll', 'prime_video', 'google_one', 'f1_tv_pro', 'globoplay'],
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     color: '#4f46e5',
     avatar: 'AL',
     isAdmin: true,
@@ -96,7 +100,11 @@ let SERVICES = {
     cssClass: 'service-crunchyroll',
     model: 'monthly',
     modelLabel: 'Todo mês',
+<<<<<<< HEAD
     totalAmount: 19.9,
+=======
+    amount: 19.90,
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     participants: ['andre'],
   },
   prime_video: {
@@ -105,7 +113,11 @@ let SERVICES = {
     cssClass: 'service-prime',
     model: 'monthly',
     modelLabel: 'Todo mês',
+<<<<<<< HEAD
     totalAmount: 9.95,
+=======
+    amount: 9.95,
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     participants: ['andre'],
   },
   google_one: {
@@ -114,7 +126,11 @@ let SERVICES = {
     cssClass: 'service-google',
     model: 'monthly',
     modelLabel: 'Todo mês',
+<<<<<<< HEAD
     totalAmount: 10.0,
+=======
+    amount: 10.00,
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     participants: ['andre'],
   },
   f1_tv_pro: {
@@ -123,7 +139,11 @@ let SERVICES = {
     cssClass: 'service-f1',
     model: 'monthly',
     modelLabel: 'Todo mês',
+<<<<<<< HEAD
     totalAmount: 29.0,
+=======
+    amount: 29.00,
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     participants: ['andre'],
   },
   globoplay: {
@@ -132,7 +152,11 @@ let SERVICES = {
     cssClass: 'service-globoplay',
     model: 'monthly',
     modelLabel: 'Todo mês',
+<<<<<<< HEAD
     totalAmount: 20.0,
+=======
+    amount: 20.00,
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     participants: ['andre'],
   },
 };
@@ -343,12 +367,39 @@ const MONTHS = [
   'dezembro',
 ];
 
+<<<<<<< HEAD
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
   'https://script.google.com/macros/s/AKfycbzR-jA71KTzLGt7P3xq5tLM5WaZlYN9ue34H6Vp43GS3Fo8h1GG0qab21Qkk9FVCHX6/exec'.trim();
 
 // Estado global da aplicação
+=======
+const STORAGE_KEYS = {
+  profile: 'streaming-payments-profile-v2',
+  notifications: 'streaming-payments-notifications-v2',
+  theme: 'streaming-payments-theme',
+  paid: 'streaming-payments-paid-v2',
+  order: 'streaming-payments-order-v3',
+};
+
+// Esta é a API publicada no Google Apps Script.
+// O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbyeS1xbwLnRyZQ-iuQuZGl1473JlKQZ4r9F58KIegp87bRyL7XRegh5ywiduA8A6kTo/exec';
+
+const state = {
+  currentPersonKey: null,
+  selectedServiceKey: null,
+  selectedYear: getToday().getFullYear(),
+};
+
+let refreshIntervalId = null;
+let reminderCheckInProgress = false;
+let serviceWorkerRegistrationPromise = null;
+let paidLogsCache = {};
+let sortableInstance = null;
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 
 const profileScreen = document.querySelector('#profileScreen');
 const dashboard = document.querySelector('#dashboard');
@@ -380,6 +431,7 @@ const nextYearButton = document.querySelector('#nextYearButton');
 const selectedYearLabel = document.querySelector('#selectedYearLabel');
 const syncSheetsButton = document.querySelector('#syncSheetsButton');
 const notificationModal = document.querySelector('#notificationModal');
+<<<<<<< HEAD
 const closeNotificationModal = document.querySelector(
   '#closeNotificationModal',
 );
@@ -409,13 +461,23 @@ const adminModalDeleteButton = document.querySelector(
 );
 
 let currentAdminContext = null;
+=======
+const closeNotificationModal = document.querySelector('#closeNotificationModal');
+const allowNotificationsButton = document.querySelector('#allowNotificationsButton');
+const tutorialButton = document.querySelector('#tutorialButton');
+const tutorialModal = document.querySelector('#tutorialModal');
+const closeTutorialModal = document.querySelector('#closeTutorialModal');
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 
 const moneyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 });
 
+<<<<<<< HEAD
 loadAdminSettings();
+=======
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 bindEvents();
 restoreProfile();
 renderProfileSelection();
@@ -763,9 +825,17 @@ async function openDashboard(personKey) {
   paidLogsCache = getPaidLogs();
   updateMonthlyTotal(personKey);
   subscriptionList.classList.remove('is-ready');
+<<<<<<< HEAD
 
   renderSubscriptionCards(personKey);
 
+=======
+  
+  // Initialize Sortable after first render
+  renderSubscriptionCards(personKey);
+  initSortable(personKey);
+  
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   // Marca como ready após o primeiro render para evitar redunância de animação no sync
   setTimeout(() => {
     subscriptionList.classList.add('is-ready');
@@ -808,6 +878,7 @@ async function openDashboard(personKey) {
 
 function renderSubscriptionCards(personKey) {
   const person = PEOPLE[personKey];
+<<<<<<< HEAD
 
   // Buscar ordem salva (Nuvem ou Local)
   let savedOrder = getSavedSubscriptionOrder(personKey);
@@ -820,6 +891,18 @@ function renderSubscriptionCards(personKey) {
     const missing = person.subscriptions.filter(
       (s) => !sortedServices.includes(s),
     );
+=======
+  
+  // Buscar ordem salva (Nuvem ou Local)
+  let savedOrder = getSavedSubscriptionOrder(personKey);
+  
+  let sortedServices;
+  if (savedOrder && savedOrder.length > 0) {
+    // Filtrar apenas assinaturas que a pessoa realmente tem
+    sortedServices = savedOrder.filter(s => person.subscriptions.includes(s));
+    // Adicionar novas assinaturas que não estavam na ordem salva
+    const missing = person.subscriptions.filter(s => !sortedServices.includes(s));
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     sortedServices = [...sortedServices, ...missing];
   } else {
     // Padrão alfabético
@@ -845,23 +928,80 @@ function renderSubscriptionCards(personKey) {
 
   if (state.selectedServiceKey) {
     document.querySelectorAll('.subscription-card').forEach((card) => {
+<<<<<<< HEAD
       card.classList.toggle(
         'is-selected',
         card.dataset.service === state.selectedServiceKey,
       );
+=======
+      card.classList.toggle('is-selected', card.dataset.service === state.selectedServiceKey);
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     });
     positionDetailsPanel();
   }
 }
 
+<<<<<<< HEAD
+=======
+function initSortable(personKey) {
+  if (typeof Sortable === 'undefined') {
+    console.warn('SortableJS não carregado. Reordenação desativada.');
+    return;
+  }
+
+  if (sortableInstance) {
+    sortableInstance.destroy();
+  }
+
+  try {
+    sortableInstance = new Sortable(subscriptionList, {
+      draggable: '.subscription-card',
+      animation: 250,
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag',
+      handle: '.subscription-card', // Mudado para garantir que o clique no card arraste
+      forceFallback: false,
+      delay: 150,
+      delayOnTouchOnly: true,
+      onEnd: () => {
+        try {
+          if (!detailsPanel.classList.contains('is-hidden')) {
+            positionDetailsPanel();
+          }
+          
+          const newOrder = Array.from(subscriptionList.querySelectorAll('.subscription-card'))
+            .map(card => card.dataset.service)
+            .filter(Boolean);
+          
+          if (newOrder.length > 0) {
+            void saveSubscriptionOrder(personKey, newOrder);
+          }
+        } catch (e) {
+          console.error('Erro ao salvar ordem após arraste:', e);
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Falha ao inicializar Sortable:', err);
+  }
+}
+
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 function getSavedSubscriptionOrder(personKey) {
   // 1. Tentar da Nuvem (Configuracoes ou Logs) - Pegar o mais recente pelo timestamp
   if (paidLogsCache[personKey]) {
     const orderKeys = Object.keys(paidLogsCache[personKey])
+<<<<<<< HEAD
       .filter((k) => k.includes(':ui_order|'))
       .sort()
       .reverse();
 
+=======
+      .filter(k => k.includes(':ui_order|'))
+      .sort()
+      .reverse();
+    
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     if (orderKeys.length > 0) {
       try {
         const winningKey = orderKeys[0];
@@ -870,11 +1010,15 @@ function getSavedSubscriptionOrder(personKey) {
           // A ordem está do index 2 em diante (pode conter vírgulas)
           const listStr = segments.slice(2).join('|').trim();
           if (listStr) {
+<<<<<<< HEAD
             const arr = listStr
               .split(',')
               .map((s) => s.trim())
               .filter(Boolean);
             return Array.from(new Set(arr));
+=======
+            return listStr.split(',').map(s => s.trim()).filter(Boolean);
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
           }
         }
       } catch (e) {
@@ -888,10 +1032,14 @@ function getSavedSubscriptionOrder(personKey) {
   if (local) {
     try {
       const parsed = JSON.parse(local);
+<<<<<<< HEAD
       if (Array.isArray(parsed)) {
         const arr = parsed.map((s) => s.trim()).filter(Boolean);
         return Array.from(new Set(arr));
       }
+=======
+      if (Array.isArray(parsed)) return parsed.map(s => s.trim()).filter(Boolean);
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     } catch {
       return null;
     }
@@ -900,6 +1048,51 @@ function getSavedSubscriptionOrder(personKey) {
   return null;
 }
 
+<<<<<<< HEAD
+=======
+async function saveSubscriptionOrder(personKey, order) {
+  // Limpar e validar a ordem antes de salvar
+  const cleanOrder = order.map(s => s.trim()).filter(Boolean);
+  if (cleanOrder.length === 0) return;
+
+  const timestamp = new Date().toISOString(); 
+  const orderString = cleanOrder.join(',');
+  const mesValue = `ui_order|${timestamp}|${orderString}`;
+
+  localStorage.setItem(`${STORAGE_KEYS.order}-${personKey}`, JSON.stringify(cleanOrder));
+
+  try {
+    // Garante que o cache local tem o objeto da pessoa
+    paidLogsCache[personKey] = paidLogsCache[personKey] || {};
+    // Remove ordens antigas do cache local para evitar acúmulo e garantir que a nova seja a única relevante
+    Object.keys(paidLogsCache[personKey]).forEach(k => {
+      if (k.includes(':ui_order|')) delete paidLogsCache[personKey][k];
+    });
+    // Adiciona a nova
+    paidLogsCache[personKey][`ui_order:${mesValue}`] = 'true';
+
+    // Salva na planilha "Configuracoes"
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        personKey: personKey,
+        serviceKey: 'ui_order',
+        mes: mesValue,
+        pago: true,
+        sheetName: 'Configuracoes'
+      }),
+    });
+    
+    setNotificationStatus('Ordem sincronizada na nuvem.');
+  } catch (err) {
+    console.error('Erro ao salvar ordem na nuvem:', err);
+    setNotificationStatus('Ordem salva apenas localmente.', true);
+  }
+}
+
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 function updateMonthlyTotal(personKey) {
   if (!totalMonthAmount) return;
 
@@ -907,7 +1100,11 @@ function updateMonthlyTotal(personKey) {
   const currentMonthIndex = today.getMonth();
   const currentYear = today.getFullYear();
   const person = PEOPLE[personKey];
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   if (!person) return;
 
   let total = 0;
@@ -996,16 +1193,21 @@ async function openServiceDetails(serviceKey) {
 
   detailsService.textContent = service.name;
   detailsTitle.textContent = `${person.name}, estes são os pagamentos dessa assinatura`;
+<<<<<<< HEAD
 
   // Aplicar cores dinâmicas ao painel de detalhes
   const panelStyleParts = [];
   if (service.color) panelStyleParts.push(`background-color: ${service.color}`);
   detailsPanel.setAttribute('style', panelStyleParts.join('; '));
 
+=======
+  
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   detailsPanel.className = 'details-panel is-hidden';
   detailsPanel.classList.add(`details-${serviceKey}`);
   detailsPanel.classList.add('is-custom-service'); // Força o tema escuro genérico
   detailsPanel.classList.remove('is-hidden');
+<<<<<<< HEAD
 
   // Exibir loading e esconder conteúdo
   detailsContent.classList.add('is-hidden');
@@ -1018,6 +1220,17 @@ async function openServiceDetails(serviceKey) {
   // Renderizar imediatamente com dados do cache enquanto busca do servidor
   renderDetails();
 
+=======
+  
+  // Exibir loading e esconder conteúdo
+  detailsContent.classList.add('is-hidden');
+  detailsLoadingState.classList.remove('is-hidden');
+  
+  positionDetailsPanel();
+  
+  setActiveTab('upcoming');
+
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   try {
     await fetchPaidLogs();
     renderDetails();
@@ -1025,7 +1238,11 @@ async function openServiceDetails(serviceKey) {
     // Esconder loading e mostrar conteúdo
     detailsLoadingState.classList.add('is-hidden');
     detailsContent.classList.remove('is-hidden');
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     // Pequeno delay para garantir que o layout mobile se ajustou se o conteúdo for grande
     setTimeout(() => {
       detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1065,8 +1282,10 @@ function renderUpcomingPayments(serviceKey, personKey) {
   return `
     <div class="panel-actions">
       <button class="ghost-button calendar-button" type="button" data-add-calendar>
-        <img src="Google_Calendar_icon_(2020).svg.png" alt="Google Agenda" class="calendar-logo" />
-        Abrir no Google Agenda
+        <span class="calendar-button-content">
+          <img src="Google_Calendar_icon_(2020).svg.png" alt="Google Agenda" class="calendar-logo" />
+          Abrir no Google Agenda
+        </span>
       </button>
       <button class="ghost-button" type="button" data-test-notification>
         Testar notificação
@@ -1275,13 +1494,23 @@ function openGoogleCalendarEvent() {
     state.selectedServiceKey,
     nextPayment.date,
   );
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   // Abrimos em uma nova aba/contexto para evitar que a navegação ocorra na aba atual do app.
   // Em dispositivos móveis, o sistema interceptará o link e abrirá o aplicativo do Google Agenda.
   // Ao fechar o app, o usuário voltará para esta aba intacta.
   window.open(calendarUrl, '_blank', 'noopener');
 
+<<<<<<< HEAD
   setNotificationStatus('O Google Agenda foi aberto. Revise e salve o evento.');
+=======
+  setNotificationStatus(
+    'O Google Agenda foi aberto. Revise e salve o evento.',
+  );
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 }
 
 function createGoogleCalendarUrl(personKey, serviceKey, startDate) {
@@ -1600,9 +1829,15 @@ async function checkPaymentReminders() {
     const personLog = logs[personKey] ?? {};
     const rawReminders = getReminderCandidates(personKey);
     const remindersToProcess = rawReminders.filter(
+<<<<<<< HEAD
       (payment) =>
         !personLog[getReminderNotificationKey(payment)] &&
         !isPaymentPaid(personKey, payment),
+=======
+      (payment) => 
+        !personLog[getReminderNotificationKey(payment)] && 
+        !isPaymentPaid(personKey, payment)
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     );
 
     if (remindersToProcess.length === 0) {
@@ -1612,6 +1847,7 @@ async function checkPaymentReminders() {
 
     const groupedReminders = {};
     for (const payment of remindersToProcess) {
+<<<<<<< HEAD
       const dateKey = formatDateKey(payment.date);
       if (!groupedReminders[dateKey]) {
         groupedReminders[dateKey] = {
@@ -1621,6 +1857,17 @@ async function checkPaymentReminders() {
         };
       }
       groupedReminders[dateKey].payments.push(payment);
+=======
+       const dateKey = formatDateKey(payment.date);
+       if (!groupedReminders[dateKey]) {
+          groupedReminders[dateKey] = {
+             payments: [],
+             daysUntil: payment.daysUntil,
+             date: payment.date
+          };
+       }
+       groupedReminders[dateKey].payments.push(payment);
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     }
 
     for (const dateKey in groupedReminders) {
@@ -1636,7 +1883,11 @@ async function checkPaymentReminders() {
         );
       }
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     void syncRemindersToSW();
   } finally {
     reminderCheckInProgress = false;
@@ -1645,6 +1896,7 @@ async function checkPaymentReminders() {
 
 async function syncRemindersToSW() {
   if (!('caches' in window) || !state.currentPersonKey) return;
+<<<<<<< HEAD
 
   const reminders = {
     personKey: state.currentPersonKey,
@@ -1662,22 +1914,47 @@ async function syncRemindersToSW() {
           amount: payment.amount,
           baseKey: getPaymentNotificationKey(payment),
         })),
+=======
+  
+  const reminders = {
+    personKey: state.currentPersonKey,
+    personName: PEOPLE[state.currentPersonKey].name,
+    candidates: PEOPLE[state.currentPersonKey].subscriptions.flatMap((serviceKey) =>
+      getUpcomingPaymentsForPerson(serviceKey, state.currentPersonKey, 12).map((payment) => ({
+        serviceKey: payment.serviceKey,
+        serviceName: SERVICES[payment.serviceKey].name,
+        dateMs: payment.date.getTime(),
+        amount: payment.amount,
+        baseKey: getPaymentNotificationKey(payment),
+      }))
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     ),
     logs: getNotificationLogs()[state.currentPersonKey] ?? {},
     paidLogs: getPaidLogs()[state.currentPersonKey] ?? {},
     settings: {
+<<<<<<< HEAD
       reminderDaysBefore: SETTINGS.reminderDaysBefore,
     },
+=======
+      reminderDaysBefore: SETTINGS.reminderDaysBefore
+    }
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   };
 
   try {
     const cache = await caches.open('payment-reminders-data');
+<<<<<<< HEAD
     await cache.put(
       '/reminders.json',
       new Response(JSON.stringify(reminders), {
         headers: { 'Content-Type': 'application/json' },
       }),
     );
+=======
+    await cache.put('/reminders.json', new Response(JSON.stringify(reminders), {
+      headers: { 'Content-Type': 'application/json' }
+    }));
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   } catch (err) {
     // Ignorar falhas silenciosamente
   }
@@ -1699,6 +1976,7 @@ function getReminderCandidates(personKey) {
 }
 
 async function showGroupedPaymentNotification(personKey, group) {
+<<<<<<< HEAD
   const serviceNames = group.payments
     .map((p) => SERVICES[p.serviceKey].name)
     .join(', ');
@@ -1716,6 +1994,16 @@ async function showGroupedPaymentNotification(personKey, group) {
       ? `${serviceNames}: pagamento ${whenSingular}`
       : `Assinaturas: pagamentos ${whenPlural}`;
 
+=======
+  const serviceNames = group.payments.map(p => SERVICES[p.serviceKey].name).join(', ');
+  const whenPlural = group.daysUntil === 0 ? "vencem hoje" : `vencem em ${group.daysUntil} ${group.daysUntil === 1 ? 'dia' : 'dias'}`;
+  const whenSingular = group.daysUntil === 0 ? "vence hoje" : `vence em ${group.daysUntil} ${group.daysUntil === 1 ? 'dia' : 'dias'}`;
+
+  const title = group.payments.length === 1
+    ? `${serviceNames}: pagamento ${whenSingular}`
+    : `Assinaturas: pagamentos ${whenPlural}`;
+    
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   let body = '';
   if (group.payments.length === 1) {
     body = `${PEOPLE[personKey].name}, a sua assinatura ${serviceNames} ${whenSingular}. Clique para ver as assinaturas no site.`;
@@ -1805,9 +2093,13 @@ async function registerServiceWorker() {
         await navigator.serviceWorker.ready;
         if ('periodicSync' in reg) {
           try {
+<<<<<<< HEAD
             const status = await navigator.permissions.query({
               name: 'periodic-background-sync',
             });
+=======
+            const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
             if (status.state === 'granted') {
               await reg.periodicSync.register('check-payments', {
                 minInterval: 12 * 60 * 60 * 1000,
@@ -1924,7 +2216,11 @@ async function syncLogsFromSW() {
         const localLogs = readJson(STORAGE_KEYS.notifications, {});
         localLogs[state.currentPersonKey] = {
           ...localLogs[state.currentPersonKey],
+<<<<<<< HEAD
           ...data.logs,
+=======
+          ...data.logs
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
         };
         saveNotificationLogs(localLogs);
       }
@@ -2058,13 +2354,23 @@ async function fetchPaidLogs(retryCount = 0) {
 
   try {
     const timestamp = Date.now();
+<<<<<<< HEAD
     const urlWithCacheBuster = `${API_URL}${
       API_URL.includes('?') ? '&' : '?'
     }t=${timestamp}`;
 
+=======
+    const urlWithCacheBuster = `${API_URL}${API_URL.includes('?') ? '&' : '?'}t=${timestamp}`;
+    
+    // 1. Fetch logs (pagamentos) da aba padrão
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     const response = await fetch(urlWithCacheBuster, {
       redirect: 'follow',
+<<<<<<< HEAD
       cache: 'no-store',
+=======
+      cache: 'no-store'
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     });
 
     if (!response.ok)
@@ -2093,6 +2399,7 @@ async function fetchPaidLogs(retryCount = 0) {
       );
     }
 
+<<<<<<< HEAD
     let configData = {};
     try {
       const configRes = await fetch(
@@ -2109,6 +2416,45 @@ async function fetchPaidLogs(retryCount = 0) {
       }
     } catch (e) {
       console.warn('Não foi possível buscar a aba Configuracoes:', e);
+=======
+    // 2. Fetch config (ordem dos cards) da aba Configuracoes
+    let configData = {};
+    try {
+      const configRes = await fetch(`${urlWithCacheBuster}&sheetName=Configuracoes`, {
+        method: 'GET',
+        mode: 'cors',
+        redirect: 'follow',
+        cache: 'no-store'
+      });
+      
+      if (configRes.ok) {
+        const configText = (await configRes.text()).trim();
+        if (configText && !configText.includes('<html')) {
+          configData = JSON.parse(configText);
+        }
+      }
+    } catch (e) {
+      console.warn('Não foi possível buscar a aba Configuracoes:', e);
+    }
+
+    // Unir os dados das duas planilhas com segurança
+    const mergedData = { ...data };
+    Object.entries(configData).forEach(([person, logs]) => {
+      if (person === 'success' || person === 'action' || person === 'error') return;
+      if (typeof logs === 'object' && logs !== null && !Array.isArray(logs)) {
+        mergedData[person] = { ...(mergedData[person] || {}), ...logs };
+      }
+    });
+
+    paidLogsCache = normalizePaidLogs(mergedData);
+    savePaidLogs(paidLogsCache);
+    
+    if (state.currentPersonKey) {
+      refreshCurrentDates();
+      renderSubscriptionCards(state.currentPersonKey);
+      if (state.selectedServiceKey) renderDetails();
+      void syncRemindersToSW();
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
     }
 
     const metadataKeys = [
@@ -2235,7 +2581,11 @@ async function unmarkPayment(personKey, payment) {
   renderDetails();
   refreshCurrentDates();
   void syncRemindersToSW();
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     return;
   }
@@ -2412,9 +2762,13 @@ function getToday() {
 
 function positionDetailsPanel() {
   if (!state.selectedServiceKey) return;
+<<<<<<< HEAD
   const activeCard = Array.from(
     subscriptionList.querySelectorAll('.subscription-card'),
   ).find((c) => c.dataset.service === state.selectedServiceKey);
+=======
+  const activeCard = Array.from(subscriptionList.querySelectorAll('.subscription-card')).find(c => c.dataset.service === state.selectedServiceKey);
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 
   if (activeCard) {
     activeCard.insertAdjacentElement('afterend', detailsPanel);
@@ -2426,6 +2780,7 @@ function positionDetailsPanel() {
 window.addEventListener('resize', () => {
   if (!detailsPanel.classList.contains('is-hidden')) {
     positionDetailsPanel();
+<<<<<<< HEAD
   }
 });
 
@@ -2770,3 +3125,7 @@ async function saveGlobalConfig() {
 function generateKey() {
   return Math.random().toString(36).substring(2, 9);
 }
+=======
+  }
+});
+>>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
