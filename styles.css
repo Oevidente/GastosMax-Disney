@@ -1,34 +1,6 @@
-:root {
-  color-scheme: light;
-  --bg: #f8fafc;
-  --surface: rgba(255, 255, 255, 0.65);
-  --surface-hover: rgba(255, 255, 255, 0.85);
-  --surface-border: rgba(0, 0, 0, 0.08);
-  --surface-border-subtle: rgba(0, 0, 0, 0.04);
-  --ink: #0f172a;
-  --details-heading: #020617;
-  --details-strong: #0f172a;
-  --details-muted: #64748b;
-  --muted: #64748b;
-  --line: rgba(0, 0, 0, 0.08);
-  --soft: rgba(0, 0, 0, 0.05);
-  --accent: #4f46e5;
-  --accent-strong: #4338ca;
-  --danger: #e11d48;
-  --success: #059669;
-  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-  --radius: 12px;
-  --radius-large: 24px;
-  --top-icon-color: #334155;
-  --table-header-bg: rgba(79, 70, 229, 0.05);
-  --table-header-color: #64748b;
-  --blob-a: rgba(79, 70, 229, 0.15);
-  --blob-b: rgba(16, 185, 129, 0.15);
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300&f[]=general-sans@700,600,500,400&display=swap');
 
-:root[data-theme="dark"] {
+:root {
   color-scheme: dark;
   --bg: #020617;
   --surface: rgba(255, 255, 255, 0.05);
@@ -48,19 +20,75 @@
   --success: #34d399;
   --shadow-inner: inset 0 2px 4px 0 rgba(255, 255, 255, 0.05);
   --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  --radius: 12px;
+  --radius-large: 24px;
   --top-icon-color: #f1f5f9;
   --table-header-bg: rgba(99, 102, 241, 0.1);
   --table-header-color: #94a3b8;
   --blob-a: rgba(79, 70, 229, 0.3);
   --blob-b: rgba(16, 185, 129, 0.2);
+  --font-sans: "General Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Satoshi", "General Sans", sans-serif;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f8fafc;
+  --surface: rgba(255, 255, 255, 0.65);
+  --surface-hover: rgba(255, 255, 255, 0.85);
+  --surface-border: rgba(0, 0, 0, 0.08);
+  --surface-border-subtle: rgba(0, 0, 0, 0.04);
+  --ink: #0f172a;
+  --details-heading: #020617;
+  --details-strong: #0f172a;
+  --details-muted: #64748b;
+  --muted: #64748b;
+  --line: rgba(0, 0, 0, 0.08);
+  --soft: rgba(0, 0, 0, 0.05);
+  --accent: #4f46e5;
+  --accent-strong: #4338ca;
+  --danger: #e11d48;
+  --success: #059669;
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  --top-icon-color: #334155;
+  --table-header-bg: rgba(79, 70, 229, 0.05);
+  --table-header-color: #64748b;
+  --blob-a: rgba(79, 70, 229, 0.15);
+  --blob-b: rgba(16, 185, 129, 0.15);
 }
 
 * {
   box-sizing: border-box;
 }
 
+@keyframes pulseSuccess {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.pulse-success {
+  animation: pulseSuccess 0.6s ease-out !important;
+}
+
+.payment-item {
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.payment-item:nth-child(1) { animation-delay: 0.05s; }
+.payment-item:nth-child(2) { animation-delay: 0.1s; }
+.payment-item:nth-child(3) { animation-delay: 0.15s; }
+.payment-item:nth-child(4) { animation-delay: 0.2s; }
+.payment-item:nth-child(5) { animation-delay: 0.25s; }
+
 html {
   min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+h1, h2, h3, h4, h5, h6, strong, .subscription-title strong, .summary-pill strong {
+  font-family: var(--font-display);
 }
 
 body {
@@ -68,7 +96,7 @@ body {
   margin: 0;
   background-color: var(--bg);
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   overflow-x: hidden;
   position: relative;
 }
@@ -107,10 +135,35 @@ button {
   width: min(1080px, calc(100% - 32px));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 24px 0 48px;
+  padding: 16px 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
+}
+
+.app-footer {
+  text-align: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  border: none;
+  margin-top: auto;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+.app-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.app-footer a:hover {
+  color: var(--ink);
 }
 
 .topbar {
@@ -144,16 +197,12 @@ button {
 }
 
 .brand-mark {
-  display: grid;
+  display: block;
   width: 44px;
   height: 44px;
-  place-items: center;
-  border: 1px solid var(--surface-border-subtle);
+  flex-shrink: 0;
   border-radius: var(--radius);
-  background: linear-gradient(to bottom right, var(--accent), var(--success));
-  color: #ffffff;
-  font-weight: 900;
-  letter-spacing: 0;
+  object-fit: contain;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
@@ -199,22 +248,31 @@ button {
   justify-content: center;
 }
 
-.top-actions .top-icon-button {
+.top-icon-button {
   min-width: 40px;
   padding: 0;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.top-actions .top-icon-button {
+.top-icon-button {
   color: var(--top-icon-color);
 }
 
-.top-icon {
+.top-icon,
+.btn-icon {
   width: 20px;
   height: 20px;
   display: block;
-  color: currentColor;
+  object-fit: contain;
   flex: 0 0 auto;
+}
+
+.top-icon-button img {
+  width: 22px;
+  height: 22px;
 }
 
 #notificationButton.ghost-button {
@@ -227,6 +285,23 @@ button {
   color: var(--top-icon-color);
 }
 
+.sync-icon-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.is-syncing .sync-icon-img {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .ghost-button:hover,
 .ghost-button:focus-visible {
   border-color: var(--accent);
@@ -234,10 +309,96 @@ button {
   outline: 0;
 }
 
+@property --calendar-btn-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rotate-calendar-btn-border {
+  from { --calendar-btn-angle: 0deg; }
+  to { --calendar-btn-angle: 360deg; }
+}
+
 .ghost-button.calendar-button {
+  --conic-blue-color: rgba(66, 133, 244, 1);
+  --conic-green-color: rgba(52, 168, 83, 1);
+  --conic-yellow-color: rgba(251, 188, 5, 1);
+  --conic-red-color: rgba(234, 67, 53, 1);
+  --outline-var: rgba(255, 255, 255, 0.1);
+
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  position: relative;
+  border-color: transparent; /* so original border doesn't clash with the conic gradient ::after */
+  /* Instead of an outer padding wrapper, we let it be exactly the size of a ghost-button */
+  z-index: 1;
+}
+
+.ghost-button.calendar-button:hover {
+  transform: translateY(-2px);
+}
+
+/* O brilho exterior suave */
+.ghost-button.calendar-button::before {
+  content: '';
+  position: absolute;
+  inset: -3px; /* Espalha um pouco mais */
+  border-radius: calc(var(--radius) + 3px);
+  padding: 6px; /* Grossura da máscara para gerar mais cor pro blur */
+  background: conic-gradient(
+    from var(--calendar-btn-angle) at 50% 50%,
+    var(--outline-var) 0deg,
+    var(--outline-var) 69deg,
+    var(--conic-blue-color) 115deg,
+    var(--conic-green-color) 193deg,
+    var(--outline-var) 270deg,
+    var(--conic-yellow-color) 291deg,
+    var(--conic-red-color) 322deg,
+    var(--outline-var) 1turn
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  filter: blur(6px);
+  opacity: 0.35;
+  z-index: -1;
+  animation: rotate-calendar-btn-border 40s linear infinite;
+  transition: opacity 0.2s ease;
+}
+
+.ghost-button.calendar-button:hover::before {
+  opacity: 0.6;
+}
+
+/* A Borda Colorida Nítida recortada (para não vazar no fundo transparente do botão) */
+.ghost-button.calendar-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  padding: 1.5px; /* A espessura que queremos para o arco-íris */
+  background: conic-gradient(
+    from var(--calendar-btn-angle) at 50% 50%,
+    var(--outline-var) 0deg,
+    var(--outline-var) 69deg,
+    var(--conic-blue-color) 115deg,
+    var(--conic-green-color) 193deg,
+    var(--outline-var) 270deg,
+    var(--conic-yellow-color) 291deg,
+    var(--conic-red-color) 322deg,
+    var(--outline-var) 1turn
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotate-calendar-btn-border 4s linear infinite;
+  pointer-events: none;
+  z-index: 1; /* Sits naturally over the button, visually acting as its border */
 }
 
 .calendar-logo {
@@ -260,22 +421,19 @@ button {
   padding: 0;
   border: 1px solid transparent;
   border-radius: var(--radius);
-  color: transparent;
-  font-size: 0;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
+  font-size: 0;
+  color: transparent;
 }
 
-.payment-action-button::before {
-  content: attr(data-symbol);
-  display: grid;
-  width: 100%;
-  height: 100%;
-  place-items: center;
-  color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 900;
-  letter-spacing: 0;
+.payment-action-button img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .payment-action-button.is-mark {
@@ -302,7 +460,7 @@ button {
 
 .profile-screen {
   display: grid;
-  min-height: calc(100vh - 144px);
+  min-height: calc(100vh - 200px);
   place-items: center;
 }
 
@@ -310,7 +468,7 @@ button {
   display: flex;
   flex-direction: column;
   width: min(1000px, 100%);
-  gap: 40px;
+  gap: 16px;
   align-items: center;
   padding: clamp(30px, 5vw, 60px);
   border: 1px solid var(--surface-border);
@@ -402,6 +560,8 @@ button {
   font-size: 0.85rem;
 }
 
+
+
 .preview-card strong {
   font-size: 1.15rem;
 }
@@ -418,7 +578,6 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 24px;
-  padding-top: 10px;
   order: 2;
 }
 
@@ -429,7 +588,8 @@ button {
 }
 
 .profile-selection-title {
-  margin-bottom: 32px;
+  margin-top: 8px;
+  margin-bottom: 24px;
   color: var(--ink);
   font-size: clamp(1.5rem, 3vw, 2.5rem);
   font-weight: 700;
@@ -590,9 +750,39 @@ button {
 
 .welcome-row {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 18px;
+  flex-wrap: wrap;
+}
+
+.welcome-summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .welcome-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .welcome-summary {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .summary-pill {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .summary-pill {
@@ -611,7 +801,6 @@ button {
 .summary-pill strong {
   font-size: 2rem;
   line-height: 1;
-  font-family: var(--font-mono);
 }
 
 .summary-pill span {
@@ -647,13 +836,18 @@ button {
   overflow: hidden;
 }
 
-.subscription-card:hover,
-.subscription-card:focus-visible,
-.subscription-card.is-selected {
+.subscription-card:hover:not(.is-selected) {
   transform: translateY(-3px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.subscription-card.is-selected {
+  grid-column: 1 / -1;
   outline: 0;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
   border-color: rgba(255, 255, 255, 0.2);
+  cursor: default;
 }
 
 .subscription-card.service-disney {
@@ -670,6 +864,7 @@ button {
   height: 150px;
   background-image: url('disney--1.svg');
   background-size: contain;
+  background-position: right center;
   background-repeat: no-repeat;
   opacity: 0.11;
   pointer-events: none;
@@ -689,6 +884,7 @@ button {
   height: 150px;
   background-image: url('HBO_Max_logo_(May_2025).png');
   background-size: contain;
+  background-position: right center;
   background-repeat: no-repeat;
   opacity: 0.11;
   pointer-events: none;
@@ -708,18 +904,173 @@ button {
   height: 120px;
   background-image: url('data:image/svg+xml;utf8,<svg fill="%23fff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.84.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-.96-.18-1.08-.659-.12-.48.18-.96.659-1.08 4.26-1.32 9.72-.66 13.32 1.56.42.24.54.84.302 1.259zm.12-3.36C15.24 8.28 8.82 8.04 5.16 9.18c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.539.3.719 1.02.419 1.56-.239.54-.959.72-1.559.42z"/></svg>');
   background-size: contain;
+  background-position: right center;
   background-repeat: no-repeat;
   opacity: 0.11;
   pointer-events: none;
 }
 
-.subscription-top,
+.subscription-card.service-crunchyroll {
+  background: rgba(180, 60, 0, 0.85);
+}
+
+.subscription-card.service-crunchyroll::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 120px;
+  height: 120px;
+  background-image: url('crunchyroll-logo.svg');
+  background-size: contain;
+  background-position: right center;
+  background-repeat: no-repeat;
+  opacity: 0.11;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+}
+
+.subscription-card.service-prime {
+  background: rgba(0, 55, 75, 0.85); /* Dark prime blue */
+}
+
+.subscription-card.service-prime::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 120px;
+  height: 120px;
+  background-image: url('amazon-prime-video-1.svg');
+  background-size: contain;
+  background-position: right center;
+  background-repeat: no-repeat;
+  opacity: 0.11;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+}
+
+.subscription-card.service-google {
+  background: rgba(4, 30, 71, 0.85); /* Dark Google Blue */
+}
+
+.subscription-card.service-google::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 100px;
+  height: 100px;
+  background-image: url('Google_One_logo.png');
+  background-size: contain;
+  background-position: right center;
+  background-repeat: no-repeat;
+  opacity: 0.11;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+}
+
+.subscription-card.service-f1 {
+  background: rgba(95, 0, 0, 0.85);
+}
+
+.subscription-card.service-f1::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 120px;
+  height: 120px;
+  background-image: url('f1%20white.png');
+  background-size: contain;
+  background-position: right center;
+  background-repeat: no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+}
+
+.subscription-card.service-globoplay {
+  background: rgba(95, 8, 24, 0.85);
+}
+
+.subscription-card.service-globoplay::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 120px;
+  height: 120px;
+  background-image: url('globoplay.png');
+  background-size: contain;
+  background-position: right center;
+  background-repeat: no-repeat;
+  opacity: 0.11;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+}
+
+/* Dynamic Logo Support */
+.subscription-card[style*="--card-logo"]::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 150px;
+  height: 150px;
+  background-image: var(--card-logo) !important;
+  background-size: contain;
+  background-position: right center;
+  background-repeat: no-repeat;
+  opacity: 0.11;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+}
+
+.subscription-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 1;
+}
+
 .payment-line {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   z-index: 1;
+}
+
+.subscription-title-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subscription-participants {
+  display: flex;
+  gap: 4px;
+}
+
+.card-participant-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .subscription-title {
@@ -757,7 +1108,7 @@ button {
 .payment-line span {
   display: block;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -767,43 +1118,138 @@ button {
   display: block;
   margin-top: 4px;
   color: #ffffff;
-  font-size: 1rem;
-  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
 }
 
 .details-panel {
-  display: grid;
-  gap: 16px;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-large);
   background: var(--surface);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   box-shadow: var(--shadow-xl);
-  overflow: hidden;
+  overflow: visible;
+  grid-column: 1 / -1;
+}
+
+.details-content {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.details-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  gap: 16px;
+  color: var(--details-muted);
+  text-align: center;
+}
+
+/* Dark background details panels - Loader Text */
+.details-panel.details-disney .details-loading-state,
+.details-panel.details-max .details-loading-state,
+.details-panel.details-spotify .details-loading-state,
+.details-panel.details-crunchyroll .details-loading-state,
+.details-panel.details-prime_video .details-loading-state,
+.details-panel.details-google_one .details-loading-state,
+.details-panel.details-f1_tv_pro .details-loading-state,
+.details-panel.details-globoplay .details-loading-state {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.loader-spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: details-spinner 0.6s linear infinite;
+}
+
+/* Dark background details panels - Spinner */
+.details-panel.details-disney .loader-spinner,
+.details-panel.details-max .loader-spinner,
+.details-panel.details-spotify .loader-spinner,
+.details-panel.details-crunchyroll .loader-spinner,
+.details-panel.details-prime_video .loader-spinner,
+.details-panel.details-google_one .loader-spinner,
+.details-panel.details-f1_tv_pro .loader-spinner,
+.details-panel.details-globoplay .loader-spinner {
+  border-color: rgba(255, 255, 255, 0.15);
+  border-top-color: white;
+}
+
+@keyframes details-spinner {
+  to { transform: rotate(360deg); }
+}
+
+.details-content.is-hidden {
+  display: none;
 }
 
 .details-panel.details-disney {
   background: rgba(4, 7, 20, 0.8);
   color: white;
 }
-.details-panel.details-disney .details-header h2,
-.details-panel.details-disney .eyebrow {
-  color: white;
-}
 
-.details-panel.details-max, .details-panel.details-spotify {
+.details-panel.details-max, 
+.details-panel.details-spotify {
   background: rgba(0, 0, 0, 0.8);
   color: white;
 }
 .details-panel.details-spotify {
   background: rgba(15, 60, 30, 0.85);
 }
+
+.details-panel.details-crunchyroll {
+  background: rgba(180, 60, 0, 0.85);
+  color: white;
+}
+
+.details-panel.details-prime_video {
+  background: rgba(0, 55, 75, 0.85);
+  color: white;
+}
+
+.details-panel.details-google_one {
+  background: rgba(4, 30, 71, 0.85);
+  color: white;
+}
+
+.details-panel.details-f1_tv_pro {
+  background: rgba(95, 0, 0, 0.85);
+  color: white;
+}
+
+.details-panel.details-globoplay {
+  background: rgba(95, 8, 24, 0.85);
+  color: white;
+}
+
+.details-panel.details-disney .details-header h2,
+.details-panel.details-disney .eyebrow,
 .details-panel.details-max .details-header h2,
 .details-panel.details-spotify .details-header h2,
 .details-panel.details-max .eyebrow,
-.details-panel.details-spotify .eyebrow {
+.details-panel.details-spotify .eyebrow,
+.details-panel.details-crunchyroll .details-header h2,
+.details-panel.details-crunchyroll .eyebrow,
+.details-panel.details-prime_video .details-header h2,
+.details-panel.details-prime_video .eyebrow,
+.details-panel.details-google_one .details-header h2,
+.details-panel.details-google_one .eyebrow,
+.details-panel.details-f1_tv_pro .details-header h2,
+.details-panel.details-f1_tv_pro .eyebrow,
+.details-panel.details-globoplay .details-header h2,
+.details-panel.details-globoplay .eyebrow {
   color: white;
 }
 
@@ -839,7 +1285,12 @@ button {
 
 .details-panel.details-disney .icon-button,
 .details-panel.details-max .icon-button,
-.details-panel.details-spotify .icon-button {
+.details-panel.details-spotify .icon-button,
+.details-panel.details-crunchyroll .icon-button,
+.details-panel.details-prime_video .icon-button,
+.details-panel.details-google_one .icon-button,
+.details-panel.details-f1_tv_pro .icon-button,
+.details-panel.details-globoplay .icon-button {
   background: rgba(255,255,255,0.1);
   color: white;
 }
@@ -864,7 +1315,12 @@ button {
 
 .details-panel.details-disney .tabs,
 .details-panel.details-max .tabs,
-.details-panel.details-spotify .tabs {
+.details-panel.details-spotify .tabs,
+.details-panel.details-crunchyroll .tabs,
+.details-panel.details-prime_video .tabs,
+.details-panel.details-google_one .tabs,
+.details-panel.details-f1_tv_pro .tabs,
+.details-panel.details-globoplay .tabs {
   background: rgba(255,255,255,0.1);
 }
 
@@ -879,7 +1335,12 @@ button {
 
 .details-panel.details-disney .tab-button,
 .details-panel.details-max .tab-button,
-.details-panel.details-spotify .tab-button {
+.details-panel.details-spotify .tab-button,
+.details-panel.details-crunchyroll .tab-button,
+.details-panel.details-prime_video .tab-button,
+.details-panel.details-google_one .tab-button,
+.details-panel.details-f1_tv_pro .tab-button,
+.details-panel.details-globoplay .tab-button {
   color: rgba(255,255,255,0.6);
 }
 
@@ -891,7 +1352,12 @@ button {
 
 .details-panel.details-disney .tab-button.is-active,
 .details-panel.details-max .tab-button.is-active,
-.details-panel.details-spotify .tab-button.is-active {
+.details-panel.details-spotify .tab-button.is-active,
+.details-panel.details-crunchyroll .tab-button.is-active,
+.details-panel.details-prime_video .tab-button.is-active,
+.details-panel.details-google_one .tab-button.is-active,
+.details-panel.details-f1_tv_pro .tab-button.is-active,
+.details-panel.details-globoplay .tab-button.is-active {
   background: rgba(255,255,255,0.2);
   color: white;
 }
@@ -913,7 +1379,6 @@ button {
   border-radius: 8px;
   background: var(--surface);
   font-size: 1rem;
-  font-family: var(--font-mono);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -936,13 +1401,26 @@ button {
 
 .details-panel.details-disney .year-controls strong,
 .details-panel.details-max .year-controls strong,
-.details-panel.details-spotify .year-controls strong {
+.details-panel.details-spotify .year-controls strong,
+.details-panel.details-crunchyroll .year-controls strong,
+.details-panel.details-prime_video .year-controls strong,
+.details-panel.details-google_one .year-controls strong,
+.details-panel.details-f1_tv_pro .year-controls strong,
+.details-panel.details-globoplay .year-controls strong {
   background: rgba(255,255,255,0.1);
   border-color: rgba(255,255,255,0.2);
 }
 
 .tab-panel {
-  overflow-x: auto;
+  overflow: visible;
+}
+
+.tab-panel:not(.is-hidden) {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.details-tabs-content {
+  overflow: visible;
 }
 
 .panel-actions {
@@ -951,6 +1429,7 @@ button {
   justify-content: flex-end;
   gap: 8px;
   margin-bottom: 12px;
+  overflow: visible;
 }
 
 .payment-list {
@@ -962,82 +1441,101 @@ button {
 }
 
 .payment-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+  display: flex;
   align-items: center;
-  padding: 12px 16px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
   border: 1px solid var(--surface-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: background 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .payment-item:hover {
   background: var(--surface-hover);
+  transform: translateX(4px);
+  border-color: var(--accent);
 }
 
-.details-panel.details-disney .payment-item,
-.details-panel.details-max .payment-item,
-.details-panel.details-spotify .payment-item {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
+.payment-info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
 
-.details-panel.details-disney .payment-item:hover,
-.details-panel.details-max .payment-item:hover,
-.details-panel.details-spotify .payment-item:hover {
-  background: rgba(255,255,255,0.1);
+.payment-item-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
 }
 
 .payment-item strong,
 .empty-state strong {
   display: block;
-  margin-bottom: 2px;
+  margin: 0;
   color: var(--details-strong);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .details-panel.details-disney .payment-item strong,
 .details-panel.details-max .payment-item strong,
 .details-panel.details-spotify .payment-item strong,
+.details-panel.details-crunchyroll .payment-item strong,
+.details-panel.details-prime_video .payment-item strong,
+.details-panel.details-google_one .payment-item strong,
+.details-panel.details-f1_tv_pro .payment-item strong,
+.details-panel.details-globoplay .payment-item strong,
 .details-panel.details-disney .empty-state strong,
 .details-panel.details-max .empty-state strong,
 .details-panel.details-spotify .empty-state strong {
   color: white;
 }
 
-.payment-item span {
-  color: var(--details-muted);
-  font-size: 0.8rem;
-}
+.payment-item span,
 .empty-state span {
   color: var(--details-muted);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .details-panel.details-disney .payment-item span,
 .details-panel.details-max .payment-item span,
 .details-panel.details-spotify .payment-item span,
+.details-panel.details-crunchyroll .payment-item span,
+.details-panel.details-prime_video .payment-item span,
+.details-panel.details-google_one .payment-item span,
+.details-panel.details-f1_tv_pro .payment-item span,
+.details-panel.details-globoplay .payment-item span,
 .details-panel.details-disney .empty-state span,
 .details-panel.details-max .empty-state span,
 .details-panel.details-spotify .empty-state span {
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.6);
 }
 
 .amount {
   color: var(--ink);
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
 }
 
 .details-panel.details-disney .amount,
 .details-panel.details-max .amount,
-.details-panel.details-spotify .amount {
+.details-panel.details-spotify .amount,
+.details-panel.details-crunchyroll .amount,
+.details-panel.details-prime_video .amount,
+.details-panel.details-google_one .amount,
+.details-panel.details-f1_tv_pro .amount,
+.details-panel.details-globoplay .amount {
   color: white;
 }
 
@@ -1089,6 +1587,15 @@ button {
 .sheet-table th:last-child,
 .sheet-table td:last-child {
   border-right: none;
+}
+
+.sheet-table th:not(:nth-child(1)):not(:nth-child(2)),
+.sheet-table td:not(:nth-child(1)):not(:nth-child(2)) {
+  text-align: center;
+}
+
+.sheet-table td:not(:nth-child(1)):not(:nth-child(2)) .status-actions {
+  justify-content: center;
 }
 
 .details-panel.details-disney .sheet-table th,
@@ -1168,20 +1675,13 @@ button {
   margin-right: 0;
 }
 
-.sheet-table td:last-child {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.status-pill.status-passou {
+.status-pill.status-atrasada {
   background: color-mix(in srgb, var(--danger) 16%, var(--surface));
   color: var(--danger);
 }
-.details-panel.details-disney .status-pill.status-passou,
-.details-panel.details-max .status-pill.status-passou,
-.details-panel.details-spotify .status-pill.status-passou {
+.details-panel.details-disney .status-pill.status-atrasada,
+.details-panel.details-max .status-pill.status-atrasada,
+.details-panel.details-spotify .status-pill.status-atrasada {
   background: rgba(225, 29, 72, 0.2);
   color: #ffa4bc;
 }
@@ -1208,28 +1708,460 @@ button {
   color: #93c5fd;
 }
 
-.is-hidden {
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+html[data-theme="dark"] .modal {
+  background: rgba(2, 6, 23, 0.85); /* Slightly darker for better contrast in dark mode */
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--surface-border-subtle);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.modal-body {
+  padding: 24px;
+  color: var(--details-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.modal-body p {
+  margin: 0;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--surface-border-subtle);
+  display: flex;
+  justify-content: flex-end;
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+}
+
+.tutorial-modal {
+  max-width: 520px;
+}
+
+.tutorial-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.tutorial-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.tutorial-icon-wrapper {
+  flex: 0 0 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  background: var(--surface-hover);
+  border: 1px solid var(--surface-border-subtle);
+}
+
+.tutorial-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+}
+
+.tutorial-button-example {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+}
+
+.tutorial-button-example img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.tutorial-button-example.mark-example {
+  background: var(--accent);
+}
+
+.tutorial-button-example.unmark-example {
+  background: var(--danger);
+  font-size: 0.85rem;
+}
+
+.tutorial-button-example.sync-example {
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.tutorial-text {
+  flex: 1;
+}
+
+.tutorial-text strong {
+  display: block;
+  color: var(--ink);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.tutorial-text p {
+  color: var(--details-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.primary-button {
+  min-height: 40px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.2);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.primary-button:hover,
+.primary-button:focus-visible {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+  outline: 0;
+}
+
+.is-hidden:not(.modal-overlay) {
   display: none !important;
 }
 
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.topbar {
+  animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.profile-screen:not(.is-hidden),
+.dashboard:not(.is-hidden) {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.profile-panel {
+  animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-item {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.subscription-list:not(.is-ready) .subscription-card {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered Profile items */
+.profile-item:nth-child(1) { animation-delay: 0.1s; }
+.profile-item:nth-child(2) { animation-delay: 0.18s; }
+.profile-item:nth-child(3) { animation-delay: 0.26s; }
+.profile-item:nth-child(4) { animation-delay: 0.34s; }
+.profile-item:nth-child(5) { animation-delay: 0.42s; }
+
+/* Staggered Subscription cards - only on first load */
+.subscription-list:not(.is-ready) .subscription-card:nth-child(1) { animation-delay: 0.05s; }
+.subscription-list:not(.is-ready) .subscription-card:nth-child(2) { animation-delay: 0.1s; }
+.subscription-list:not(.is-ready) .subscription-card:nth-child(3) { animation-delay: 0.15s; }
+.subscription-list:not(.is-ready) .subscription-card:nth-child(4) { animation-delay: 0.2s; }
+.subscription-list:not(.is-ready) .subscription-card:nth-child(5) { animation-delay: 0.25s; }
+.subscription-list:not(.is-ready) .subscription-card:nth-child(6) { animation-delay: 0.3s; }
+.subscription-list:not(.is-ready) .subscription-card:nth-child(7) { animation-delay: 0.35s; }
+.subscription-list:not(.is-ready) .subscription-card:nth-child(8) { animation-delay: 0.4s; }
+
+/* Generic Dark Theme Support for Details Panel */
+.details-panel:not(.is-hidden) {
+  animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.details-panel.is-custom-service .details-loading-state,
+.details-panel.is-custom-service .loader-spinner {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.15);
+  border-top-color: white;
+}
+
+.details-panel.is-custom-service .details-header h2,
+.details-panel.is-custom-service .eyebrow,
+.details-panel.is-custom-service .icon-button,
+.details-panel.is-custom-service .tab-button.is-active,
+.details-panel.is-custom-service .payment-item strong,
+.details-panel.is-custom-service .empty-state strong,
+.details-panel.is-custom-service .amount {
+  color: white !important;
+}
+
+.details-panel.is-custom-service .icon-button,
+.details-panel.is-custom-service .tabs,
+.details-panel.is-custom-service .year-controls strong,
+.details-panel.is-custom-service .table-responsive {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.details-panel.is-custom-service .tab-button {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.details-panel.is-custom-service .tab-button.is-active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.details-panel.is-custom-service .payment-item span,
+.details-panel.is-custom-service .empty-state span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.details-panel.is-custom-service .sheet-table th,
+.details-panel.is-custom-service .sheet-table td {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.details-panel.is-custom-service .sheet-table th {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.details-panel.is-custom-service .sheet-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.details-panel.is-custom-service .status-pill.status-atrasada {
+  background: rgba(225, 29, 72, 0.2);
+  color: #ffa4bc;
+}
+
+.details-panel.is-custom-service .status-pill.status-pago {
+  background: rgba(92, 198, 208, 0.2);
+  color: #93e3ea;
+}
+
+.details-panel.is-custom-service .status-pill.status-futuro {
+  background: rgba(96, 165, 250, 0.2);
+  color: #93c5fd;
+}
+
+@media (max-width: 768px) {
+  .details-panel.is-custom-service .payment-item-right {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.modal-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100;
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-overlay.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  display: flex !important;
+  pointer-events: none;
+}
+
+.modal-overlay.is-hidden .modal {
+  transform: scale(0.9) translateY(20px);
+}
+
+.modal {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.top-actions .ghost-button,
+.ghost-button,
+.icon-button,
+.tab-button,
+.profile-form button,
+.payment-action-button,
+.profile-item,
+.subscription-card,
+.summary-pill {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.subscription-card:hover:not(.is-selected) {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.profile-item:hover .profile-avatar {
+  transform: translateY(-4px) rotate(2deg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+
 @media (max-width: 760px) {
+  .notification-status:empty {
+    display: none;
+  }
+
+  .dashboard {
+    gap: 16px;
+  }
+
+  .notification-status {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    min-height: auto;
+  }
+
   .app-shell {
     width: min(100% - 24px, 1080px);
     padding-top: 16px;
   }
 
   .topbar {
-    align-items: start;
-    padding: 12px 16px;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .brand-lockup {
+    flex-shrink: 1;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand-lockup strong {
+    font-size: 0.9rem;
+  }
+
+  .brand-lockup span:not(.brand-mark) {
+    font-size: 0.7rem;
+  }
+
+  .profile-selection-title {
+    margin-top: 0;
+    margin-bottom: 16px;
   }
 
   .top-actions {
-    max-width: 180px;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    justify-content: end;
+    flex-shrink: 0;
   }
 
   .profile-panel {
-    padding: 24px;
-    gap: 32px;
+    padding: 24px 16px;
+    gap: 16px;
   }
 
   .profile-copy { 
@@ -1265,10 +2197,34 @@ button {
   }
 
   .input-row,
-  .subscription-list,
   .welcome-row,
   .payment-item {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .subscription-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .payment-item-right {
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--surface-border-subtle);
+  }
+
+  .details-panel.details-disney .payment-item-right,
+  .details-panel.details-max .payment-item-right,
+  .details-panel.details-spotify .payment-item-right,
+  .details-panel.details-crunchyroll .payment-item-right,
+  .details-panel.details-prime_video .payment-item-right,
+  .details-panel.details-google_one .payment-item-right,
+  .details-panel.details-f1_tv_pro .payment-item-right,
+  .details-panel.details-globoplay .payment-item-right {
+    border-top-color: rgba(255, 255, 255, 0.1);
   }
 
   .input-row {
@@ -1276,14 +2232,25 @@ button {
   }
 
   .welcome-row {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     align-items: stretch;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .welcome-summary {
+    display: flex;
     gap: 12px;
+    width: 100%;
+    margin: 0;
+    justify-content: stretch;
   }
 
   .summary-pill {
-    text-align: left;
-    padding: 12px 16px;
+    flex: 1;
+    min-width: 0;
+    width: auto;
   }
 
   .subscription-top,
@@ -1301,12 +2268,23 @@ button {
   }
 
   .year-controls {
-    grid-template-columns: 1fr;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .payment-item .payment-action-button {
-    justify-self: end;
+  #syncSheetsButton {
+    font-size: 0;
+    color: transparent;
+    padding: 0;
+    min-width: 40px;
+    justify-content: center;
   }
+
+  #syncSheetsButton .sync-icon-img {
+    margin-right: 0;
+  }
+
 
   .table-responsive {
     border: none;
@@ -1347,7 +2325,8 @@ button {
     border-color: rgba(255, 255, 255, 0.1);
   }
 
-  .sheet-table td {
+  .sheet-table td,
+  .sheet-table td:not(:nth-child(1)):not(:nth-child(2)) {
     border: none;
     border-bottom: 1px solid var(--surface-border-subtle);
     position: relative;
@@ -1357,6 +2336,10 @@ button {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+  }
+
+  .sheet-table td:not(:nth-child(1)):not(:nth-child(2)) .status-actions {
+    justify-content: flex-end;
   }
 
   .details-panel.details-disney .sheet-table td,
@@ -1400,4 +2383,9 @@ button {
   .share-type {
     width: max-content;
   }
+}
+
+/* Estilos para Reordenação (SortableJS) */
+.subscription-card:active {
+  cursor: default;
 }
