@@ -848,8 +848,10 @@ function renderUpcomingPayments(serviceKey, personKey) {
   return `
     <div class="panel-actions">
       <button class="ghost-button calendar-button" type="button" data-add-calendar>
-        <img src="Google_Calendar_icon_(2020).svg.png" alt="Google Agenda" class="calendar-logo" />
-        Abrir no Google Agenda
+        <span class="calendar-button-content">
+          <img src="Google_Calendar_icon_(2020).svg.png" alt="Google Agenda" class="calendar-logo" />
+          Abrir no Google Agenda
+        </span>
       </button>
       <button class="ghost-button" type="button" data-test-notification>
         Testar notificação
@@ -1066,14 +1068,14 @@ function openGoogleCalendarEvent() {
     state.selectedServiceKey,
     nextPayment.date,
   );
-  const openedWindow = window.open(calendarUrl, '_blank', 'noopener');
-
-  if (!openedWindow) {
-    window.location.href = calendarUrl;
-  }
+  
+  // Abrimos em uma nova aba/contexto para evitar que a navegação ocorra na aba atual do app.
+  // Em dispositivos móveis, o sistema interceptará o link e abrirá o aplicativo do Google Agenda.
+  // Ao fechar o app, o usuário voltará para esta aba intacta.
+  window.open(calendarUrl, '_blank', 'noopener');
 
   setNotificationStatus(
-    'O Google Agenda foi aberto com o evento preenchido. Revise os lembretes e salve o evento.',
+    'O Google Agenda foi aberto. Revise e salve o evento.',
   );
 }
 
@@ -1625,7 +1627,7 @@ function setNotificationStatus(message, showAsSystem = false) {
     const title = message.includes('erro') || message.includes('Falha') || message.includes('Erro') ? 'Aviso de Sincronização' : 'Sincronização';
     showBrowserNotification(title, {
       body: message,
-      icon: '/icon-192x192.png',
+      icon: '/App-icon.png',
       tag: 'sync-status',
       renotify: true
     }).catch(err => console.warn('Não foi possível exibir notificação do sistema:', err));
