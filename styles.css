@@ -135,10 +135,35 @@ button {
   width: min(1080px, calc(100% - 32px));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 24px 0 48px;
+  padding: 16px 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
+}
+
+.app-footer {
+  text-align: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  border: none;
+  margin-top: auto;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+.app-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.app-footer a:hover {
+  color: var(--ink);
 }
 
 .topbar {
@@ -420,7 +445,7 @@ button {
 
 .profile-screen {
   display: grid;
-  min-height: calc(100vh - 144px);
+  min-height: calc(100vh - 200px);
   place-items: center;
 }
 
@@ -428,7 +453,7 @@ button {
   display: flex;
   flex-direction: column;
   width: min(1000px, 100%);
-  gap: 40px;
+  gap: 16px;
   align-items: center;
   padding: clamp(30px, 5vw, 60px);
   border: 1px solid var(--surface-border);
@@ -536,7 +561,6 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 24px;
-  padding-top: 10px;
   order: 2;
 }
 
@@ -547,7 +571,8 @@ button {
 }
 
 .profile-selection-title {
-  margin-bottom: 32px;
+  margin-top: 8px;
+  margin-bottom: 24px;
   color: var(--ink);
   font-size: clamp(1.5rem, 3vw, 2.5rem);
   font-weight: 700;
@@ -1498,6 +1523,15 @@ button {
   border-right: none;
 }
 
+.sheet-table th:not(:nth-child(1)):not(:nth-child(2)),
+.sheet-table td:not(:nth-child(1)):not(:nth-child(2)) {
+  text-align: center;
+}
+
+.sheet-table td:not(:nth-child(1)):not(:nth-child(2)) .status-actions {
+  justify-content: center;
+}
+
 .details-panel.details-disney .sheet-table th,
 .details-panel.details-max .sheet-table th,
 .details-panel.details-spotify .sheet-table th,
@@ -1573,13 +1607,6 @@ button {
 
 .sheet-table td .amount {
   margin-right: 0;
-}
-
-.sheet-table td:last-child {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
 }
 
 .status-pill.status-atrasada {
@@ -1979,6 +2006,11 @@ html[data-theme="dark"] .modal {
     font-size: 0.7rem;
   }
 
+  .profile-selection-title {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
   .top-actions {
     display: flex;
     flex-wrap: nowrap;
@@ -1988,8 +2020,8 @@ html[data-theme="dark"] .modal {
   }
 
   .profile-panel {
-    padding: 24px;
-    gap: 32px;
+    padding: 24px 16px;
+    gap: 16px;
   }
 
   .profile-copy { 
@@ -2153,7 +2185,8 @@ html[data-theme="dark"] .modal {
     border-color: rgba(255, 255, 255, 0.1);
   }
 
-  .sheet-table td {
+  .sheet-table td,
+  .sheet-table td:not(:nth-child(1)):not(:nth-child(2)) {
     border: none;
     border-bottom: 1px solid var(--surface-border-subtle);
     position: relative;
@@ -2163,6 +2196,10 @@ html[data-theme="dark"] .modal {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+  }
+
+  .sheet-table td:not(:nth-child(1)):not(:nth-child(2)) .status-actions {
+    justify-content: flex-end;
   }
 
   .details-panel.details-disney .sheet-table td,

@@ -919,13 +919,9 @@ function renderMonthlySheet(serviceKey, year) {
       const participantCells = service.participants
         .map((participantKey) => {
           const paid = isPaymentPaid(participantKey, { serviceKey, date });
-          const isCurrentUser = participantKey === state.currentPersonKey;
-          const actionButton = isCurrentUser
-            ? `<button class="ghost-button action-btn" type="button" data-toggle-paid data-person="${participantKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
-            : '';
           const innerContent = paid
-            ? `<div class="status-actions"><span class="status-pill status-pago">pago</span>${actionButton}</div>`
-            : `<div class="status-actions"><span class="amount">${moneyFormatter.format(service.amount)}</span>${actionButton}</div>`;
+            ? `<div class="status-actions"><span class="status-pill status-pago">pago</span></div>`
+            : `<div class="status-actions"><span class="amount">${moneyFormatter.format(service.amount)}</span></div>`;
           return `<td data-label="${PEOPLE[participantKey].name}">${innerContent}</td>`;
         })
         .join('');
@@ -973,17 +969,13 @@ function renderRotationSheet(serviceKey, year) {
             : status === 'futuro'
               ? ' status-futuro'
               : '';
-      const actionButton =
-        payerKey === state.currentPersonKey
-          ? `<button class="ghost-button" type="button" data-toggle-paid data-person="${payerKey}" data-service="${serviceKey}" data-date-ms="${date.getTime()}">${paid ? 'Desfazer pago' : 'Marcar como pago'}</button>`
-          : '';
       return `
         <tr>
           <td data-label="Mês">${capitalize(MONTHS[date.getMonth()])}</td>
           <td data-label="Data">${formatLongDate(date)}</td>
           <td data-label="Responsável">${PEOPLE[payerKey].name}</td>
           <td data-label="Valor"><span class="amount">${moneyFormatter.format(SERVICES[serviceKey].amount)}</span></td>
-          <td data-label="Status"><div class="status-actions"><span class="status-pill${statusClass}">${status}</span>${actionButton}</div></td>
+          <td data-label="Status"><div class="status-actions"><span class="status-pill${statusClass}">${status}</span></div></td>
         </tr>
       `;
     })
