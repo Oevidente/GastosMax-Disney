@@ -332,17 +332,8 @@ button {
   justify-content: center;
   gap: 8px;
   position: relative;
-<<<<<<< HEAD
   border-color: transparent; /* so original border doesn't clash with the conic gradient ::after */
   /* Instead of an outer padding wrapper, we let it be exactly the size of a ghost-button */
-=======
-  padding: 1px; /* Espaçamento para a borda */
-  border-radius: var(--radius);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s ease;
->>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   z-index: 1;
 }
 
@@ -350,7 +341,6 @@ button {
   transform: translateY(-2px);
 }
 
-<<<<<<< HEAD
 /* O brilho exterior suave */
 .ghost-button.calendar-button::before {
   content: '';
@@ -385,50 +375,10 @@ button {
 }
 
 /* A Borda Colorida Nítida recortada (para não vazar no fundo transparente do botão) */
-=======
-.ghost-button.calendar-button:hover::before {
-  filter: blur(14px);
-  opacity: 0.8;
-}
-
-.calendar-button-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: rgba(15, 23, 42, 0.4); /* Fundo com 40% de opacidade (ajustado para o tom var(--bg)) */
-  backdrop-filter: blur(8px);
-  border-radius: calc(var(--radius) - 1px);
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  position: relative;
-}
-
-/* O Brilho Intenso (Glow) - permanece apenas atrás da borda */
-.ghost-button.calendar-button::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
-  bottom: -4px;
-  background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc05, #34a853, #4285f4);
-  background-size: 200%;
-  border-radius: calc(var(--radius) + 4px);
-  z-index: -1;
-  filter: blur(10px) brightness(1.1);
-  opacity: 0.4;
-  animation: liquidGlow 6s linear infinite;
-}
-
-/* A Borda Colorida Nítida - Agora restrita apenas ao contorno via Mask */
->>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 .ghost-button.calendar-button::after {
   content: '';
   position: absolute;
   inset: 0;
-<<<<<<< HEAD
   border-radius: var(--radius);
   padding: 1.5px; /* A espessura que queremos para o arco-íris */
   background: conic-gradient(
@@ -442,29 +392,13 @@ button {
     var(--conic-red-color) 322deg,
     var(--outline-var) 1turn
   );
-=======
-  padding: 1px; /* Espessura da borda */
-  border-radius: var(--radius);
-  background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc05, #34a853, #4285f4);
-  background-size: 200%;
->>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-<<<<<<< HEAD
   animation: rotate-calendar-btn-border 4s linear infinite;
   pointer-events: none;
   z-index: 1; /* Sits naturally over the button, visually acting as its border */
-=======
-  z-index: 1;
-  animation: liquidGlow 6s linear infinite;
-}
-
-@keyframes liquidGlow {
-  0% { background-position: 0% 0; }
-  100% { background-position: 200% 0; }
->>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 }
 
 .calendar-logo {
@@ -1081,7 +1015,6 @@ button {
   filter: brightness(0) invert(1);
 }
 
-<<<<<<< HEAD
 /* Dynamic Logo Support */
 .subscription-card[style*="--card-logo"]::before {
   content: '';
@@ -1108,9 +1041,6 @@ button {
   z-index: 1;
 }
 
-=======
-.subscription-top,
->>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 .payment-line {
   display: flex;
   align-items: center;
@@ -2039,15 +1969,11 @@ html[data-theme="dark"] .modal {
 .subscription-list:not(.is-ready) .subscription-card:nth-child(7) { animation-delay: 0.35s; }
 .subscription-list:not(.is-ready) .subscription-card:nth-child(8) { animation-delay: 0.4s; }
 
-<<<<<<< HEAD
 /* Generic Dark Theme Support for Details Panel */
-=======
->>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 .details-panel:not(.is-hidden) {
   animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-<<<<<<< HEAD
 .details-panel.is-custom-service .details-loading-state,
 .details-panel.is-custom-service .loader-spinner {
   color: rgba(255, 255, 255, 0.8);
@@ -2121,8 +2047,6 @@ html[data-theme="dark"] .modal {
   }
 }
 
-=======
->>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 .modal-overlay {
   display: flex;
   position: fixed;
@@ -2462,31 +2386,6 @@ html[data-theme="dark"] .modal {
 }
 
 /* Estilos para Reordenação (SortableJS) */
-<<<<<<< HEAD
 .subscription-card:active {
   cursor: default;
-=======
-.subscription-card {
-  cursor: grab !important;
-  user-select: none;
-  touch-action: manipulation;
-}
-
-.subscription-card:active {
-  cursor: grabbing !important;
-}
-
-.sortable-ghost {
-  opacity: 0.3;
-  transform: scale(0.95);
-  border: 2px dashed var(--accent) !important;
-  background: var(--soft) !important;
-}
-
-.sortable-drag {
-  opacity: 0.9;
-  transform: rotate(2deg) scale(1.05);
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6) !important;
-  z-index: 1000;
->>>>>>> c17ff502a7ac085103634f3933a170d006bc0362
 }
