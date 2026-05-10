@@ -175,9 +175,7 @@ function loadAdminSettings() {
   let settingsStr = localStorage.getItem('site_settings');
 
   // Tentar encontrar configurações globais nos logs (pode estar em 'admin' ou personKey atual)
-  const settingsProviders = ['admin', state?.currentPersonKey].filter(
-    Boolean,
-  );
+  const settingsProviders = ['admin', state?.currentPersonKey].filter(Boolean);
 
   for (const provider of settingsProviders) {
     const providerLogs = paidLogsCache[provider];
@@ -346,7 +344,7 @@ const MONTHS = [
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbzR-jA71KTzLGt7P3xq5tLM5WaZlYN9ue34H6Vp43GS3Fo8h1GG0qab21Qkk9FVCHX6/exec'.trim();
+  'https://script.google.com/macros/s/AKfycbxzSoRdRwYOf0tKwSb6HIr2TozXWjtVYPb2kjoKXRyGs4ooROj8C2YJUvwI1UJVabNo/exec'.trim();
 
 // Estado global da aplicação
 
@@ -672,8 +670,9 @@ async function handleProfileSubmit() {
     return;
   }
 
-  saveProfile(personKey);
-  openDashboard(personKey);
+  // saveProfile(personKey);
+  // openDashboard(personKey);
+  handleProfileClick(personKey);
 }
 
 function restoreProfile() {
@@ -712,8 +711,9 @@ function renderProfileSelection() {
     button.addEventListener('click', () => {
       const personKey = button.dataset.person;
       if (personKey && PEOPLE[personKey]) {
-        saveProfile(personKey);
-        openDashboard(personKey);
+        // saveProfile(personKey);
+        // openDashboard(personKey);
+        handleProfileClick(personKey);
       }
     });
   });
@@ -785,7 +785,7 @@ async function openDashboard(personKey) {
       await fetchPaidLogs();
 
       // fetchPaidLogs já chama updateUIAfterSync que renderiza
-      
+
       if (!isSyncingManual) {
         setNotificationStatus('');
       }
@@ -1980,10 +1980,11 @@ function normalizePaidLogs(data) {
 
   Object.entries(data).forEach(([personKey, personLogs]) => {
     // Normalizar a chave da pessoa usando a lógica do app (mapeamento + fallback)
-    const normPKey = findPersonKey(personKey) || normalizeName(personKey).replace(/[\s-]+/g, '_');
-    
-    if (!normPKey || metadataKeys.includes(normPKey))
-      return;
+    const normPKey =
+      findPersonKey(personKey) ||
+      normalizeName(personKey).replace(/[\s-]+/g, '_');
+
+    if (!normPKey || metadataKeys.includes(normPKey)) return;
     if (
       typeof personLogs !== 'object' ||
       personLogs === null ||
@@ -2025,16 +2026,16 @@ function rowsArrayToLogs(rows) {
       // Usar as chaves exatas que o Apps Script retorna (camelCase)
       const pKey = row.personKey;
       const payKey = row.paymentKey;
-      
+
       if (!pKey || !payKey) return;
 
       // Status de pagamento seguindo a lógica do normalizeBoolean do Code.gs
       const p = row.pago !== undefined ? row.pago : row.paid;
       const isPaid =
-        p === true || 
-        String(p).toLowerCase() === 'true' || 
-        String(p).toLowerCase() === 'sim' || 
-        String(p) === '1' || 
+        p === true ||
+        String(p).toLowerCase() === 'true' ||
+        String(p).toLowerCase() === 'sim' ||
+        String(p) === '1' ||
         String(p).toLowerCase() === 'pago';
 
       if (isPaid) {
@@ -2309,27 +2310,27 @@ function findServiceKey(rawName) {
 
   // Mapeamento manual para compatibilidade com o servidor (igual ao Code.gs)
   const manualMap = {
-    'disney': 'disney',
+    disney: 'disney',
     'disney+': 'disney',
-    'hbo': 'max',
-    'max': 'max',
+    hbo: 'max',
+    max: 'max',
     'hbo max': 'max',
-    'spotify': 'spotify',
-    'crunchyroll': 'crunchyroll',
+    spotify: 'spotify',
+    crunchyroll: 'crunchyroll',
     'prime video': 'prime_video',
-    'prime_video': 'prime_video',
+    prime_video: 'prime_video',
     'google one': 'google_one',
-    'google_one': 'google_one',
+    google_one: 'google_one',
     'f1 tv pro': 'f1_tv_pro',
-    'f1_tv_pro': 'f1_tv_pro',
-    'globoplay': 'globoplay',
+    f1_tv_pro: 'f1_tv_pro',
+    globoplay: 'globoplay',
   };
 
   if (manualMap[normalized]) return manualMap[normalized];
 
   return (
-    Object.entries(SERVICES).find(([k, s]) =>
-      k === normalized || normalizeName(s.name) === normalized
+    Object.entries(SERVICES).find(
+      ([k, s]) => k === normalized || normalizeName(s.name) === normalized,
     )?.[0] ?? normalized.replace(/[\s-]+/g, '_')
   );
 }
@@ -2770,3 +2771,145 @@ async function saveGlobalConfig() {
 function generateKey() {
   return Math.random().toString(36).substring(2, 9);
 }
+
+// ==========================================
+// SISTEMA DE SENHAS COM DICA
+// ==========================================
+let currentAuthAction = null;
+let authenticatingPerson = null;
+let currentHintText = '';
+
+async function handleProfileClick(personKey) {
+  const passwordModal = document.querySelector('#passwordModal');
+  const passwordModalTitle = document.querySelector('#passwordModalTitle');
+  const passwordModalMessage = document.querySelector('#passwordModalMessage');
+  const passwordInputContainer = document.querySelector(
+    '#passwordInputContainer',
+  );
+  const passwordInput = document.querySelector('#passwordInput');
+  const hintInput = document.querySelector('#hintInput');
+  const showHintBtn = document.querySelector('#showHintBtn');
+  const hintTextDisplay = document.querySelector('#hintTextDisplay');
+  const passwordError = document.querySelector('#passwordError');
+  const passwordSubmitBtn = document.querySelector('#passwordSubmitBtn');
+
+  authenticatingPerson = personKey;
+
+  if (!API_URL || API_URL.includes('COLA_TUA_URL')) {
+    saveProfile(personKey);
+    openDashboard(personKey);
+    return;
+  }
+
+  passwordModal.classList.remove('is-hidden');
+  passwordModalTitle.textContent = PEOPLE[personKey].name;
+  passwordModalMessage.textContent = 'Verificando segurança...';
+  passwordInputContainer.classList.add('is-hidden');
+  passwordSubmitBtn.style.display = 'none';
+  passwordError.textContent = '';
+  passwordInput.value = '';
+  hintInput.value = '';
+  hintTextDisplay.style.display = 'none';
+  showHintBtn.style.display = 'none';
+  hintInput.style.display = 'none';
+
+  try {
+    const timestamp = Date.now();
+    const url = `${API_URL}?action=has_password&personKey=${personKey}&t=${timestamp}`;
+    const res = await fetch(url, { redirect: 'follow' });
+    const data = await res.json();
+
+    passwordInputContainer.classList.remove('is-hidden');
+    passwordSubmitBtn.style.display = 'block';
+
+    if (data.hasPassword) {
+      currentAuthAction = 'login';
+      currentHintText = data.hint || 'Nenhuma dica cadastrada.';
+      passwordModalMessage.textContent =
+        'Este perfil é protegido. Digite sua senha:';
+      passwordSubmitBtn.textContent = 'Entrar';
+      showHintBtn.style.display = 'block'; // Mostra botão de dica
+    } else {
+      currentAuthAction = 'create';
+      passwordModalMessage.textContent =
+        'Crie uma senha e uma dica para proteger seu perfil:';
+      passwordSubmitBtn.textContent = 'Salvar e Entrar';
+      hintInput.style.display = 'block'; // Mostra campo para criar a dica
+    }
+    setTimeout(() => passwordInput.focus(), 100);
+  } catch (err) {
+    passwordModalMessage.textContent = 'Erro de conexão. Tente novamente.';
+  }
+}
+
+// Botões do Modal
+document.addEventListener('click', async (event) => {
+  if (event.target.closest('#closePasswordModal')) {
+    document.querySelector('#passwordModal').classList.add('is-hidden');
+  }
+
+  if (event.target.closest('#showHintBtn')) {
+    const hintDisplay = document.querySelector('#hintTextDisplay');
+    hintDisplay.textContent = `💡 Dica: ${currentHintText}`;
+    hintDisplay.style.display = 'block';
+    event.target.style.display = 'none';
+  }
+
+  if (event.target.closest('#passwordSubmitBtn')) {
+    const passwordInput = document.querySelector('#passwordInput');
+    const hintInput = document.querySelector('#hintInput');
+    const passwordError = document.querySelector('#passwordError');
+    const passwordSubmitBtn = document.querySelector('#passwordSubmitBtn');
+    const pass = passwordInput.value.trim();
+
+    if (!pass) {
+      passwordError.textContent = 'A senha não pode ser vazia.';
+      return;
+    }
+    if (currentAuthAction === 'create' && !hintInput.value.trim()) {
+      passwordError.textContent = 'Por favor, crie uma dica para sua senha.';
+      return;
+    }
+
+    passwordSubmitBtn.disabled = true;
+    passwordSubmitBtn.textContent = 'Aguarde...';
+    passwordError.textContent = '';
+
+    try {
+      if (currentAuthAction === 'login') {
+        const timestamp = Date.now();
+        const url = `${API_URL}?action=check_password&personKey=${authenticatingPerson}&password=${encodeURIComponent(pass)}&t=${timestamp}`;
+        const res = await fetch(url, { redirect: 'follow' });
+        const data = await res.json();
+
+        if (data.match) {
+          document.querySelector('#passwordModal').classList.add('is-hidden');
+          saveProfile(authenticatingPerson);
+          openDashboard(authenticatingPerson);
+        } else {
+          passwordError.textContent = 'Senha incorreta.';
+        }
+      } else if (currentAuthAction === 'create') {
+        await fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify({
+            action: 'set_password',
+            personKey: authenticatingPerson,
+            newPassword: pass,
+            hint: hintInput.value.trim(),
+          }),
+        });
+        document.querySelector('#passwordModal').classList.add('is-hidden');
+        saveProfile(authenticatingPerson);
+        openDashboard(authenticatingPerson);
+      }
+    } catch (err) {
+      passwordError.textContent = 'Erro de comunicação com o servidor.';
+    } finally {
+      passwordSubmitBtn.disabled = false;
+      passwordSubmitBtn.textContent =
+        currentAuthAction === 'login' ? 'Entrar' : 'Salvar e Entrar';
+    }
+  }
+});

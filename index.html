@@ -56,7 +56,7 @@
                 <!-- Perfis serão inseridos aqui via JS -->
               </div>
             </div>
-            
+
             <form class="profile-form is-hidden" id="profileForm" autocomplete="off">
               <label for="profileNameInput">Ou digite seu nome</label>
               <div class="input-row">
@@ -135,7 +135,7 @@
           </div>
         </section>
       </section>
-      
+
       <section class="admin-screen is-hidden" id="adminScreen">
         <div class="admin-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
           <h2>Área do Administrador</h2>
@@ -149,7 +149,7 @@
             </div>
             <div id="adminServicesList" style="display: flex; flex-direction: column; gap: 12px;"></div>
           </div>
-          
+
           <div class="admin-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <h3>Perfis de Usuários</h3>
@@ -202,9 +202,9 @@
           </div>
           <div class="tutorial-item">
             <div class="tutorial-icon-wrapper">
-               <span class="tutorial-button-example mark-example">
-                 <img src="icones/icons8-pay-100.png" alt="" />
-               </span>
+              <span class="tutorial-button-example mark-example">
+                <img src="icones/icons8-pay-100.png" alt="" />
+              </span>
             </div>
             <div class="tutorial-text">
               <strong>Marcar como Pago</strong>
@@ -213,9 +213,9 @@
           </div>
           <div class="tutorial-item">
             <div class="tutorial-icon-wrapper">
-               <span class="tutorial-button-example unmark-example">
-                 <img src="icones/icons8-undo-pay-100.png" alt="" />
-               </span>
+              <span class="tutorial-button-example unmark-example">
+                <img src="icones/icons8-undo-pay-100.png" alt="" />
+              </span>
             </div>
             <div class="tutorial-text">
               <strong>Desmarcar Pagamento</strong>
@@ -224,9 +224,9 @@
           </div>
           <div class="tutorial-item">
             <div class="tutorial-icon-wrapper">
-               <span class="tutorial-button-example sync-example">
-                 <img src="icones/icons8-sync-100.png" alt="" class="tutorial-icon" style="filter: none" />
-               </span>
+              <span class="tutorial-button-example sync-example">
+                <img src="icones/icons8-sync-100.png" alt="" class="tutorial-icon" style="filter: none" />
+              </span>
             </div>
             <div class="tutorial-text">
               <strong>Sincronizar</strong>
@@ -254,6 +254,34 @@
             <button class="primary-button" id="adminModalSaveButton" type="button">Salvar</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SENHA COM DICA -->
+  <div id="passwordModal" class="modal-overlay is-hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="passwordModalTitle">Acesso Restrito</h2>
+        <button type="button" id="closePasswordModal" class="icon-button" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <p id="passwordModalMessage" style="color: var(--ink); font-weight: 500;">Buscando credenciais...</p>
+        <div id="passwordInputContainer" class="is-hidden" style="display: flex; flex-direction: column; gap: 8px;">
+          <input type="password" id="passwordInput" placeholder="Sua senha" style="padding: 14px; border-radius: 8px; border: 1px solid var(--surface-border); background: var(--surface); color: var(--ink); width: 100%; font-size: 1rem;" />
+
+          <!-- Campo para CRIAR a dica -->
+          <input type="text" id="hintInput" placeholder="Dica para lembrar a senha (ex: nome do meu pet)" style="padding: 14px; border-radius: 8px; border: 1px solid var(--surface-border); background: var(--surface); color: var(--ink); width: 100%; font-size: 0.9rem; display: none;" />
+
+          <!-- Botão para VER a dica -->
+          <button type="button" id="showHintBtn" class="ghost-button" style="display: none; width: fit-content; padding: 6px 12px; font-size: 0.75rem; margin-top: 4px;">Esqueci a senha (Ver Dica)</button>
+          <p id="hintTextDisplay" style="display: none; font-size: 0.85rem; color: var(--accent-strong); margin: 0; padding-left: 4px; font-style: italic;"></p>
+
+          <p id="passwordError" class="form-message"></p>
+        </div>
+      </div>
+      <div class="modal-footer" id="passwordFooter">
+        <button type="button" id="passwordSubmitBtn" class="primary-button" style="display: none; width: 100%;">Entrar</button>
       </div>
     </div>
   </div>
