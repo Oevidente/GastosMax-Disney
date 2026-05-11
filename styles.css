@@ -467,7 +467,7 @@ button {
 .profile-panel {
   display: flex;
   flex-direction: column;
-  width: min(1000px, 100%);
+  width: min(1080px, 100%);
   gap: 16px;
   align-items: center;
   padding: clamp(30px, 5vw, 60px);
@@ -2446,6 +2446,86 @@ html[data-theme="dark"] .modal {
   text-transform: uppercase;
   font-weight: 800;
   letter-spacing: 0.05em;
+}
+
+/* Group context improvements */
+.group-context-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto 24px;
+  box-shadow: var(--shadow-xl);
+}
+
+.group-info-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+}
+
+.group-details {
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.group-details .eyebrow {
+  margin: 0 0 2px;
+  font-size: 0.65rem;
+  opacity: 0.8;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.group-details strong {
+  display: block;
+  font-size: 1.15rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.group-actions-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rename-box-inline {
+  width: 100%;
+  padding-top: 16px;
+  border-top: 1px solid var(--surface-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rename-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.rename-input-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background: var(--soft);
+  color: var(--ink);
+  font-size: 0.9rem;
 }
 
 .invoice-item-right {

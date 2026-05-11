@@ -3,11 +3,11 @@ const SETTINGS = {
   upcomingPaymentLimit: 6,
   calendarMonthsAhead: 24,
   calendarEventHour: 9,
-  calendarTimeZone: 'America/Fortaleza',
+  calendarTimeZone: "America/Fortaleza",
   reminderDaysBefore: 3,
   refreshMinutes: 30,
   maxRotationStartMonth: 5,
-  maxRotation: ['sarha', 'andre', 'isabela', 'ianka'],
+  maxRotation: ["sarha", "andre", "isabela", "ianka"],
 };
 
 // Estado global da aplicação
@@ -15,7 +15,8 @@ const state = {
   currentPersonKey: null,
   selectedServiceKey: null,
   selectedYear: new Date().getFullYear(),
-  groupId: localStorage.getItem('streaming-payments-group-id') || null,
+  groupId: localStorage.getItem("streaming-payments-group-id") || null,
+  groupName: localStorage.getItem("streaming-payments-group-name") || null,
 };
 
 let refreshIntervalId = null;
@@ -24,117 +25,117 @@ let serviceWorkerRegistrationPromise = null;
 
 let PEOPLE = {
   andre: {
-    name: 'André Luiz',
-    aliases: ['andre', 'andré'],
+    name: "André Luiz",
+    aliases: ["andre", "andré"],
     subscriptions: [
-      'disney',
-      'max',
-      'spotify',
-      'crunchyroll',
-      'prime_video',
-      'google_one',
-      'f1_tv_pro',
-      'globoplay',
+      "disney",
+      "max",
+      "spotify",
+      "crunchyroll",
+      "prime_video",
+      "google_one",
+      "f1_tv_pro",
+      "globoplay",
     ],
-    color: '#4f46e5',
-    avatar: 'AL',
+    color: "#4f46e5",
+    avatar: "AL",
     isAdmin: true,
   },
   isabela: {
-    name: 'Bela Lustosa',
-    aliases: ['isabela'],
-    subscriptions: ['disney', 'max', 'spotify'],
-    color: '#ec4899',
-    avatar: 'BL',
+    name: "Bela Lustosa",
+    aliases: ["isabela"],
+    subscriptions: ["disney", "max", "spotify"],
+    color: "#ec4899",
+    avatar: "BL",
   },
   ianka: {
-    name: 'Ianka Lacerda',
-    aliases: ['ianka'],
-    subscriptions: ['disney', 'max'],
-    color: '#10b981',
-    avatar: 'IL',
+    name: "Ianka Lacerda",
+    aliases: ["ianka"],
+    subscriptions: ["disney", "max"],
+    color: "#10b981",
+    avatar: "IL",
   },
   sarha: {
-    name: 'Sarha Pedrosa',
-    aliases: ['sarha'],
-    subscriptions: ['max'],
-    color: '#f59e0b',
-    avatar: 'SP',
+    name: "Sarha Pedrosa",
+    aliases: ["sarha"],
+    subscriptions: ["max"],
+    color: "#f59e0b",
+    avatar: "SP",
   },
 };
 
 let SERVICES = {
   disney: {
-    name: 'Disney+',
-    shortName: 'D+',
-    cssClass: 'service-disney',
-    model: 'monthly',
-    modelLabel: 'Todo mês',
+    name: "Disney+",
+    shortName: "D+",
+    cssClass: "service-disney",
+    model: "monthly",
+    modelLabel: "Todo mês",
     totalAmount: 66.93,
-    participants: ['andre', 'isabela', 'ianka'],
+    participants: ["andre", "isabela", "ianka"],
   },
   max: {
-    name: 'HBO Max',
-    shortName: 'M',
-    cssClass: 'service-max',
-    model: 'rotation',
-    modelLabel: 'Rodízio',
+    name: "HBO Max",
+    shortName: "M",
+    cssClass: "service-max",
+    model: "rotation",
+    modelLabel: "Rodízio",
     totalAmount: 22.45,
-    participants: ['andre', 'isabela', 'ianka', 'sarha'],
+    participants: ["andre", "isabela", "ianka", "sarha"],
   },
   spotify: {
-    name: 'Spotify',
-    shortName: 'S',
-    cssClass: 'service-spotify',
-    model: 'monthly',
-    modelLabel: 'Todo mês',
+    name: "Spotify",
+    shortName: "S",
+    cssClass: "service-spotify",
+    model: "monthly",
+    modelLabel: "Todo mês",
     totalAmount: 31.9,
-    participants: ['andre', 'isabela'],
+    participants: ["andre", "isabela"],
   },
   crunchyroll: {
-    name: 'Crunchyroll',
-    shortName: 'CR',
-    cssClass: 'service-crunchyroll',
-    model: 'monthly',
-    modelLabel: 'Todo mês',
+    name: "Crunchyroll",
+    shortName: "CR",
+    cssClass: "service-crunchyroll",
+    model: "monthly",
+    modelLabel: "Todo mês",
     totalAmount: 19.9,
-    participants: ['andre'],
+    participants: ["andre"],
   },
   prime_video: {
-    name: 'Prime Video',
-    shortName: 'PV',
-    cssClass: 'service-prime',
-    model: 'monthly',
-    modelLabel: 'Todo mês',
+    name: "Prime Video",
+    shortName: "PV",
+    cssClass: "service-prime",
+    model: "monthly",
+    modelLabel: "Todo mês",
     totalAmount: 9.95,
-    participants: ['andre'],
+    participants: ["andre"],
   },
   google_one: {
-    name: 'Google One',
-    shortName: 'G1',
-    cssClass: 'service-google',
-    model: 'monthly',
-    modelLabel: 'Todo mês',
+    name: "Google One",
+    shortName: "G1",
+    cssClass: "service-google",
+    model: "monthly",
+    modelLabel: "Todo mês",
     totalAmount: 10.0,
-    participants: ['andre'],
+    participants: ["andre"],
   },
   f1_tv_pro: {
-    name: 'F1 TV Pro',
-    shortName: 'F1',
-    cssClass: 'service-f1',
-    model: 'monthly',
-    modelLabel: 'Todo mês',
+    name: "F1 TV Pro",
+    shortName: "F1",
+    cssClass: "service-f1",
+    model: "monthly",
+    modelLabel: "Todo mês",
     totalAmount: 29.0,
-    participants: ['andre'],
+    participants: ["andre"],
   },
   globoplay: {
-    name: 'Globoplay',
-    shortName: 'GP',
-    cssClass: 'service-globoplay',
-    model: 'monthly',
-    modelLabel: 'Todo mês',
+    name: "Globoplay",
+    shortName: "GP",
+    cssClass: "service-globoplay",
+    model: "monthly",
+    modelLabel: "Todo mês",
     totalAmount: 20.0,
-    participants: ['andre'],
+    participants: ["andre"],
   },
 };
 
@@ -151,7 +152,7 @@ function applyDynamicAmounts() {
           : 0;
     if (s.totalAmount === undefined) s.totalAmount = baseValue;
 
-    if (s.model === 'rotation') {
+    if (s.model === "rotation") {
       s.amount = baseValue;
     } else {
       const participantsCount =
@@ -174,10 +175,10 @@ function syncRelationships() {
 }
 
 function loadAdminSettings() {
-  let settingsStr = localStorage.getItem('site_settings');
+  let settingsStr = localStorage.getItem("site_settings");
 
   // Tentar encontrar configurações globais nos logs (pode estar em 'admin' ou personKey atual)
-  const settingsProviders = ['admin', state?.currentPersonKey].filter(Boolean);
+  const settingsProviders = ["admin", state?.currentPersonKey].filter(Boolean);
 
   for (const provider of settingsProviders) {
     const providerLogs = paidLogsCache && paidLogsCache[provider];
@@ -185,14 +186,14 @@ function loadAdminSettings() {
 
     // 1) Single entry (legacy)
     const singleKeys = Object.keys(providerLogs)
-      .filter((k) => k.includes(':site_settings|'))
+      .filter((k) => k.includes(":site_settings|"))
       .sort()
       .reverse();
     if (singleKeys.length > 0) {
-      const parts = singleKeys[0].split('|');
+      const parts = singleKeys[0].split("|");
       if (parts.length >= 3) {
-        settingsStr = parts.slice(2).join('|');
-        localStorage.setItem('site_settings', settingsStr);
+        settingsStr = parts.slice(2).join("|");
+        localStorage.setItem("site_settings", settingsStr);
         break; // Mais recente disponível
       }
     }
@@ -200,24 +201,24 @@ function loadAdminSettings() {
     // 2) Multi-part chunked upload support (site_settings_chunk)
     const chunkKeys = Object.keys(providerLogs).filter(
       (k) =>
-        k.includes(':site_settings_chunk|') ||
-        k.includes(':site_settings_part|'),
+        k.includes(":site_settings_chunk|") ||
+        k.includes(":site_settings_part|"),
     );
 
     if (chunkKeys.length > 0) {
       const groups = {};
       chunkKeys.forEach((k) => {
-        const colonIndex = k.indexOf(':');
+        const colonIndex = k.indexOf(":");
         if (colonIndex === -1) return;
         const payload = k.slice(colonIndex + 1); // site_settings_chunk|gid|idx|total|b64
-        const parts = payload.split('|');
+        const parts = payload.split("|");
         if (parts.length < 5) return;
         const tag = parts[0];
-        if (!tag.startsWith('site_settings')) return;
+        if (!tag.startsWith("site_settings")) return;
         const gid = parts[1];
         const partIndex = parseInt(parts[2], 10);
         const total = parseInt(parts[3], 10) || 0;
-        const b64 = parts.slice(4).join('|');
+        const b64 = parts.slice(4).join("|");
 
         groups[gid] = groups[gid] || { total: total, parts: {} };
         if (!isNaN(partIndex)) groups[gid].parts[partIndex] = b64;
@@ -232,11 +233,11 @@ function loadAdminSettings() {
         try {
           const encoded = Array.from(
             { length: g.total },
-            (_, i) => g.parts[i] || '',
-          ).join('');
+            (_, i) => g.parts[i] || "",
+          ).join("");
           const json = fromBase64Unicode(encoded);
           settingsStr = json;
-          localStorage.setItem('site_settings', settingsStr);
+          localStorage.setItem("site_settings", settingsStr);
           break;
         } catch (e) {
           // ignore and try earlier groups
@@ -253,7 +254,7 @@ function loadAdminSettings() {
       if (parsed.PEOPLE) PEOPLE = parsed.PEOPLE;
       if (parsed.SERVICES) SERVICES = parsed.SERVICES;
     } catch (e) {
-      console.warn('Erro ao ler configs do localStorage', e);
+      console.warn("Erro ao ler configs do localStorage", e);
     }
   }
 
@@ -262,11 +263,11 @@ function loadAdminSettings() {
 }
 
 const STORAGE_KEYS = {
-  profile: 'streaming-payments-profile-v2',
-  notifications: 'streaming-payments-notifications-v2',
-  theme: 'streaming-payments-theme',
-  paid: 'streaming-payments-paid-v2',
-  order: 'streaming-payments-order-v3',
+  profile: "streaming-payments-profile-v2",
+  notifications: "streaming-payments-notifications-v2",
+  theme: "streaming-payments-theme",
+  paid: "streaming-payments-paid-v2",
+  order: "streaming-payments-order-v3",
 };
 
 function readJson(key, fallback) {
@@ -286,14 +287,14 @@ function getPaidLogs() {
 let paidLogsCache = getPaidLogs();
 
 function slugify(text) {
-  if (!text) return '';
+  if (!text) return "";
   return text
     .trim()
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\s-]+/g, '_') // Sempre usar underscore para compatibilidade com o Code.gs
-    .replace(/[^\w]/g, '');
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s-]+/g, "_") // Sempre usar underscore para compatibilidade com o Code.gs
+    .replace(/[^\w]/g, "");
 }
 
 function toBase64Unicode(str) {
@@ -330,90 +331,90 @@ function ensureDarkColor(hex) {
 // Estado global da aplicação
 
 const MONTHS = [
-  'janeiro',
-  'fevereiro',
-  'março',
-  'abril',
-  'maio',
-  'junho',
-  'julho',
-  'agosto',
-  'setembro',
-  'outubro',
-  'novembro',
-  'dezembro',
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
 
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbxl2gIPfpLOOUEc7xi7g8vpM-JF01zMhb10KHVEFwtj4LkWzm2NX1kiSTVHi2fd_7tQuw/exec'.trim();
+  "https://script.google.com/macros/s/AKfycbydWZzphnDnAeH4panv0GLfUrInDrZuPzUAQLxsGF7-15l6ldxkzs6f4kZMKO5vSL7h/exec".trim();
 
 // Estado global da aplicação
 
-const profileScreen = document.querySelector('#profileScreen');
-const dashboard = document.querySelector('#dashboard');
-const profileSelection = document.querySelector('#profileSelection');
-const profileGrid = document.querySelector('#profileGrid');
-const profileForm = document.querySelector('#profileForm');
-const profileNameInput = document.querySelector('#profileNameInput');
-const profileMessage = document.querySelector('#profileMessage');
-const notificationButton = document.querySelector('#notificationButton');
-const notificationStatus = document.querySelector('#notificationStatus');
-const changeProfileButton = document.querySelector('#changeProfileButton');
-const personName = document.querySelector('#personName');
-const summaryCount = document.querySelector('#summaryCount');
-const summaryLabel = document.querySelector('#summaryLabel');
-const totalMonthAmount = document.querySelector('#totalMonthAmount');
-const subscriptionList = document.querySelector('#subscriptionList');
-const detailsPanel = document.querySelector('#detailsPanel');
-const detailsLoadingState = document.querySelector('#detailsLoadingState');
-const detailsContent = document.querySelector('#detailsContent');
-const detailsService = document.querySelector('#detailsService');
-const detailsTitle = document.querySelector('#detailsTitle');
-const upcomingPanel = document.querySelector('#upcomingPanel');
-const fullPanel = document.querySelector('#fullPanel');
-const closeDetailsButton = document.querySelector('#closeDetailsButton');
-const tabButtons = document.querySelectorAll('.tab-button');
-const yearControls = document.querySelector('#yearControls');
-const previousYearButton = document.querySelector('#previousYearButton');
-const nextYearButton = document.querySelector('#nextYearButton');
-const selectedYearLabel = document.querySelector('#selectedYearLabel');
-const syncSheetsButton = document.querySelector('#syncSheetsButton');
-const notificationModal = document.querySelector('#notificationModal');
+const profileScreen = document.querySelector("#profileScreen");
+const dashboard = document.querySelector("#dashboard");
+const profileSelection = document.querySelector("#profileSelection");
+const profileGrid = document.querySelector("#profileGrid");
+const profileForm = document.querySelector("#profileForm");
+const profileNameInput = document.querySelector("#profileNameInput");
+const profileMessage = document.querySelector("#profileMessage");
+const notificationButton = document.querySelector("#notificationButton");
+const notificationStatus = document.querySelector("#notificationStatus");
+const changeProfileButton = document.querySelector("#changeProfileButton");
+const personName = document.querySelector("#personName");
+const summaryCount = document.querySelector("#summaryCount");
+const summaryLabel = document.querySelector("#summaryLabel");
+const totalMonthAmount = document.querySelector("#totalMonthAmount");
+const subscriptionList = document.querySelector("#subscriptionList");
+const detailsPanel = document.querySelector("#detailsPanel");
+const detailsLoadingState = document.querySelector("#detailsLoadingState");
+const detailsContent = document.querySelector("#detailsContent");
+const detailsService = document.querySelector("#detailsService");
+const detailsTitle = document.querySelector("#detailsTitle");
+const upcomingPanel = document.querySelector("#upcomingPanel");
+const fullPanel = document.querySelector("#fullPanel");
+const closeDetailsButton = document.querySelector("#closeDetailsButton");
+const tabButtons = document.querySelectorAll(".tab-button");
+const yearControls = document.querySelector("#yearControls");
+const previousYearButton = document.querySelector("#previousYearButton");
+const nextYearButton = document.querySelector("#nextYearButton");
+const selectedYearLabel = document.querySelector("#selectedYearLabel");
+const syncSheetsButton = document.querySelector("#syncSheetsButton");
+const notificationModal = document.querySelector("#notificationModal");
 const closeNotificationModal = document.querySelector(
-  '#closeNotificationModal',
+  "#closeNotificationModal",
 );
 const allowNotificationsButton = document.querySelector(
-  '#allowNotificationsButton',
+  "#allowNotificationsButton",
 );
-const tutorialButton = document.querySelector('#tutorialButton');
-const tutorialModal = document.querySelector('#tutorialModal');
-const closeTutorialModal = document.querySelector('#closeTutorialModal');
-const adminButton = document.querySelector('#adminButton');
-const adminScreen = document.querySelector('#adminScreen');
-const backFromAdminButton = document.querySelector('#backFromAdminButton');
-const adminServicesList = document.querySelector('#adminServicesList');
-const adminProfilesList = document.querySelector('#adminProfilesList');
-const addServiceButton = document.querySelector('#addServiceButton');
-const addProfileButton = document.querySelector('#addProfileButton');
-const adminSharedModal = document.querySelector('#adminSharedModal');
-const closeAdminModal = document.querySelector('#closeAdminModal');
-const adminModalBody = document.querySelector('#adminModalBody');
-const adminModalTitle = document.querySelector('#adminModalTitle');
-const adminModalSaveButton = document.querySelector('#adminModalSaveButton');
+const tutorialButton = document.querySelector("#tutorialButton");
+const tutorialModal = document.querySelector("#tutorialModal");
+const closeTutorialModal = document.querySelector("#closeTutorialModal");
+const adminButton = document.querySelector("#adminButton");
+const adminScreen = document.querySelector("#adminScreen");
+const backFromAdminButton = document.querySelector("#backFromAdminButton");
+const adminServicesList = document.querySelector("#adminServicesList");
+const adminProfilesList = document.querySelector("#adminProfilesList");
+const addServiceButton = document.querySelector("#addServiceButton");
+const addProfileButton = document.querySelector("#addProfileButton");
+const adminSharedModal = document.querySelector("#adminSharedModal");
+const closeAdminModal = document.querySelector("#closeAdminModal");
+const adminModalBody = document.querySelector("#adminModalBody");
+const adminModalTitle = document.querySelector("#adminModalTitle");
+const adminModalSaveButton = document.querySelector("#adminModalSaveButton");
 const adminModalCancelButton = document.querySelector(
-  '#adminModalCancelButton',
+  "#adminModalCancelButton",
 );
 const adminModalDeleteButton = document.querySelector(
-  '#adminModalDeleteButton',
+  "#adminModalDeleteButton",
 );
 
 let currentAdminContext = null;
 
-const moneyFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
+const moneyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
 });
 
 loadAdminSettings();
@@ -432,73 +433,73 @@ function checkInitialNotificationPermission() {
   const capability = getNotificationCapability();
   if (!capability.available) return;
 
-  if (Notification.permission === 'default') {
-    notificationModal.classList.remove('is-hidden');
+  if (Notification.permission === "default") {
+    notificationModal.classList.remove("is-hidden");
   }
 }
 
 function bindEvents() {
   // --- CLIQUE PARA ABRIR A FATURA ---
-  document.querySelector('.id-total-pill').addEventListener('click', () => {
+  document.querySelector(".id-total-pill").addEventListener("click", () => {
     if (state.currentPersonKey) {
       openInvoiceModal(state.currentPersonKey);
     }
   });
 
-  document.querySelector('#closeInvoiceModal').addEventListener('click', () => {
-    document.querySelector('#invoiceModal').classList.add('is-hidden');
+  document.querySelector("#closeInvoiceModal").addEventListener("click", () => {
+    document.querySelector("#invoiceModal").classList.add("is-hidden");
   });
 
-  document.addEventListener('click', (event) => {
-    if (event.target === document.querySelector('#invoiceModal')) {
-      document.querySelector('#invoiceModal').classList.add('is-hidden');
+  document.addEventListener("click", (event) => {
+    if (event.target === document.querySelector("#invoiceModal")) {
+      document.querySelector("#invoiceModal").classList.add("is-hidden");
     }
   });
   // ----------------------------------
 
   // (aqui continua o resto do seu bindEvents que já existe...)
-  profileForm.addEventListener('submit', (event) => {
+  profileForm.addEventListener("submit", (event) => {
     event.preventDefault();
     void handleProfileSubmit();
   });
 
-  notificationButton.addEventListener('click', () => {
+  notificationButton.addEventListener("click", () => {
     const capability = getNotificationCapability();
-    if (capability.available && Notification.permission === 'default') {
-      notificationModal.classList.remove('is-hidden');
+    if (capability.available && Notification.permission === "default") {
+      notificationModal.classList.remove("is-hidden");
     } else {
       void requestNotificationAccess();
     }
   });
 
-  closeNotificationModal.addEventListener('click', () => {
-    notificationModal.classList.add('is-hidden');
+  closeNotificationModal.addEventListener("click", () => {
+    notificationModal.classList.add("is-hidden");
   });
 
-  tutorialButton.addEventListener('click', () => {
-    tutorialModal.classList.remove('is-hidden');
+  tutorialButton.addEventListener("click", () => {
+    tutorialModal.classList.remove("is-hidden");
   });
 
-  closeTutorialModal.addEventListener('click', () => {
-    tutorialModal.classList.add('is-hidden');
+  closeTutorialModal.addEventListener("click", () => {
+    tutorialModal.classList.add("is-hidden");
   });
 
-  tutorialModal.addEventListener('click', (event) => {
+  tutorialModal.addEventListener("click", (event) => {
     if (event.target === tutorialModal) {
-      tutorialModal.classList.add('is-hidden');
+      tutorialModal.classList.add("is-hidden");
     }
   });
 
-  allowNotificationsButton.addEventListener('click', async () => {
+  allowNotificationsButton.addEventListener("click", async () => {
     try {
       const permission = await Notification.requestPermission();
-      if (permission !== 'default') {
-        notificationModal.classList.add('is-hidden');
+      if (permission !== "default") {
+        notificationModal.classList.add("is-hidden");
         updateNotificationButton();
         if (state.currentPersonKey) {
           updateNotificationStatus();
         }
-        if (permission === 'granted') {
+        if (permission === "granted") {
           await registerServiceWorker();
           if (state.currentPersonKey) {
             await checkPaymentReminders();
@@ -506,14 +507,14 @@ function bindEvents() {
         }
       }
     } catch {
-      notificationModal.classList.add('is-hidden');
+      notificationModal.classList.add("is-hidden");
     }
   });
 
-  upcomingPanel.addEventListener('click', async (event) => {
-    const testButton = event.target.closest('[data-test-notification]');
-    const calendarButton = event.target.closest('[data-add-calendar]');
-    const markButton = event.target.closest('[data-mark-paid]');
+  upcomingPanel.addEventListener("click", async (event) => {
+    const testButton = event.target.closest("[data-test-notification]");
+    const calendarButton = event.target.closest("[data-add-calendar]");
+    const markButton = event.target.closest("[data-mark-paid]");
 
     if (testButton) {
       void showTestNotification();
@@ -525,7 +526,7 @@ function bindEvents() {
     if (markButton) {
       if (!state.currentPersonKey) {
         setNotificationStatus(
-          'Selecione um perfil antes de marcar pagamentos.',
+          "Selecione um perfil antes de marcar pagamentos.",
         );
         return;
       }
@@ -541,25 +542,25 @@ function bindEvents() {
       const paid = isPaymentPaid(state.currentPersonKey, payment);
 
       if (paid) {
-        markButton.classList.add('pulse-success');
-        setTimeout(() => markButton.classList.remove('pulse-success'), 600);
+        markButton.classList.add("pulse-success");
+        setTimeout(() => markButton.classList.remove("pulse-success"), 600);
         await unmarkPayment(state.currentPersonKey, payment);
-        setNotificationStatus('Parcela desmarcada como paga.');
+        setNotificationStatus("Parcela desmarcada como paga.");
       } else {
-        markButton.classList.add('pulse-success');
-        setTimeout(() => markButton.classList.remove('pulse-success'), 600);
+        markButton.classList.add("pulse-success");
+        setTimeout(() => markButton.classList.remove("pulse-success"), 600);
         await markPaymentAsPaid(state.currentPersonKey, payment);
-        setNotificationStatus('Parcela marcada como paga.');
+        setNotificationStatus("Parcela marcada como paga.");
       }
     }
   });
 
-  fullPanel.addEventListener('click', async (event) => {
-    const toggleButton = event.target.closest('[data-toggle-paid]');
+  fullPanel.addEventListener("click", async (event) => {
+    const toggleButton = event.target.closest("[data-toggle-paid]");
     if (!toggleButton) return;
 
     if (!state.currentPersonKey) {
-      setNotificationStatus('Selecione um perfil antes de marcar pagamentos.');
+      setNotificationStatus("Selecione um perfil antes de marcar pagamentos.");
       return;
     }
 
@@ -575,35 +576,35 @@ function bindEvents() {
     const paid = isPaymentPaid(personKey, payment);
 
     if (paid) {
-      toggleButton.classList.add('pulse-success');
-      setTimeout(() => toggleButton.classList.remove('pulse-success'), 600);
+      toggleButton.classList.add("pulse-success");
+      setTimeout(() => toggleButton.classList.remove("pulse-success"), 600);
       await unmarkPayment(personKey, payment);
-      setNotificationStatus('Parcela desmarcada como paga.');
+      setNotificationStatus("Parcela desmarcada como paga.");
     } else {
-      toggleButton.classList.add('pulse-success');
-      setTimeout(() => toggleButton.classList.remove('pulse-success'), 600);
+      toggleButton.classList.add("pulse-success");
+      setTimeout(() => toggleButton.classList.remove("pulse-success"), 600);
       await markPaymentAsPaid(personKey, payment);
-      setNotificationStatus('Parcela marcada como paga.');
+      setNotificationStatus("Parcela marcada como paga.");
     }
   });
 
-  changeProfileButton.addEventListener('click', changeProfile);
+  changeProfileButton.addEventListener("click", changeProfile);
 
-  closeDetailsButton.addEventListener('click', () => {
+  closeDetailsButton.addEventListener("click", () => {
     state.selectedServiceKey = null;
-    detailsPanel.classList.add('is-hidden');
+    detailsPanel.classList.add("is-hidden");
     document
-      .querySelectorAll('.subscription-card')
-      .forEach((card) => card.classList.remove('is-selected'));
+      .querySelectorAll(".subscription-card")
+      .forEach((card) => card.classList.remove("is-selected"));
   });
 
   tabButtons.forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener("click", () => {
       setActiveTab(button.dataset.panel);
     });
   });
 
-  previousYearButton.addEventListener('click', () => {
+  previousYearButton.addEventListener("click", () => {
     if (state.selectedYear <= 2026) {
       return;
     }
@@ -611,33 +612,33 @@ function bindEvents() {
     renderDetails();
   });
 
-  nextYearButton.addEventListener('click', () => {
+  nextYearButton.addEventListener("click", () => {
     state.selectedYear += 1;
     renderDetails();
   });
 
-  syncSheetsButton.addEventListener('click', async () => {
-    if (syncSheetsButton.classList.contains('is-syncing')) return;
+  syncSheetsButton.addEventListener("click", async () => {
+    if (syncSheetsButton.classList.contains("is-syncing")) return;
 
-    syncSheetsButton.classList.add('is-syncing');
+    syncSheetsButton.classList.add("is-syncing");
     syncSheetsButton.disabled = true;
 
     try {
       await fetchPaidLogs();
-      setNotificationStatus('Dados sincronizados com sucesso.', true);
+      setNotificationStatus("Dados sincronizados com sucesso.", true);
     } catch (error) {
-      console.error('Erro na sincronização manual:', error);
+      console.error("Erro na sincronização manual:", error);
       setNotificationStatus(
-        error.message || 'Erro ao sincronizar. Tente novamente.',
+        error.message || "Erro ao sincronizar. Tente novamente.",
         true,
       );
     } finally {
-      syncSheetsButton.classList.remove('is-syncing');
+      syncSheetsButton.classList.remove("is-syncing");
       syncSheetsButton.disabled = false;
     }
   });
 
-  window.addEventListener('focus', () => {
+  window.addEventListener("focus", () => {
     refreshCurrentDates();
     void (async () => {
       await fetchPaidLogs().catch(() => {});
@@ -645,7 +646,7 @@ function bindEvents() {
     })();
   });
 
-  document.addEventListener('visibilitychange', () => {
+  document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
       refreshCurrentDates();
       void (async () => {
@@ -655,39 +656,39 @@ function bindEvents() {
     }
   });
 
-  adminButton.addEventListener('click', () => {
-    dashboard.classList.add('is-hidden');
-    adminScreen.classList.remove('is-hidden');
+  adminButton.addEventListener("click", () => {
+    dashboard.classList.add("is-hidden");
+    adminScreen.classList.remove("is-hidden");
     renderAdminScreen();
   });
 
-  backFromAdminButton.addEventListener('click', () => {
-    adminScreen.classList.add('is-hidden');
-    dashboard.classList.remove('is-hidden');
+  backFromAdminButton.addEventListener("click", () => {
+    adminScreen.classList.add("is-hidden");
+    dashboard.classList.remove("is-hidden");
     refreshCurrentDates();
   });
 
-  addServiceButton.addEventListener('click', () =>
+  addServiceButton.addEventListener("click", () =>
     openAdminModalForService(null),
   );
-  addProfileButton.addEventListener('click', () =>
+  addProfileButton.addEventListener("click", () =>
     openAdminModalForProfile(null),
   );
 
-  closeAdminModal.addEventListener('click', () =>
-    adminSharedModal.classList.add('is-hidden'),
+  closeAdminModal.addEventListener("click", () =>
+    adminSharedModal.classList.add("is-hidden"),
   );
-  adminModalCancelButton.addEventListener('click', () =>
-    adminSharedModal.classList.add('is-hidden'),
+  adminModalCancelButton.addEventListener("click", () =>
+    adminSharedModal.classList.add("is-hidden"),
   );
 
-  adminModalSaveButton.addEventListener('click', handleAdminSave);
-  adminModalDeleteButton.addEventListener('click', handleAdminDelete);
+  adminModalSaveButton.addEventListener("click", handleAdminSave);
+  adminModalDeleteButton.addEventListener("click", handleAdminDelete);
 }
 
 async function handleProfileSubmit() {
   const personKey = findPersonKey(profileNameInput.value);
-  profileMessage.textContent = '';
+  profileMessage.textContent = "";
 
   if (!personKey) {
     profileMessage.textContent = getNameError(profileNameInput.value);
@@ -706,11 +707,11 @@ function restoreProfile() {
   updateNotificationButton();
 
   if (!personKey || !PEOPLE[personKey]) {
-    profileScreen.classList.remove('is-hidden');
-    dashboard.classList.add('is-hidden');
-    notificationButton.classList.add('is-hidden');
-    changeProfileButton.classList.add('is-hidden');
-    if (adminButton) adminButton.classList.add('is-hidden');
+    profileScreen.classList.remove("is-hidden");
+    dashboard.classList.add("is-hidden");
+    notificationButton.classList.add("is-hidden");
+    changeProfileButton.classList.add("is-hidden");
+    if (adminButton) adminButton.classList.add("is-hidden");
     renderProfileSelection();
     return;
   }
@@ -730,9 +731,9 @@ function renderProfileSelection() {
         <button type="button" class="primary-button" id="btnStartAdmin" style="margin-top: 16px; padding: 10px 20px;">Configurar meu Grupo</button>
       </div>
     `;
-    document.getElementById('btnStartAdmin').addEventListener('click', () => {
-      profileScreen.classList.add('is-hidden');
-      adminScreen.classList.remove('is-hidden');
+    document.getElementById("btnStartAdmin").addEventListener("click", () => {
+      profileScreen.classList.add("is-hidden");
+      adminScreen.classList.remove("is-hidden");
       renderAdminScreen();
     });
     return;
@@ -748,10 +749,10 @@ function renderProfileSelection() {
       </button>
     `,
     )
-    .join('');
+    .join("");
 
-  profileGrid.querySelectorAll('.profile-item').forEach((button) => {
-    button.addEventListener('click', () => {
+  profileGrid.querySelectorAll(".profile-item").forEach((button) => {
+    button.addEventListener("click", () => {
       const personKey = button.dataset.person;
       if (personKey && PEOPLE[personKey]) {
         handleProfileClick(personKey);
@@ -766,17 +767,17 @@ function changeProfile() {
   state.currentPersonKey = null;
   state.selectedServiceKey = null;
   state.selectedYear = getToday().getFullYear();
-  dashboard.classList.add('is-hidden');
-  subscriptionList.classList.remove('is-ready');
-  detailsPanel.classList.add('is-hidden');
-  notificationButton.classList.add('is-hidden');
-  changeProfileButton.classList.add('is-hidden');
-  if (adminButton) adminButton.classList.add('is-hidden');
-  yearControls.classList.add('is-hidden');
-  profileScreen.classList.remove('is-hidden');
+  dashboard.classList.add("is-hidden");
+  subscriptionList.classList.remove("is-ready");
+  detailsPanel.classList.add("is-hidden");
+  notificationButton.classList.add("is-hidden");
+  changeProfileButton.classList.add("is-hidden");
+  if (adminButton) adminButton.classList.add("is-hidden");
+  yearControls.classList.add("is-hidden");
+  profileScreen.classList.remove("is-hidden");
   renderProfileSelection();
-  if (profileNameInput) profileNameInput.value = '';
-  if (profileMessage) profileMessage.textContent = '';
+  if (profileNameInput) profileNameInput.value = "";
+  if (profileMessage) profileMessage.textContent = "";
 }
 
 async function openDashboard(personKey) {
@@ -784,7 +785,7 @@ async function openDashboard(personKey) {
   if (!person) {
     // Tenta encontrar por alias se a chave mudou na sincronização
     const alternateKey = Object.keys(PEOPLE).find(
-      (k) => PEOPLE[k].aliases?.includes(personKey) || k === personKey
+      (k) => PEOPLE[k].aliases?.includes(personKey) || k === personKey,
     );
     if (alternateKey) {
       personKey = alternateKey;
@@ -805,28 +806,28 @@ async function openDashboard(personKey) {
   personName.textContent = person.name;
   summaryCount.textContent = person.subscriptions.length;
   summaryLabel.textContent =
-    person.subscriptions.length === 1 ? 'assinatura' : 'assinaturas';
-  profileScreen.classList.add('is-hidden');
-  dashboard.classList.remove('is-hidden');
-  changeProfileButton.classList.remove('is-hidden');
-  detailsPanel.classList.add('is-hidden');
+    person.subscriptions.length === 1 ? "assinatura" : "assinaturas";
+  profileScreen.classList.add("is-hidden");
+  dashboard.classList.remove("is-hidden");
+  changeProfileButton.classList.remove("is-hidden");
+  detailsPanel.classList.add("is-hidden");
 
   if (person.isAdmin) {
-    adminButton.classList.remove('is-hidden');
+    adminButton.classList.remove("is-hidden");
   } else {
-    adminButton.classList.add('is-hidden');
+    adminButton.classList.add("is-hidden");
   }
 
   // Inicializa com dados locais IMEDIATAMENTE
   paidLogsCache = getPaidLogs();
   updateMonthlyTotal(personKey);
-  subscriptionList.classList.remove('is-ready');
+  subscriptionList.classList.remove("is-ready");
 
   renderSubscriptionCards(personKey);
 
   // Marca como ready após o primeiro render para evitar redunância de animação no sync
   setTimeout(() => {
-    subscriptionList.classList.add('is-ready');
+    subscriptionList.classList.add("is-ready");
   }, 1000);
 
   updateNotificationButton();
@@ -835,9 +836,9 @@ async function openDashboard(personKey) {
   // Tenta sincronizar "no fundo"
   void (async () => {
     try {
-      const isSyncingManual = syncSheetsButton.classList.contains('is-syncing');
+      const isSyncingManual = syncSheetsButton.classList.contains("is-syncing");
       if (!isSyncingManual) {
-        setNotificationStatus('Sincronizando...');
+        setNotificationStatus("Sincronizando...");
       }
 
       await fetchPaidLogs();
@@ -845,16 +846,16 @@ async function openDashboard(personKey) {
       // fetchPaidLogs já chama updateUIAfterSync que renderiza
 
       if (!isSyncingManual) {
-        setNotificationStatus('');
+        setNotificationStatus("");
       }
     } catch (error) {
-      console.error('Sincronização em segundo plano falhou:', error);
+      console.error("Sincronização em segundo plano falhou:", error);
       // Não mostramos erro gritante aqui para não atrapalhar o uso dos dados locais
       if (
         notificationStatus &&
-        notificationStatus.textContent === 'Sincronizando...'
+        notificationStatus.textContent === "Sincronizando..."
       ) {
-        setNotificationStatus('Modo offline (dados locais)');
+        setNotificationStatus("Modo offline (dados locais)");
       }
     } finally {
       void checkPaymentReminders();
@@ -873,7 +874,9 @@ function renderSubscriptionCards(personKey) {
   let sortedServices;
   if (savedOrder && savedOrder.length > 0) {
     // Filtrar apenas assinaturas que a pessoa realmente tem e que existam em SERVICES
-    sortedServices = savedOrder.filter((s) => person.subscriptions.includes(s) && SERVICES[s]);
+    sortedServices = savedOrder.filter(
+      (s) => person.subscriptions.includes(s) && SERVICES[s],
+    );
     // Adicionar novas assinaturas que não estavam na ordem salva
     const missing = person.subscriptions.filter(
       (s) => !sortedServices.includes(s) && SERVICES[s],
@@ -884,29 +887,29 @@ function renderSubscriptionCards(personKey) {
     sortedServices = [...person.subscriptions]
       .filter((s) => SERVICES[s])
       .sort((a, b) =>
-        SERVICES[a].name.localeCompare(SERVICES[b].name, 'pt-BR'),
+        SERVICES[a].name.localeCompare(SERVICES[b].name, "pt-BR"),
       );
   }
 
   // Preserve detailsPanel if it has been moved inside subscriptionList
   if (detailsPanel.parentElement === subscriptionList) {
-    subscriptionList.insertAdjacentElement('afterend', detailsPanel);
+    subscriptionList.insertAdjacentElement("afterend", detailsPanel);
   }
 
   subscriptionList.innerHTML = sortedServices
     .map((serviceKey) => createSubscriptionCard(serviceKey, personKey))
-    .join('');
+    .join("");
 
-  subscriptionList.querySelectorAll('.subscription-card').forEach((card) => {
-    card.addEventListener('click', () => {
+  subscriptionList.querySelectorAll(".subscription-card").forEach((card) => {
+    card.addEventListener("click", () => {
       void openServiceDetails(card.dataset.service);
     });
   });
 
   if (state.selectedServiceKey) {
-    document.querySelectorAll('.subscription-card').forEach((card) => {
+    document.querySelectorAll(".subscription-card").forEach((card) => {
       card.classList.toggle(
-        'is-selected',
+        "is-selected",
         card.dataset.service === state.selectedServiceKey,
       );
     });
@@ -918,27 +921,27 @@ function getSavedSubscriptionOrder(personKey) {
   // 1. Tentar da Nuvem (Configuracoes ou Logs) - Pegar o mais recente pelo timestamp
   if (paidLogsCache[personKey]) {
     const orderKeys = Object.keys(paidLogsCache[personKey])
-      .filter((k) => k.includes(':ui_order|'))
+      .filter((k) => k.includes(":ui_order|"))
       .sort()
       .reverse();
 
     if (orderKeys.length > 0) {
       try {
         const winningKey = orderKeys[0];
-        const segments = winningKey.split('|');
+        const segments = winningKey.split("|");
         if (segments.length >= 3) {
           // A ordem está do index 2 em diante (pode conter vírgulas)
-          const listStr = segments.slice(2).join('|').trim();
+          const listStr = segments.slice(2).join("|").trim();
           if (listStr) {
             const arr = listStr
-              .split(',')
+              .split(",")
               .map((s) => s.trim())
               .filter(Boolean);
             return Array.from(new Set(arr));
           }
         }
       } catch (e) {
-        console.warn('Erro ao processar ordem da nuvem:', e);
+        console.warn("Erro ao processar ordem da nuvem:", e);
       }
     }
   }
@@ -1009,32 +1012,32 @@ function createSubscriptionCard(serviceKey, personKey) {
 
   const dateText = nextPayment
     ? formatShortDate(nextPayment.date)
-    : 'Sem data restante';
+    : "Sem data restante";
   const amountText = moneyFormatter.format(service.amount);
   const statusPill = paid
     ? '<span class="status-pill status-pago" style="margin-left: 8px; vertical-align: middle;">Pago</span>'
-    : '';
+    : "";
 
   const participantsHtml = (service.participants || [])
     .map((pKey) => {
       const p = PEOPLE[pKey];
       return p
         ? `<span class="card-participant-avatar" style="background-color: ${p.color};" title="${p.name}">${p.avatar}</span>`
-        : '';
+        : "";
     })
-    .join('');
+    .join("");
 
   const cardStyleParts = [];
   if (service.color) cardStyleParts.push(`background-color: ${service.color}`);
   if (service.logoUrl)
     cardStyleParts.push(`--card-logo: url('${service.logoUrl}')`);
   const overrideStyle =
-    cardStyleParts.length > 0 ? `style="${cardStyleParts.join('; ')}"` : '';
+    cardStyleParts.length > 0 ? `style="${cardStyleParts.join("; ")}"` : "";
 
   const symbolHtml = `<span class="service-symbol">${service.shortName}</span>`;
 
   return `
-    <button class="subscription-card ${service.cssClass}${paid ? ' is-paid' : ''}" type="button" data-service="${serviceKey}" ${overrideStyle}>
+    <button class="subscription-card ${service.cssClass}${paid ? " is-paid" : ""}" type="button" data-service="${serviceKey}" ${overrideStyle}>
       <span class="subscription-top">
         <span class="subscription-title-container">
           <span class="subscription-title">
@@ -1050,7 +1053,7 @@ function createSubscriptionCard(serviceKey, personKey) {
 
       <span class="payment-line">
         <span>
-          <span>${paid ? 'Data paga' : 'Próxima data'}</span>
+          <span>${paid ? "Data paga" : "Próxima data"}</span>
           <strong>${dateText}</strong>
         </span>
         <span>
@@ -1069,12 +1072,12 @@ async function openServiceDetails(serviceKey) {
   state.selectedYear = getToday().getFullYear();
 
   if (!service || !person) {
-    if (detailsPanel) detailsPanel.classList.add('is-hidden');
+    if (detailsPanel) detailsPanel.classList.add("is-hidden");
     return;
   }
 
-  document.querySelectorAll('.subscription-card').forEach((card) => {
-    card.classList.toggle('is-selected', card.dataset.service === serviceKey);
+  document.querySelectorAll(".subscription-card").forEach((card) => {
+    card.classList.toggle("is-selected", card.dataset.service === serviceKey);
   });
 
   detailsService.textContent = service.name;
@@ -1083,20 +1086,20 @@ async function openServiceDetails(serviceKey) {
   // Aplicar cores dinâmicas ao painel de detalhes
   const panelStyleParts = [];
   if (service.color) panelStyleParts.push(`background-color: ${service.color}`);
-  detailsPanel.setAttribute('style', panelStyleParts.join('; '));
+  detailsPanel.setAttribute("style", panelStyleParts.join("; "));
 
-  detailsPanel.className = 'details-panel is-hidden';
+  detailsPanel.className = "details-panel is-hidden";
   detailsPanel.classList.add(`details-${serviceKey}`);
-  detailsPanel.classList.add('is-custom-service'); // Força o tema escuro genérico
-  detailsPanel.classList.remove('is-hidden');
+  detailsPanel.classList.add("is-custom-service"); // Força o tema escuro genérico
+  detailsPanel.classList.remove("is-hidden");
 
   // Exibir loading e esconder conteúdo
-  detailsContent.classList.add('is-hidden');
-  detailsLoadingState.classList.remove('is-hidden');
+  detailsContent.classList.add("is-hidden");
+  detailsLoadingState.classList.remove("is-hidden");
 
   positionDetailsPanel();
 
-  setActiveTab('upcoming');
+  setActiveTab("upcoming");
 
   // Renderizar imediatamente com dados do cache enquanto busca do servidor
   renderDetails();
@@ -1106,12 +1109,12 @@ async function openServiceDetails(serviceKey) {
     renderDetails();
   } finally {
     // Esconder loading e mostrar conteúdo
-    detailsLoadingState.classList.add('is-hidden');
-    detailsContent.classList.remove('is-hidden');
+    detailsLoadingState.classList.add("is-hidden");
+    detailsContent.classList.remove("is-hidden");
 
     // Pequeno delay para garantir que o layout mobile se ajustou se o conteúdo for grande
     setTimeout(() => {
-      detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      detailsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
   }
 }
@@ -1176,7 +1179,7 @@ function renderUpcomingPayments(serviceKey, personKey) {
             </li>
           `;
         })
-        .join('')}
+        .join("")}
     </ul>
   `;
 }
@@ -1185,7 +1188,7 @@ function renderFullSheet(serviceKey) {
   const service = SERVICES[serviceKey];
   const year = state.selectedYear;
 
-  if (service.model === 'monthly') {
+  if (service.model === "monthly") {
     return renderMonthlySheet(serviceKey, year);
   }
 
@@ -1196,7 +1199,7 @@ function renderMonthlySheet(serviceKey, year) {
   const service = SERVICES[serviceKey];
   const participantHeaders = service.participants
     .map((personKey) => `<th>${PEOPLE[personKey]?.name || personKey}</th>`)
-    .join('');
+    .join("");
 
   const rows = getYearMonths(year)
     .map((date) => {
@@ -1204,15 +1207,15 @@ function renderMonthlySheet(serviceKey, year) {
       const currentPersonPaid = state.currentPersonKey
         ? isPaymentPaid(state.currentPersonKey, { serviceKey, date })
         : false;
-      const rowStatus = currentPersonPaid ? 'pago' : status;
+      const rowStatus = currentPersonPaid ? "pago" : status;
       const statusClass =
-        rowStatus === 'atrasada'
-          ? ' status-atrasada'
-          : rowStatus === 'pago'
-            ? ' status-pago'
-            : rowStatus === 'futuro'
-              ? ' status-futuro'
-              : '';
+        rowStatus === "atrasada"
+          ? " status-atrasada"
+          : rowStatus === "pago"
+            ? " status-pago"
+            : rowStatus === "futuro"
+              ? " status-futuro"
+              : "";
 
       const participantCells = service.participants
         .map((participantKey) => {
@@ -1222,7 +1225,7 @@ function renderMonthlySheet(serviceKey, year) {
             : `<div class="status-actions"><span class="amount">${moneyFormatter.format(service.amount)}</span></div>`;
           return `<td data-label="${PEOPLE[participantKey]?.name || participantKey}">${innerContent}</td>`;
         })
-        .join('');
+        .join("");
 
       return `
         <tr>
@@ -1233,7 +1236,7 @@ function renderMonthlySheet(serviceKey, year) {
         </tr>
       `;
     })
-    .join('');
+    .join("");
 
   return `
     <div class="table-responsive">
@@ -1258,15 +1261,15 @@ function renderRotationSheet(serviceKey, year) {
       const payerKey = getRotationPayer(serviceKey, date.getMonth());
       const baseStatus = getDateStatus(date);
       const paid = isPaymentPaid(payerKey, { serviceKey, date });
-      const status = paid ? 'pago' : baseStatus;
+      const status = paid ? "pago" : baseStatus;
       const statusClass =
-        status === 'atrasada'
-          ? ' status-atrasada'
-          : status === 'pago'
-            ? ' status-pago'
-            : status === 'futuro'
-              ? ' status-futuro'
-              : '';
+        status === "atrasada"
+          ? " status-atrasada"
+          : status === "pago"
+            ? " status-pago"
+            : status === "futuro"
+              ? " status-futuro"
+              : "";
       return `
         <tr>
           <td data-label="Mês">${capitalize(MONTHS[date.getMonth()])}</td>
@@ -1277,7 +1280,7 @@ function renderRotationSheet(serviceKey, year) {
         </tr>
       `;
     })
-    .join('');
+    .join("");
 
   return `
     <div class="table-responsive">
@@ -1362,7 +1365,7 @@ function openGoogleCalendarEvent() {
 
   if (!nextPayment) {
     setNotificationStatus(
-      'Não há pagamento futuro para adicionar ao Google Agenda.',
+      "Não há pagamento futuro para adicionar ao Google Agenda.",
     );
     return;
   }
@@ -1376,16 +1379,16 @@ function openGoogleCalendarEvent() {
   // Abrimos em uma nova aba/contexto para evitar que a navegação ocorra na aba atual do app.
   // Em dispositivos móveis, o sistema interceptará o link e abrirá o aplicativo do Google Agenda.
   // Ao fechar o app, o usuário voltará para esta aba intacta.
-  window.open(calendarUrl, '_blank', 'noopener');
+  window.open(calendarUrl, "_blank", "noopener");
 
-  setNotificationStatus('O Google Agenda foi aberto. Revise e salve o evento.');
+  setNotificationStatus("O Google Agenda foi aberto. Revise e salve o evento.");
 }
 
 function createGoogleCalendarUrl(personKey, serviceKey, startDate) {
   const person = PEOPLE[personKey];
   const service = SERVICES[serviceKey];
-  if (!person || !service) return '#';
-  
+  if (!person || !service) return "#";
+
   const eventStart = createCalendarEventDate(
     startDate,
     SETTINGS.calendarEventHour,
@@ -1400,15 +1403,15 @@ function createGoogleCalendarUrl(personKey, serviceKey, startDate) {
   const recurrenceCount = getCalendarRecurrenceCount(serviceKey);
   const timeZone = getCalendarTimeZone();
   const params = new URLSearchParams({
-    action: 'TEMPLATE',
+    action: "TEMPLATE",
     text: `Pagamento ${service.name} - ${moneyFormatter.format(service.amount)}`,
     dates: `${formatGoogleCalendarDate(eventStart)}/${formatGoogleCalendarDate(eventEnd)}`,
     details: [
       `${person.name}, este é o lembrete de pagamento de ${service.name}.`,
       `Valor: ${moneyFormatter.format(service.amount)}.`,
       `Primeiro vencimento: ${formatLongDate(startDate)}.`,
-      'Confira os lembretes do evento antes de salvar.',
-    ].join('\n'),
+      "Confira os lembretes do evento antes de salvar.",
+    ].join("\n"),
     recur: `RRULE:FREQ=MONTHLY;INTERVAL=${recurrenceInterval};COUNT=${recurrenceCount}`,
     ctz: timeZone,
   });
@@ -1417,7 +1420,7 @@ function createGoogleCalendarUrl(personKey, serviceKey, startDate) {
 }
 
 function getCalendarRecurrenceInterval(serviceKey) {
-  return SERVICES[serviceKey].model === 'rotation'
+  return SERVICES[serviceKey].model === "rotation"
     ? SETTINGS.maxRotation.length
     : 1;
 }
@@ -1443,16 +1446,20 @@ function personPaysInMonth(serviceKey, personKey, monthIndex) {
   if (!service) return false;
 
   const matchPKey = findPersonKey(personKey) || personKey.toLowerCase();
-  
-  if (service.model === 'monthly') {
-    const participantsKeys = (service.participants || []).map(p => findPersonKey(p) || p.toLowerCase());
+
+  if (service.model === "monthly") {
+    const participantsKeys = (service.participants || []).map(
+      (p) => findPersonKey(p) || p.toLowerCase(),
+    );
     return participantsKeys.includes(matchPKey);
   }
 
   const rotationPayer = getRotationPayer(serviceKey, monthIndex);
   if (!rotationPayer) return false;
-  
-  return (findPersonKey(rotationPayer) || rotationPayer.toLowerCase()) === matchPKey;
+
+  return (
+    (findPersonKey(rotationPayer) || rotationPayer.toLowerCase()) === matchPKey
+  );
 }
 
 function getRotationPayer(serviceKey, monthIndex) {
@@ -1460,7 +1467,7 @@ function getRotationPayer(serviceKey, monthIndex) {
   if (!service) return null;
   let rotation = service.participants || [];
 
-  if (serviceKey === 'max') {
+  if (serviceKey === "max") {
     rotation = SETTINGS.maxRotation;
   }
 
@@ -1499,22 +1506,22 @@ function getDateStatus(date) {
   const paymentDate = startOfDay(date);
 
   if (paymentDate < today) {
-    return 'atrasada';
+    return "atrasada";
   }
 
-  return paymentDate.getTime() === today.getTime() ? 'vence hoje' : 'futuro';
+  return paymentDate.getTime() === today.getTime() ? "vence hoje" : "futuro";
 }
 
 function setActiveTab(panelName) {
   tabButtons.forEach((button) => {
     const isActive = button.dataset.panel === panelName;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-selected', String(isActive));
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
   });
 
-  upcomingPanel.classList.toggle('is-hidden', panelName !== 'upcoming');
-  fullPanel.classList.toggle('is-hidden', panelName !== 'full');
-  yearControls.classList.toggle('is-hidden', panelName !== 'full');
+  upcomingPanel.classList.toggle("is-hidden", panelName !== "upcoming");
+  fullPanel.classList.toggle("is-hidden", panelName !== "full");
+  yearControls.classList.toggle("is-hidden", panelName !== "full");
   updateYearControls();
 }
 
@@ -1573,38 +1580,38 @@ async function requestNotificationAccess({ runReminderCheck = true } = {}) {
   }
 
   try {
-    if (Notification.permission === 'default') {
+    if (Notification.permission === "default") {
       setNotificationStatus(
-        'O navegador deve abrir o pedido de permissão agora.',
+        "O navegador deve abrir o pedido de permissão agora.",
       );
       await Notification.requestPermission();
     }
   } catch {
-    setNotificationStatus('O navegador bloqueou o pedido de permissão.');
+    setNotificationStatus("O navegador bloqueou o pedido de permissão.");
     updateNotificationButton();
     return false;
   }
 
   updateNotificationButton();
 
-  if (Notification.permission === 'denied') {
+  if (Notification.permission === "denied") {
     setNotificationStatus(
-      'As notificações estão bloqueadas. Libere nas configurações do navegador para este site.',
+      "As notificações estão bloqueadas. Libere nas configurações do navegador para este site.",
     );
     return false;
   }
 
-  if (Notification.permission === 'default') {
-    setNotificationStatus('A permissão ainda não foi concedida.');
+  if (Notification.permission === "default") {
+    setNotificationStatus("A permissão ainda não foi concedida.");
     return false;
   }
 
-  if (Notification.permission === 'granted') {
+  if (Notification.permission === "granted") {
     const registration = await registerServiceWorker();
 
-    if ('serviceWorker' in navigator && !registration) {
+    if ("serviceWorker" in navigator && !registration) {
       setNotificationStatus(
-        'Permissão concedida, mas o service worker não foi registrado. No Android, abra pelo GitHub Pages em HTTPS.',
+        "Permissão concedida, mas o service worker não foi registrado. No Android, abra pelo GitHub Pages em HTTPS.",
       );
       return false;
     }
@@ -1613,7 +1620,7 @@ async function requestNotificationAccess({ runReminderCheck = true } = {}) {
       await checkPaymentReminders();
     }
 
-    setNotificationStatus('Notificações permitidas neste navegador.');
+    setNotificationStatus("Notificações permitidas neste navegador.");
     return true;
   }
 
@@ -1622,56 +1629,56 @@ async function requestNotificationAccess({ runReminderCheck = true } = {}) {
 
 function updateNotificationButton() {
   if (!state.currentPersonKey) {
-    notificationButton.classList.add('is-hidden');
+    notificationButton.classList.add("is-hidden");
     return;
   }
 
-  notificationButton.classList.remove('is-hidden');
+  notificationButton.classList.remove("is-hidden");
 
   const capability = getNotificationCapability();
 
   if (!capability.available) {
-    setNotificationButtonState('unavailable');
+    setNotificationButtonState("unavailable");
     return;
   }
 
-  if (Notification.permission === 'granted') {
-    setNotificationButtonState('enabled');
+  if (Notification.permission === "granted") {
+    setNotificationButtonState("enabled");
     return;
   }
 
-  if (Notification.permission === 'denied') {
-    setNotificationButtonState('blocked');
+  if (Notification.permission === "denied") {
+    setNotificationButtonState("blocked");
     return;
   }
 
-  setNotificationButtonState('prompt');
+  setNotificationButtonState("prompt");
 }
 
 function setNotificationButtonState(stateName) {
   const stateConfig = {
     unavailable: {
       icon: `<img src="icones/icons8-no-reminders-100.png" class="top-icon" alt="" />`,
-      ariaLabel: 'Notificações indisponíveis neste dispositivo',
-      title: 'Notificações indisponíveis',
+      ariaLabel: "Notificações indisponíveis neste dispositivo",
+      title: "Notificações indisponíveis",
       disabled: true,
     },
     enabled: {
       icon: `<img src="icones/icons8-notification-100.png" class="top-icon" alt="" />`,
-      ariaLabel: 'Notificações ativas',
-      title: 'Notificações ativas',
+      ariaLabel: "Notificações ativas",
+      title: "Notificações ativas",
       disabled: false,
     },
     blocked: {
       icon: `<img src="icones/icons8-no-reminders-100.png" class="top-icon" alt="" />`,
-      ariaLabel: 'Notificações bloqueadas',
-      title: 'Notificações bloqueadas',
+      ariaLabel: "Notificações bloqueadas",
+      title: "Notificações bloqueadas",
       disabled: true,
     },
     prompt: {
       icon: `<img src="icones/icons8-notification-100.png" class="top-icon" alt="" />`,
-      ariaLabel: 'Ativar notificações',
-      title: 'Ativar notificações',
+      ariaLabel: "Ativar notificações",
+      title: "Ativar notificações",
       disabled: false,
     },
   };
@@ -1679,21 +1686,21 @@ function setNotificationButtonState(stateName) {
   const config = stateConfig[stateName] || stateConfig.prompt;
 
   notificationButton.innerHTML = config.icon;
-  notificationButton.setAttribute('aria-label', config.ariaLabel);
+  notificationButton.setAttribute("aria-label", config.ariaLabel);
   notificationButton.title = config.title;
   notificationButton.disabled = config.disabled;
 }
 
 function updateNotificationStatus() {
   if (!state.currentPersonKey) {
-    setNotificationStatus('');
+    setNotificationStatus("");
     return;
   }
 
   // We intentionally leave the notification status empty by default.
   // The notification icon in the topbar and the modal handle the UX.
   // Status text should only be used for transient feedback (like 'Parcela paga').
-  setNotificationStatus('');
+  setNotificationStatus("");
 }
 
 async function checkPaymentReminders() {
@@ -1701,7 +1708,7 @@ async function checkPaymentReminders() {
     reminderCheckInProgress ||
     !state.currentPersonKey ||
     !supportsNotifications() ||
-    Notification.permission !== 'granted'
+    Notification.permission !== "granted"
   ) {
     return;
   }
@@ -1747,7 +1754,7 @@ async function checkPaymentReminders() {
         }
       } catch {
         setNotificationStatus(
-          'Não foi possível exibir um lembrete agora. Use o botão de teste para diagnosticar.',
+          "Não foi possível exibir um lembrete agora. Use o botão de teste para diagnosticar.",
         );
       }
     }
@@ -1759,7 +1766,7 @@ async function checkPaymentReminders() {
 }
 
 async function syncRemindersToSW() {
-  if (!('caches' in window) || !state.currentPersonKey) return;
+  if (!("caches" in window) || !state.currentPersonKey) return;
 
   const reminders = {
     personKey: state.currentPersonKey,
@@ -1786,11 +1793,11 @@ async function syncRemindersToSW() {
   };
 
   try {
-    const cache = await caches.open('payment-reminders-data');
+    const cache = await caches.open("payment-reminders-data");
     await cache.put(
-      '/reminders.json',
+      "/reminders.json",
       new Response(JSON.stringify(reminders), {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }),
     );
   } catch (err) {
@@ -1816,22 +1823,22 @@ function getReminderCandidates(personKey) {
 async function showGroupedPaymentNotification(personKey, group) {
   const serviceNames = group.payments
     .map((p) => SERVICES[p.serviceKey].name)
-    .join(', ');
+    .join(", ");
   const whenPlural =
     group.daysUntil === 0
-      ? 'vencem hoje'
-      : `vencem em ${group.daysUntil} ${group.daysUntil === 1 ? 'dia' : 'dias'}`;
+      ? "vencem hoje"
+      : `vencem em ${group.daysUntil} ${group.daysUntil === 1 ? "dia" : "dias"}`;
   const whenSingular =
     group.daysUntil === 0
-      ? 'vence hoje'
-      : `vence em ${group.daysUntil} ${group.daysUntil === 1 ? 'dia' : 'dias'}`;
+      ? "vence hoje"
+      : `vence em ${group.daysUntil} ${group.daysUntil === 1 ? "dia" : "dias"}`;
 
   const title =
     group.payments.length === 1
       ? `${serviceNames}: pagamento ${whenSingular}`
       : `Assinaturas: pagamentos ${whenPlural}`;
 
-  let body = '';
+  let body = "";
   if (group.payments.length === 1) {
     body = `${PEOPLE[personKey].name}, a sua assinatura ${serviceNames} ${whenSingular}. Clique para ver as assinaturas no site.`;
   } else {
@@ -1854,7 +1861,7 @@ async function showTestNotification() {
     return;
   }
 
-  setNotificationStatus('Preparando a notificação de teste...');
+  setNotificationStatus("Preparando a notificação de teste...");
   const hasPermission = await requestNotificationAccess({
     runReminderCheck: false,
   });
@@ -1883,11 +1890,11 @@ async function showTestNotification() {
   try {
     await showBrowserNotification(title, options);
     setNotificationStatus(
-      'Notificação de teste enviada. Se ela não apareceu, confira as notificações do navegador e do sistema operacional.',
+      "Notificação de teste enviada. Se ela não apareceu, confira as notificações do navegador e do sistema operacional.",
     );
   } catch {
     setNotificationStatus(
-      'A permissão foi concedida, mas o navegador não exibiu a notificação. No Android, teste pelo endereço HTTPS do GitHub Pages.',
+      "A permissão foi concedida, mas o navegador não exibiu a notificação. No Android, teste pelo endereço HTTPS do GitHub Pages.",
     );
   }
 }
@@ -1900,31 +1907,31 @@ async function showBrowserNotification(title, options) {
     return;
   }
 
-  if (typeof Notification === 'function') {
+  if (typeof Notification === "function") {
     new Notification(title, options);
     return;
   }
 
-  throw new Error('Notifications are not available.');
+  throw new Error("Notifications are not available.");
 }
 
 async function registerServiceWorker() {
-  if (!('serviceWorker' in navigator)) {
+  if (!("serviceWorker" in navigator)) {
     return null;
   }
 
   if (!serviceWorkerRegistrationPromise) {
     serviceWorkerRegistrationPromise = navigator.serviceWorker
-      .register('./sw.js')
+      .register("./sw.js")
       .then(async (reg) => {
         await navigator.serviceWorker.ready;
-        if ('periodicSync' in reg) {
+        if ("periodicSync" in reg) {
           try {
             const status = await navigator.permissions.query({
-              name: 'periodic-background-sync',
+              name: "periodic-background-sync",
             });
-            if (status.state === 'granted') {
-              await reg.periodicSync.register('check-payments', {
+            if (status.state === "granted") {
+              await reg.periodicSync.register("check-payments", {
                 minInterval: 12 * 60 * 60 * 1000,
               });
             }
@@ -1945,10 +1952,10 @@ function supportsNotifications() {
 }
 
 function getNotificationCapability() {
-  if (!('Notification' in window)) {
+  if (!("Notification" in window)) {
     return {
       available: false,
-      message: 'Este navegador não oferece notificações para sites.',
+      message: "Este navegador não oferece notificações para sites.",
     };
   }
 
@@ -1956,13 +1963,13 @@ function getNotificationCapability() {
     return {
       available: false,
       message:
-        'Notificações precisam de HTTPS. Elas não funcionam abrindo o HTML direto; teste pelo GitHub Pages.',
+        "Notificações precisam de HTTPS. Elas não funcionam abrindo o HTML direto; teste pelo GitHub Pages.",
     };
   }
 
   return {
     available: true,
-    message: '',
+    message: "",
   };
 }
 
@@ -1973,18 +1980,18 @@ function setNotificationStatus(message, showAsSystem = false) {
 
   if (showAsSystem && message) {
     const title =
-      message.includes('erro') ||
-      message.includes('Falha') ||
-      message.includes('Erro')
-        ? 'Aviso de Sincronização'
-        : 'Sincronização';
+      message.includes("erro") ||
+      message.includes("Falha") ||
+      message.includes("Erro")
+        ? "Aviso de Sincronização"
+        : "Sincronização";
     showBrowserNotification(title, {
       body: message,
-      icon: '/App-icon.png',
-      tag: 'sync-status',
+      icon: "/App-icon.png",
+      tag: "sync-status",
       renotify: true,
     }).catch((err) =>
-      console.warn('Não foi possível exibir notificação do sistema:', err),
+      console.warn("Não foi possível exibir notificação do sistema:", err),
     );
   }
 }
@@ -2029,10 +2036,10 @@ function getNotificationLogs() {
 
 // Background sync from SW cache
 async function syncLogsFromSW() {
-  if (!('caches' in window) || !state.currentPersonKey) return;
+  if (!("caches" in window) || !state.currentPersonKey) return;
   try {
-    const cache = await caches.open('payment-reminders-data');
-    const response = await cache.match('/reminders.json');
+    const cache = await caches.open("payment-reminders-data");
+    const response = await cache.match("/reminders.json");
     if (response) {
       const data = await response.json();
       if (data && data.logs) {
@@ -2056,16 +2063,16 @@ function savePaidLogs(logs) {
 }
 
 function isValidPaidLogsResponse(data) {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return false;
 
   // Ignorar chaves de metadados conhecidas do Google Apps Script
   const metadataKeys = [
-    'success',
-    'ok',
-    'action',
-    'error',
-    'message',
-    'status',
+    "success",
+    "ok",
+    "action",
+    "error",
+    "message",
+    "status",
   ];
 
   // Se tiver um erro explícito do servidor, não é um log válido para processar
@@ -2077,7 +2084,7 @@ function isValidPaidLogsResponse(data) {
   return dataKeys.every((key) => {
     const val = data[key];
     if (val === null) return true;
-    if (typeof val !== 'object' || Array.isArray(val)) return true; // Ignoramos chaves simples
+    if (typeof val !== "object" || Array.isArray(val)) return true; // Ignoramos chaves simples
     return true;
   });
 }
@@ -2085,23 +2092,23 @@ function isValidPaidLogsResponse(data) {
 function normalizePaidLogs(data) {
   const result = {};
   const metadataKeys = [
-    'success',
-    'ok',
-    'action',
-    'error',
-    'message',
-    'status',
+    "success",
+    "ok",
+    "action",
+    "error",
+    "message",
+    "status",
   ];
 
   Object.entries(data).forEach(([personKey, personLogs]) => {
     // Normalizar a chave da pessoa usando a lógica do app (mapeamento + fallback)
     const normPKey =
       findPersonKey(personKey) ||
-      normalizeName(personKey).replace(/[\s-]+/g, '_');
+      normalizeName(personKey).replace(/[\s-]+/g, "_");
 
     if (!normPKey || metadataKeys.includes(normPKey)) return;
     if (
-      typeof personLogs !== 'object' ||
+      typeof personLogs !== "object" ||
       personLogs === null ||
       Array.isArray(personLogs)
     )
@@ -2110,23 +2117,23 @@ function normalizePaidLogs(data) {
     result[normPKey] = {};
 
     Object.entries(personLogs).forEach(([paymentKey, paidAt]) => {
-      let normalizedPaymentKey = String(paymentKey || '').trim();
+      let normalizedPaymentKey = String(paymentKey || "").trim();
       if (!normalizedPaymentKey) return;
 
       // Se for uma chave de pagamento (contém ':'), normalizar a parte do serviço
       if (
-        normalizedPaymentKey.includes(':') &&
-        !normalizedPaymentKey.includes('site_settings')
+        normalizedPaymentKey.includes(":") &&
+        !normalizedPaymentKey.includes("site_settings")
       ) {
-        const parts = normalizedPaymentKey.split(':');
+        const parts = normalizedPaymentKey.split(":");
         const sKey = findServiceKey(parts[0]);
-        const date = parts.slice(1).join(':');
+        const date = parts.slice(1).join(":");
         normalizedPaymentKey = `${sKey}:${date}`;
       }
 
-      const s = paidAt === undefined || paidAt === null ? '' : String(paidAt);
-      if (s && s.startsWith('!')) return;
-      if (s) result[normPKey][normalizedPaymentKey] = 'true';
+      const s = paidAt === undefined || paidAt === null ? "" : String(paidAt);
+      if (s && s.startsWith("!")) return;
+      if (s) result[normPKey][normalizedPaymentKey] = "true";
     });
   });
 
@@ -2148,14 +2155,14 @@ function rowsArrayToLogs(rows) {
       const p = row.pago !== undefined ? row.pago : row.paid;
       const isPaid =
         p === true ||
-        String(p).toLowerCase() === 'true' ||
-        String(p).toLowerCase() === 'sim' ||
-        String(p) === '1' ||
-        String(p).toLowerCase() === 'pago';
+        String(p).toLowerCase() === "true" ||
+        String(p).toLowerCase() === "sim" ||
+        String(p) === "1" ||
+        String(p).toLowerCase() === "pago";
 
       if (isPaid) {
         logs[pKey] = logs[pKey] || {};
-        logs[pKey][payKey] = 'true';
+        logs[pKey][payKey] = "true";
       }
     } catch (e) {
       // ignorar linha problemática
@@ -2175,11 +2182,12 @@ async function fetchPaidLogs() {
 
     // Se o Script devolver com sucesso, a gente processa e atualiza a tela
     if (data.success) {
+      if (data.nome_grupo) salvarGrupo(state.groupId, data.nome_grupo);
       processarDadosDaPlanilha(data);
       updateUIAfterSync();
     }
   } catch (e) {
-    console.warn('Erro na sincronização', e);
+    console.warn("Erro na sincronização", e);
   }
 }
 
@@ -2198,7 +2206,7 @@ async function markPaymentAsPaid(personKey, payment) {
   const paymentKey = getPaymentNotificationKey(payment);
   // Atualização otimista na UI (Salva na hora na tela)
   paidLogsCache[personKey] = paidLogsCache[personKey] ?? {};
-  paidLogsCache[personKey][paymentKey] = 'true';
+  paidLogsCache[personKey][paymentKey] = "true";
   savePaidLogs(paidLogsCache);
   renderDetails();
   refreshCurrentDates();
@@ -2207,11 +2215,11 @@ async function markPaymentAsPaid(personKey, payment) {
   if (!state.groupId) return;
 
   try {
-    setNotificationStatus('Salvando pagamento no banco...');
+    setNotificationStatus("Salvando pagamento no banco...");
     await fetch(API_URL, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
-        action: 'salvar_log',
+        action: "salvar_log",
         id_grupo: state.groupId,
         chave_perfil: personKey,
         chave_servico: payment.serviceKey,
@@ -2219,9 +2227,9 @@ async function markPaymentAsPaid(personKey, payment) {
         pago: true,
       }),
     });
-    setNotificationStatus('Parcela marcada como paga e salva.');
+    setNotificationStatus("Parcela marcada como paga e salva.");
   } catch (error) {
-    setNotificationStatus('Erro de conexão ao salvar. Salvo localmente.', true);
+    setNotificationStatus("Erro de conexão ao salvar. Salvo localmente.", true);
   }
 }
 
@@ -2242,11 +2250,11 @@ async function unmarkPayment(personKey, payment) {
   if (!state.groupId) return;
 
   try {
-    setNotificationStatus('Removendo do banco de dados...');
+    setNotificationStatus("Removendo do banco de dados...");
     await fetch(API_URL, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
-        action: 'salvar_log',
+        action: "salvar_log",
         id_grupo: state.groupId,
         chave_perfil: personKey,
         chave_servico: payment.serviceKey,
@@ -2254,9 +2262,9 @@ async function unmarkPayment(personKey, payment) {
         pago: false,
       }),
     });
-    setNotificationStatus('Parcela desmarcada.');
+    setNotificationStatus("Parcela desmarcada.");
   } catch (error) {
-    setNotificationStatus('Erro de conexão ao remover.', true);
+    setNotificationStatus("Erro de conexão ao remover.", true);
   }
 }
 
@@ -2278,29 +2286,29 @@ async function unmarkPayment(personKey, payment) {
   refreshCurrentDates();
   void syncRemindersToSW();
 
-  if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
+  if (!API_URL || API_URL.includes("COLA_TUA_URL_DO_APPS_SCRIPT_AQUI")) {
     return;
   }
 
   try {
-    setNotificationStatus('Removendo do banco de dados...');
+    setNotificationStatus("Removendo do banco de dados...");
     await fetch(API_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      referrerPolicy: 'no-referrer',
+      method: "POST",
+      mode: "no-cors",
+      referrerPolicy: "no-referrer",
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
+        "Content-Type": "text/plain;charset=utf-8",
       },
       body: JSON.stringify({
         ...getPaymentSyncPayload(personKey, payment, false),
         remove: true,
       }),
     });
-    setNotificationStatus('Parcela desmarcada e sincronizada.');
+    setNotificationStatus("Parcela desmarcada e sincronizada.");
   } catch (error) {
-    console.error('Erro ao remover no Sheets:', error);
+    console.error("Erro ao remover no Sheets:", error);
     setNotificationStatus(
-      'Erro de conexão ao remover. Alteração salva localmente.',
+      "Erro de conexão ao remover. Alteração salva localmente.",
       true,
     );
   }
@@ -2340,19 +2348,19 @@ function findPersonKey(rawName) {
 
   return (
     Object.entries(PEOPLE).find(([k, person]) => {
-      const pName = normalizeName(person.name || '');
+      const pName = normalizeName(person.name || "");
       const pId = normalizeName(k);
       const aliases = (person.aliases || []).map(normalizeName);
-      
+
       return (
         pId === normalized ||
         pName === normalized ||
         aliases.includes(normalized) ||
         pName.includes(normalized) ||
         normalized.includes(pName) ||
-        aliases.some(a => normalized.includes(a))
+        aliases.some((a) => normalized.includes(a))
       );
-    })?.[0] ?? normalized.replace(/[\s-]+/g, '_')
+    })?.[0] ?? normalized.replace(/[\s-]+/g, "_")
   );
 }
 
@@ -2362,20 +2370,20 @@ function findServiceKey(rawName) {
 
   // Mapeamento manual para compatibilidade com o servidor (igual ao Code.gs)
   const manualMap = {
-    disney: 'disney',
-    'disney+': 'disney',
-    hbo: 'max',
-    max: 'max',
-    'hbo max': 'max',
-    spotify: 'spotify',
-    crunchyroll: 'crunchyroll',
-    'prime video': 'prime_video',
-    prime_video: 'prime_video',
-    'google one': 'google_one',
-    google_one: 'google_one',
-    'f1 tv pro': 'f1_tv_pro',
-    f1_tv_pro: 'f1_tv_pro',
-    globoplay: 'globoplay',
+    disney: "disney",
+    "disney+": "disney",
+    hbo: "max",
+    max: "max",
+    "hbo max": "max",
+    spotify: "spotify",
+    crunchyroll: "crunchyroll",
+    "prime video": "prime_video",
+    prime_video: "prime_video",
+    "google one": "google_one",
+    google_one: "google_one",
+    "f1 tv pro": "f1_tv_pro",
+    f1_tv_pro: "f1_tv_pro",
+    globoplay: "globoplay",
   };
 
   if (manualMap[normalized]) return manualMap[normalized];
@@ -2383,30 +2391,30 @@ function findServiceKey(rawName) {
   return (
     Object.entries(SERVICES).find(
       ([k, s]) => k === normalized || normalizeName(s.name) === normalized,
-    )?.[0] ?? normalized.replace(/[\s-]+/g, '_')
+    )?.[0] ?? normalized.replace(/[\s-]+/g, "_")
   );
 }
 
 function getNameError(rawName) {
   const normalized = normalizeName(rawName);
 
-  if (normalized === 'ianca') {
-    return 'Esse cadastro está como Ianka, com k.';
+  if (normalized === "ianca") {
+    return "Esse cadastro está como Ianka, com k.";
   }
 
-  if (normalized === 'sara' || normalized === 'sarah') {
-    return 'Esse cadastro está como Sarha.';
+  if (normalized === "sara" || normalized === "sarah") {
+    return "Esse cadastro está como Sarha.";
   }
 
-  return 'Nome não encontrado. Use André, Isabela, Ianka ou Sarha.';
+  return "Nome não encontrado. Use André, Isabela, Ianka ou Sarha.";
 }
 
 function normalizeName(value) {
   return value
     .trim()
     .toLowerCase() // Removido pt-BR para ser idêntico ao normalizeText do Code.gs
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function formatShortDate(date) {
@@ -2420,21 +2428,21 @@ function formatLongDate(date) {
 function formatDateKey(date) {
   return [
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-  ].join('-');
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 function formatGoogleCalendarDate(date) {
   return [
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-    'T',
-    String(date.getHours()).padStart(2, '0'),
-    String(date.getMinutes()).padStart(2, '0'),
-    String(date.getSeconds()).padStart(2, '0'),
-  ].join('');
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+    "T",
+    String(date.getHours()).padStart(2, "0"),
+    String(date.getMinutes()).padStart(2, "0"),
+    String(date.getSeconds()).padStart(2, "0"),
+  ].join("");
 }
 
 function getCalendarTimeZone() {
@@ -2445,7 +2453,7 @@ function getCalendarTimeZone() {
 }
 
 function capitalize(value) {
-  return value.charAt(0).toLocaleUpperCase('pt-BR') + value.slice(1);
+  return value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
 }
 
 function getDaysUntil(date) {
@@ -2466,18 +2474,18 @@ function getToday() {
 function positionDetailsPanel() {
   if (!state.selectedServiceKey) return;
   const activeCard = Array.from(
-    subscriptionList.querySelectorAll('.subscription-card'),
+    subscriptionList.querySelectorAll(".subscription-card"),
   ).find((c) => c.dataset.service === state.selectedServiceKey);
 
   if (activeCard) {
-    activeCard.insertAdjacentElement('afterend', detailsPanel);
+    activeCard.insertAdjacentElement("afterend", detailsPanel);
   } else {
-    subscriptionList.insertAdjacentElement('afterend', detailsPanel);
+    subscriptionList.insertAdjacentElement("afterend", detailsPanel);
   }
 }
 
-window.addEventListener('resize', () => {
-  if (!detailsPanel.classList.contains('is-hidden')) {
+window.addEventListener("resize", () => {
+  if (!detailsPanel.classList.contains("is-hidden")) {
     positionDetailsPanel();
   }
 });
@@ -2491,36 +2499,36 @@ function renderAdminScreen() {
     <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
       <div>
         <strong>${s.name}</strong> <span style="font-size: 0.8rem; margin-left:8px; opacity: 0.7;">${moneyFormatter.format(s.totalAmount)}</span>
-        <div style="font-size: 0.8rem; opacity: 0.7;">Pessoas: ${(s.participants || []).map((p) => PEOPLE[p]?.name).join(', ') || 'Ninguém'}</div>
+        <div style="font-size: 0.8rem; opacity: 0.7;">Pessoas: ${(s.participants || []).map((p) => PEOPLE[p]?.name).join(", ") || "Ninguém"}</div>
       </div>
       <button class="ghost-button edit-service-btn" data-key="${sKey}" style="padding: 6px;">Editar</button>
     </div>
   `,
     )
-    .join('');
+    .join("");
 
   adminProfilesList.innerHTML = Object.entries(PEOPLE)
     .map(
       ([pKey, p]) => `
     <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <strong>${p.name}</strong> ${p.isAdmin ? '<span style="color: #ef4444; font-size: 0.7rem; text-transform: uppercase; margin-left:4px;">ADMIN</span>' : ''}
+        <strong>${p.name}</strong> ${p.isAdmin ? '<span style="color: #ef4444; font-size: 0.7rem; text-transform: uppercase; margin-left:4px;">ADMIN</span>' : ""}
         <div style="font-size: 0.8rem; opacity: 0.7;">Assinaturas: ${p.subscriptions.length}</div>
       </div>
       <button class="ghost-button edit-profile-btn" data-key="${pKey}" style="padding: 6px;">Editar</button>
     </div>
   `,
     )
-    .join('');
+    .join("");
 
-  document.querySelectorAll('.edit-service-btn').forEach((btn) => {
-    btn.addEventListener('click', () =>
+  document.querySelectorAll(".edit-service-btn").forEach((btn) => {
+    btn.addEventListener("click", () =>
       openAdminModalForService(btn.dataset.key),
     );
   });
 
-  document.querySelectorAll('.edit-profile-btn').forEach((btn) => {
-    btn.addEventListener('click', () =>
+  document.querySelectorAll(".edit-profile-btn").forEach((btn) => {
+    btn.addEventListener("click", () =>
       openAdminModalForProfile(btn.dataset.key),
     );
   });
@@ -2528,30 +2536,30 @@ function renderAdminScreen() {
 
 function openAdminModalForService(serviceKey) {
   currentAdminContext = {
-    type: 'service',
-    key: serviceKey || 'temp_' + generateKey(),
+    type: "service",
+    key: serviceKey || "temp_" + generateKey(),
   };
   const s = serviceKey
     ? SERVICES[serviceKey]
     : {
-        name: '',
-        shortName: '',
-        logoUrl: '',
-        cssClass: '',
-        model: 'monthly',
-        modelLabel: 'Todo mês',
+        name: "",
+        shortName: "",
+        logoUrl: "",
+        cssClass: "",
+        model: "monthly",
+        modelLabel: "Todo mês",
         totalAmount: 0,
         participants: [],
-        color: '#1a2b4c',
+        color: "#1a2b4c",
       };
 
   adminModalTitle.textContent = serviceKey
-    ? 'Editar Assinatura'
-    : 'Nova Assinatura';
-  adminModalDeleteButton.style.display = serviceKey ? 'block' : 'none';
-  adminModalDeleteButton.textContent = 'Excluir';
-  adminModalDeleteButton.style.color = '#ef4444';
-  adminModalDeleteButton.style.background = 'transparent';
+    ? "Editar Assinatura"
+    : "Nova Assinatura";
+  adminModalDeleteButton.style.display = serviceKey ? "block" : "none";
+  adminModalDeleteButton.textContent = "Excluir";
+  adminModalDeleteButton.style.color = "#ef4444";
+  adminModalDeleteButton.style.background = "transparent";
 
   adminModalBody.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -2561,7 +2569,7 @@ function openAdminModalForService(serviceKey) {
       </label>
       <label style="display:flex; flex-direction:column; gap:4px;">
         <span style="font-size: 0.8rem; opacity:0.8;">Logo de Fundo (URL da Imagem)</span>
-        <input type="text" id="adminS_logoUrl" value="${s.logoUrl || ''}" placeholder="https://exemplo.com/logo.png" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: inherit; width: 100%; box-sizing: border-box;" />
+        <input type="text" id="adminS_logoUrl" value="${s.logoUrl || ""}" placeholder="https://exemplo.com/logo.png" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: inherit; width: 100%; box-sizing: border-box;" />
       </label>
       <label style="display:flex; flex-direction:column; gap:4px;">
         <span style="font-size: 0.8rem; opacity:0.8;">Sigla de Referência</span>
@@ -2573,13 +2581,13 @@ function openAdminModalForService(serviceKey) {
       </label>
       <label style="display:flex; flex-direction:column; gap:4px;">
         <span style="font-size: 0.8rem; opacity:0.8;">Cor do Card (Ajustada para ser escura)</span>
-        <input type="color" id="adminS_color" value="${s.color || '#1a2b4c'}" style="height:40px; width: 100%; padding:0; border:none; border-radius:8px; outline:none; background:transparent;" />
+        <input type="color" id="adminS_color" value="${s.color || "#1a2b4c"}" style="height:40px; width: 100%; padding:0; border:none; border-radius:8px; outline:none; background:transparent;" />
       </label>
       <label style="display:flex; flex-direction:column; gap:4px;">
         <span style="font-size: 0.8rem; opacity:0.8;">Modelo (monthly / rotation)</span>
         <select id="adminS_model" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: #0f172a; color: inherit; width: 100%; box-sizing: border-box;">
-          <option value="monthly" ${s.model === 'monthly' ? 'selected' : ''}>Mensal</option>
-          <option value="rotation" ${s.model === 'rotation' ? 'selected' : ''}>Rodízio</option>
+          <option value="monthly" ${s.model === "monthly" ? "selected" : ""}>Mensal</option>
+          <option value="rotation" ${s.model === "rotation" ? "selected" : ""}>Rodízio</option>
         </select>
       </label>
       <label style="display:flex; flex-direction:column; gap:4px;">
@@ -2593,39 +2601,39 @@ function openAdminModalForService(serviceKey) {
             .map(
               ([pKey, p]) => `
             <label style="display:flex; align-items:center; gap:8px;">
-              <input type="checkbox" class="adminS_participant" value="${pKey}" ${(s.participants || []).includes(pKey) ? 'checked' : ''} style="width:20px;height:20px;" />
+              <input type="checkbox" class="adminS_participant" value="${pKey}" ${(s.participants || []).includes(pKey) ? "checked" : ""} style="width:20px;height:20px;" />
               ${p.name}
             </label>
           `,
             )
-            .join('')}
+            .join("")}
         </div>
       </div>
     </div>
   `;
-  adminSharedModal.classList.remove('is-hidden');
+  adminSharedModal.classList.remove("is-hidden");
 }
 
 function openAdminModalForProfile(profileKey) {
   currentAdminContext = {
-    type: 'profile',
-    key: profileKey || 'temp_' + generateKey(),
+    type: "profile",
+    key: profileKey || "temp_" + generateKey(),
   };
   const p = profileKey
     ? PEOPLE[profileKey]
     : {
-        name: '',
+        name: "",
         aliases: [],
-        color: '#444444',
-        avatar: '',
+        color: "#444444",
+        avatar: "",
         isAdmin: false,
       };
 
-  adminModalTitle.textContent = profileKey ? 'Editar Perfil' : 'Novo Perfil';
-  adminModalDeleteButton.style.display = profileKey ? 'block' : 'none';
-  adminModalDeleteButton.textContent = 'Excluir';
-  adminModalDeleteButton.style.color = '#ef4444';
-  adminModalDeleteButton.style.background = 'transparent';
+  adminModalTitle.textContent = profileKey ? "Editar Perfil" : "Novo Perfil";
+  adminModalDeleteButton.style.display = profileKey ? "block" : "none";
+  adminModalDeleteButton.textContent = "Excluir";
+  adminModalDeleteButton.style.color = "#ef4444";
+  adminModalDeleteButton.style.background = "transparent";
 
   adminModalBody.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -2642,46 +2650,46 @@ function openAdminModalForProfile(profileKey) {
         <input type="color" id="adminP_color" value="${p.color}" style="height:40px; width: 100%; padding:0; border:none; border-radius:8px; outline:none; background:transparent;" />
       </label>
       <label style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-        <input type="checkbox" id="adminP_isAdmin" ${p.isAdmin ? 'checked' : ''} style="width:20px;height:20px;" />
+        <input type="checkbox" id="adminP_isAdmin" ${p.isAdmin ? "checked" : ""} style="width:20px;height:20px;" />
         Administrador
       </label>
     </div>
   `;
-  adminSharedModal.classList.remove('is-hidden');
+  adminSharedModal.classList.remove("is-hidden");
 }
 
 async function handleAdminSave() {
   if (!state.groupId) return;
 
-  if (currentAdminContext.type === 'service') {
-    const isNew = currentAdminContext.key.startsWith('temp_');
-    const name = document.querySelector('#adminS_name').value;
+  if (currentAdminContext.type === "service") {
+    const isNew = currentAdminContext.key.startsWith("temp_");
+    const name = document.querySelector("#adminS_name").value;
     const sKey = isNew ? findServiceKey(name) : currentAdminContext.key;
     const isMonthly =
-      document.querySelector('#adminS_model').value === 'monthly';
+      document.querySelector("#adminS_model").value === "monthly";
     const parts = Array.from(
-      document.querySelectorAll('.adminS_participant:checked'),
+      document.querySelectorAll(".adminS_participant:checked"),
     ).map((el) => el.value);
 
     SERVICES[sKey] = {
       name: name,
-      shortName: document.querySelector('#adminS_short').value,
-      logoUrl: document.querySelector('#adminS_logoUrl').value,
+      shortName: document.querySelector("#adminS_short").value,
+      logoUrl: document.querySelector("#adminS_logoUrl").value,
       cssClass:
-        document.querySelector('#adminS_css').value || `service-${sKey}`,
-      color: ensureDarkColor(document.querySelector('#adminS_color').value),
-      model: isMonthly ? 'monthly' : 'rotation',
-      modelLabel: isMonthly ? 'Todo mês' : 'Rodízio',
+        document.querySelector("#adminS_css").value || `service-${sKey}`,
+      color: ensureDarkColor(document.querySelector("#adminS_color").value),
+      model: isMonthly ? "monthly" : "rotation",
+      modelLabel: isMonthly ? "Todo mês" : "Rodízio",
       totalAmount:
-        parseFloat(document.querySelector('#adminS_total').value) || 0,
+        parseFloat(document.querySelector("#adminS_total").value) || 0,
       participants: parts,
     };
 
-    setNotificationStatus('Salvando assinatura na nuvem...');
+    setNotificationStatus("Salvando assinatura na nuvem...");
     await fetch(API_URL, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
-        action: 'salvar_assinatura',
+        action: "salvar_assinatura",
         id_grupo: state.groupId,
         chave_servico: sKey,
         nome: SERVICES[sKey].name,
@@ -2689,13 +2697,13 @@ async function handleAdminSave() {
         cor: SERVICES[sKey].color,
         modelo: SERVICES[sKey].model,
         valor_total: SERVICES[sKey].totalAmount,
-        participantes: parts.join(','),
+        participantes: parts.join(","),
       }),
     });
-    setNotificationStatus('Assinatura salva para todos!');
-  } else if (currentAdminContext.type === 'profile') {
-    const isNew = currentAdminContext.key.startsWith('temp_');
-    const name = document.querySelector('#adminP_name').value;
+    setNotificationStatus("Assinatura salva para todos!");
+  } else if (currentAdminContext.type === "profile") {
+    const isNew = currentAdminContext.key.startsWith("temp_");
+    const name = document.querySelector("#adminP_name").value;
     const pKey = isNew ? findPersonKey(name) : currentAdminContext.key;
     const existing = PEOPLE[pKey] || { subscriptions: [] };
 
@@ -2704,18 +2712,18 @@ async function handleAdminSave() {
       aliases:
         existing.aliases && existing.aliases.length > 0
           ? existing.aliases
-          : [name.split(' ')[0].toLowerCase()],
-      avatar: document.querySelector('#adminP_avatar').value,
-      color: document.querySelector('#adminP_color').value,
-      isAdmin: document.querySelector('#adminP_isAdmin').checked,
+          : [name.split(" ")[0].toLowerCase()],
+      avatar: document.querySelector("#adminP_avatar").value,
+      color: document.querySelector("#adminP_color").value,
+      isAdmin: document.querySelector("#adminP_isAdmin").checked,
       subscriptions: existing.subscriptions,
     };
 
-    setNotificationStatus('Salvando perfil na nuvem...');
+    setNotificationStatus("Salvando perfil na nuvem...");
     await fetch(API_URL, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
-        action: 'salvar_perfil',
+        action: "salvar_perfil",
         id_grupo: state.groupId,
         chave_perfil: pKey,
         nome: PEOPLE[pKey].name,
@@ -2724,10 +2732,10 @@ async function handleAdminSave() {
         is_admin: PEOPLE[pKey].isAdmin,
       }),
     });
-    setNotificationStatus('Perfil salvo para todos!');
+    setNotificationStatus("Perfil salvo para todos!");
   }
 
-  adminSharedModal.classList.add('is-hidden');
+  adminSharedModal.classList.add("is-hidden");
   syncRelationships();
   applyDynamicAmounts();
   renderAdminScreen();
@@ -2736,31 +2744,31 @@ async function handleAdminSave() {
 let deleteConfirmTimeout = null;
 async function handleAdminDelete(e) {
   const btn = e.target;
-  if (btn.textContent !== 'Confirmar Exclusão') {
-    btn.textContent = 'Confirmar Exclusão';
-    btn.style.color = '#fff';
-    btn.style.background = '#ef4444';
+  if (btn.textContent !== "Confirmar Exclusão") {
+    btn.textContent = "Confirmar Exclusão";
+    btn.style.color = "#fff";
+    btn.style.background = "#ef4444";
     clearTimeout(deleteConfirmTimeout);
     deleteConfirmTimeout = setTimeout(() => {
-      btn.textContent = 'Excluir';
-      btn.style.color = '#ef4444';
-      btn.style.background = 'transparent';
+      btn.textContent = "Excluir";
+      btn.style.color = "#ef4444";
+      btn.style.background = "transparent";
     }, 3000);
     return;
   }
 
   if (!state.groupId) return;
 
-  setNotificationStatus('Excluindo do banco de dados...');
-  if (currentAdminContext.type === 'service') {
+  setNotificationStatus("Excluindo do banco de dados...");
+  if (currentAdminContext.type === "service") {
     delete SERVICES[currentAdminContext.key];
     await fetch(API_URL, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
-        action: 'deletar_item',
+        action: "deletar_item",
         id_grupo: state.groupId,
-        aba: 'Assinaturas',
-        coluna_chave: 'chave_servico',
+        aba: "Assinaturas",
+        coluna_chave: "chave_servico",
         valor_chave: currentAdminContext.key,
       }),
     });
@@ -2773,19 +2781,19 @@ async function handleAdminDelete(e) {
         );
     }
     await fetch(API_URL, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
-        action: 'deletar_item',
+        action: "deletar_item",
         id_grupo: state.groupId,
-        aba: 'Perfis',
-        coluna_chave: 'chave_perfil',
+        aba: "Perfis",
+        coluna_chave: "chave_perfil",
         valor_chave: currentAdminContext.key,
       }),
     });
   }
 
-  setNotificationStatus('Excluído com sucesso!');
-  adminSharedModal.classList.add('is-hidden');
+  setNotificationStatus("Excluído com sucesso!");
+  adminSharedModal.classList.add("is-hidden");
   syncRelationships();
   applyDynamicAmounts();
   renderAdminScreen();
@@ -2800,12 +2808,14 @@ function generateKey() {
 // ==========================================
 let currentAuthAction = null;
 let authenticatingPerson = null;
-let currentHintText = '';
+let currentHintText = "";
 
 async function handleProfileClick(personKey) {
   let person = PEOPLE[personKey];
   if (!person) {
-    const alternateKey = Object.keys(PEOPLE).find(k => PEOPLE[k].aliases?.includes(personKey) || k === personKey);
+    const alternateKey = Object.keys(PEOPLE).find(
+      (k) => PEOPLE[k].aliases?.includes(personKey) || k === personKey,
+    );
     if (alternateKey) {
       personKey = alternateKey;
       person = PEOPLE[personKey];
@@ -2817,18 +2827,18 @@ async function handleProfileClick(personKey) {
     return;
   }
 
-  const passwordModal = document.querySelector('#passwordModal');
-  const passwordModalTitle = document.querySelector('#passwordModalTitle');
-  const passwordModalMessage = document.querySelector('#passwordModalMessage');
+  const passwordModal = document.querySelector("#passwordModal");
+  const passwordModalTitle = document.querySelector("#passwordModalTitle");
+  const passwordModalMessage = document.querySelector("#passwordModalMessage");
   const passwordInputContainer = document.querySelector(
-    '#passwordInputContainer',
+    "#passwordInputContainer",
   );
-  const passwordInput = document.querySelector('#passwordInput');
-  const hintInput = document.querySelector('#hintInput');
-  const showHintBtn = document.querySelector('#showHintBtn');
-  const hintTextDisplay = document.querySelector('#hintTextDisplay');
-  const passwordError = document.querySelector('#passwordError');
-  const passwordSubmitBtn = document.querySelector('#passwordSubmitBtn');
+  const passwordInput = document.querySelector("#passwordInput");
+  const hintInput = document.querySelector("#hintInput");
+  const showHintBtn = document.querySelector("#showHintBtn");
+  const hintTextDisplay = document.querySelector("#hintTextDisplay");
+  const passwordError = document.querySelector("#passwordError");
+  const passwordSubmitBtn = document.querySelector("#passwordSubmitBtn");
 
   authenticatingPerson = personKey;
 
@@ -2838,17 +2848,17 @@ async function handleProfileClick(personKey) {
     return;
   }
 
-  passwordModal.classList.remove('is-hidden');
+  passwordModal.classList.remove("is-hidden");
   passwordModalTitle.textContent = person.name;
-  passwordModalMessage.textContent = 'Verificando segurança...';
-  passwordInputContainer.classList.add('is-hidden');
-  passwordSubmitBtn.style.display = 'none';
-  passwordError.textContent = '';
-  passwordInput.value = '';
-  hintInput.value = '';
-  hintTextDisplay.style.display = 'none';
-  showHintBtn.style.display = 'none';
-  hintInput.style.display = 'none';
+  passwordModalMessage.textContent = "Verificando segurança...";
+  passwordInputContainer.classList.add("is-hidden");
+  passwordSubmitBtn.style.display = "none";
+  passwordError.textContent = "";
+  passwordInput.value = "";
+  hintInput.value = "";
+  hintTextDisplay.style.display = "none";
+  showHintBtn.style.display = "none";
+  hintInput.style.display = "none";
 
   try {
     const timestamp = Date.now();
@@ -2856,97 +2866,97 @@ async function handleProfileClick(personKey) {
     const res = await fetch(url);
     const data = await res.json();
 
-    passwordInputContainer.classList.remove('is-hidden');
-    passwordSubmitBtn.style.display = 'block';
+    passwordInputContainer.classList.remove("is-hidden");
+    passwordSubmitBtn.style.display = "block";
 
     if (data.hasPassword) {
-      currentAuthAction = 'login';
-      currentHintText = data.hint || 'Nenhuma dica cadastrada.';
+      currentAuthAction = "login";
+      currentHintText = data.hint || "Nenhuma dica cadastrada.";
       passwordModalMessage.textContent =
-        'Este perfil é protegido. Digite sua senha:';
-      passwordSubmitBtn.textContent = 'Entrar';
-      showHintBtn.style.display = 'block';
+        "Este perfil é protegido. Digite sua senha:";
+      passwordSubmitBtn.textContent = "Entrar";
+      showHintBtn.style.display = "block";
     } else {
-      currentAuthAction = 'create';
+      currentAuthAction = "create";
       passwordModalMessage.textContent =
-        'Crie uma senha e uma dica para proteger seu perfil:';
-      passwordSubmitBtn.textContent = 'Salvar e Entrar';
-      hintInput.style.display = 'block';
+        "Crie uma senha e uma dica para proteger seu perfil:";
+      passwordSubmitBtn.textContent = "Salvar e Entrar";
+      hintInput.style.display = "block";
     }
     setTimeout(() => passwordInput.focus(), 100);
   } catch (err) {
-    passwordModalMessage.textContent = 'Erro de conexão. Tente novamente.';
+    passwordModalMessage.textContent = "Erro de conexão. Tente novamente.";
   }
 }
 
 // Botões do Modal
-document.addEventListener('click', async (event) => {
-  if (event.target.closest('#closePasswordModal')) {
-    document.querySelector('#passwordModal').classList.add('is-hidden');
+document.addEventListener("click", async (event) => {
+  if (event.target.closest("#closePasswordModal")) {
+    document.querySelector("#passwordModal").classList.add("is-hidden");
   }
 
-  if (event.target.closest('#showHintBtn')) {
-    const hintDisplay = document.querySelector('#hintTextDisplay');
+  if (event.target.closest("#showHintBtn")) {
+    const hintDisplay = document.querySelector("#hintTextDisplay");
     hintDisplay.textContent = `💡 Dica: ${currentHintText}`;
-    hintDisplay.style.display = 'block';
-    event.target.style.display = 'none';
+    hintDisplay.style.display = "block";
+    event.target.style.display = "none";
   }
 
-  if (event.target.closest('#passwordSubmitBtn')) {
-    const passwordInput = document.querySelector('#passwordInput');
-    const hintInput = document.querySelector('#hintInput');
-    const passwordError = document.querySelector('#passwordError');
-    const passwordSubmitBtn = document.querySelector('#passwordSubmitBtn');
+  if (event.target.closest("#passwordSubmitBtn")) {
+    const passwordInput = document.querySelector("#passwordInput");
+    const hintInput = document.querySelector("#hintInput");
+    const passwordError = document.querySelector("#passwordError");
+    const passwordSubmitBtn = document.querySelector("#passwordSubmitBtn");
     const pass = passwordInput.value.trim();
 
     if (!pass) {
-      passwordError.textContent = 'A senha não pode ser vazia.';
+      passwordError.textContent = "A senha não pode ser vazia.";
       return;
     }
-    if (currentAuthAction === 'create' && !hintInput.value.trim()) {
-      passwordError.textContent = 'Por favor, crie uma dica para sua senha.';
+    if (currentAuthAction === "create" && !hintInput.value.trim()) {
+      passwordError.textContent = "Por favor, crie uma dica para sua senha.";
       return;
     }
 
     passwordSubmitBtn.disabled = true;
-    passwordSubmitBtn.textContent = 'Aguarde...';
-    passwordError.textContent = '';
+    passwordSubmitBtn.textContent = "Aguarde...";
+    passwordError.textContent = "";
 
     try {
-      if (currentAuthAction === 'login') {
+      if (currentAuthAction === "login") {
         const timestamp = Date.now();
         const url = `${API_URL}?action=check_password&id_grupo=${state.groupId}&personKey=${authenticatingPerson}&password=${encodeURIComponent(pass)}&t=${timestamp}`;
         const res = await fetch(url);
         const data = await res.json();
 
         if (data.match) {
-          document.querySelector('#passwordModal').classList.add('is-hidden');
+          document.querySelector("#passwordModal").classList.add("is-hidden");
           saveProfile(authenticatingPerson);
           openDashboard(authenticatingPerson);
         } else {
-          passwordError.textContent = 'Senha incorreta.';
+          passwordError.textContent = "Senha incorreta.";
         }
-      } else if (currentAuthAction === 'create') {
+      } else if (currentAuthAction === "create") {
         await fetch(API_URL, {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify({
-            action: 'set_password',
+            action: "set_password",
             id_grupo: state.groupId,
             chave_perfil: authenticatingPerson,
             senha: pass,
             dica: hintInput.value.trim(),
           }),
         });
-        document.querySelector('#passwordModal').classList.add('is-hidden');
+        document.querySelector("#passwordModal").classList.add("is-hidden");
         saveProfile(authenticatingPerson);
         openDashboard(authenticatingPerson);
       }
     } catch (err) {
-      passwordError.textContent = 'Erro de comunicação com o servidor.';
+      passwordError.textContent = "Erro de comunicação com o servidor.";
     } finally {
       passwordSubmitBtn.disabled = false;
       passwordSubmitBtn.textContent =
-        currentAuthAction === 'login' ? 'Entrar' : 'Salvar e Entrar';
+        currentAuthAction === "login" ? "Entrar" : "Salvar e Entrar";
     }
   }
 });
@@ -2989,9 +2999,9 @@ function openInvoiceModal(personKey) {
   // Ordena por data (o mais atrasado primeiro)
   pendingItems.sort((a, b) => a.date - b.date);
 
-  const invoiceList = document.querySelector('#invoiceList');
-  const invoiceTotalAmount = document.querySelector('#invoiceTotalAmount');
-  let html = '';
+  const invoiceList = document.querySelector("#invoiceList");
+  const invoiceTotalAmount = document.querySelector("#invoiceTotalAmount");
+  let html = "";
 
   if (pendingItems.length === 0) {
     html = `
@@ -3008,7 +3018,7 @@ function openInvoiceModal(personKey) {
         const isAtrasada = payment.date < today;
         const isHoje = payment.date.getTime() === today.getTime();
 
-        let statusPill = '';
+        let statusPill = "";
         if (isAtrasada) {
           statusPill = `<span class="status-pill status-atrasada" style="background: rgba(225, 29, 72, 0.2); color: #ffa4bc;">Atrasado</span>`;
         } else if (isHoje) {
@@ -3019,19 +3029,19 @@ function openInvoiceModal(personKey) {
 
         // Dicionário com as cores exatas do seu CSS para as 8 assinaturas originais
         const fallbackColors = {
-          disney: 'rgb(4, 7, 20)',
-          max: 'rgb(0, 0, 0)',
-          spotify: 'rgb(15, 60, 30)',
-          crunchyroll: 'rgb(180, 60, 0)',
-          prime_video: 'rgb(0, 55, 75)',
-          google_one: 'rgb(4, 30, 71)',
-          f1_tv_pro: 'rgb(95, 0, 0)',
-          globoplay: 'rgb(95, 8, 24)',
+          disney: "rgb(4, 7, 20)",
+          max: "rgb(0, 0, 0)",
+          spotify: "rgb(15, 60, 30)",
+          crunchyroll: "rgb(180, 60, 0)",
+          prime_video: "rgb(0, 55, 75)",
+          google_one: "rgb(4, 30, 71)",
+          f1_tv_pro: "rgb(95, 0, 0)",
+          globoplay: "rgb(95, 8, 24)",
         };
 
         // Tenta usar a cor customizada do Admin. Se não tiver, usa a cor do dicionário. Se falhar, usa o azul padrão.
         const bgColor =
-          service.color || fallbackColors[payment.serviceKey] || '#1a2b4c';
+          service.color || fallbackColors[payment.serviceKey] || "#1a2b4c";
 
         return `
         <div class="invoice-item" style="background-color: ${bgColor};">
@@ -3049,86 +3059,164 @@ function openInvoiceModal(personKey) {
         </div>
       `;
       })
-      .join('');
+      .join("");
   }
 
   invoiceList.innerHTML = html;
   invoiceTotalAmount.textContent = moneyFormatter.format(total);
-  document.querySelector('#invoiceModal').classList.remove('is-hidden');
+  document.querySelector("#invoiceModal").classList.remove("is-hidden");
 }
 
 // ==========================================
 // SISTEMA DE GRUPOS (NOVO)
 // ==========================================
-const groupScreen = document.querySelector('#groupScreen');
-const btnCreateGroup = document.querySelector('#btnCreateGroup');
-const formJoinGroup = document.querySelector('#formJoinGroup');
-const btnChangeGroup = document.querySelector('#btnChangeGroup');
-const currentGroupLabel = document.querySelector('#currentGroupLabel');
-const inputGroupCode = document.querySelector('#inputGroupCode');
-const groupMessage = document.querySelector('#groupMessage');
+const groupScreen = document.querySelector("#groupScreen");
+const btnCreateGroup = document.querySelector("#btnCreateGroup");
+const formJoinGroup = document.querySelector("#formJoinGroup");
+const btnChangeGroup = document.querySelector("#btnChangeGroup");
+const currentGroupLabel = document.querySelector("#currentGroupLabel");
+const inputGroupCode = document.querySelector("#inputGroupCode");
+const groupMessage = document.querySelector("#groupMessage");
 
 // Mudar a função que inicia o site para verificar o grupo primeiro
 function initApp() {
   if (!state.groupId) {
     // Se não tem grupo, mostra a tela de boas vindas
-    groupScreen.classList.remove('is-hidden');
-    profileScreen.classList.add('is-hidden');
-    dashboard.classList.add('is-hidden');
-    if (adminButton) adminButton.classList.add('is-hidden');
+    groupScreen.classList.remove("is-hidden");
+    profileScreen.classList.add("is-hidden");
+    dashboard.classList.add("is-hidden");
+    if (adminButton) adminButton.classList.add("is-hidden");
   } else {
     // Se já tem grupo, tenta buscar os dados dele
-    groupScreen.classList.add('is-hidden');
-    profileScreen.classList.remove('is-hidden');
+    groupScreen.classList.add("is-hidden");
+    profileScreen.classList.remove("is-hidden");
 
     // Mostra o código do grupo na tela
-    if (currentGroupLabel) currentGroupLabel.textContent = state.groupId;
+    if (currentGroupLabel)
+      currentGroupLabel.textContent = state.groupName || state.groupId;
 
     carregarDadosDoGrupo(state.groupId);
   }
 }
 // Botão: Alternar Grupo
 if (btnChangeGroup) {
-  btnChangeGroup.addEventListener('click', () => {
+  btnChangeGroup.addEventListener("click", () => {
     // Apaga o grupo atual da memória
     state.groupId = null;
-    localStorage.removeItem('streaming-payments-group-id');
+    state.groupName = null;
+    localStorage.removeItem("streaming-payments-group-id");
+    localStorage.removeItem("streaming-payments-group-name");
 
     // Volta para a tela inicial
     initApp();
   });
 }
-// Botão: Criar Novo Grupo
-if (btnCreateGroup) {
-  btnCreateGroup.addEventListener('click', async () => {
-    btnCreateGroup.textContent = 'Criando...';
+
+// Lógica de Renomear Grupo
+const btnEditGroupName = document.querySelector("#btnEditGroupName");
+const renameGroupContainer = document.querySelector("#renameGroupContainer");
+const inputRenameGroup = document.querySelector("#inputRenameGroup");
+const btnSaveGroupName = document.querySelector("#btnSaveGroupName");
+const renameGroupMessage = document.querySelector("#renameGroupMessage");
+
+if (btnEditGroupName && renameGroupContainer) {
+  btnEditGroupName.addEventListener("click", () => {
+    renameGroupContainer.classList.toggle("is-hidden");
+    if (!renameGroupContainer.classList.contains("is-hidden")) {
+      inputRenameGroup.value = state.groupName || state.groupId;
+      inputRenameGroup.focus();
+    }
+  });
+
+  if (btnSaveGroupName) {
+    btnSaveGroupName.addEventListener("click", async () => {
+      const newName = inputRenameGroup.value.trim();
+      if (!newName) return;
+
+      btnSaveGroupName.textContent = "Salvando...";
+      btnSaveGroupName.disabled = true;
+      renameGroupMessage.textContent = "";
+      renameGroupMessage.style.color = "var(--ink)";
+
+      try {
+        const idGrupoNovo = slugify(newName);
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "renomear_grupo",
+            id_grupo: state.groupId,
+            id_grupo_novo: idGrupoNovo,
+            nome: newName,
+          }),
+        });
+        const data = await response.json();
+
+        // Independent of backend result, we update locally because the
+        // older backend might ignore this action but we still want the user to see their new name.
+        salvarGrupo(idGrupoNovo, newName);
+        if (currentGroupLabel) currentGroupLabel.textContent = newName;
+        state.groupId = idGrupoNovo;
+
+        renameGroupContainer.classList.add("is-hidden");
+      } catch (e) {
+        renameGroupMessage.textContent =
+          "Erro de conexão com o banco de dados.";
+        renameGroupMessage.style.color = "var(--danger)";
+      } finally {
+        btnSaveGroupName.textContent = "Salvar";
+        btnSaveGroupName.disabled = false;
+      }
+    });
+  }
+}
+// Formulário: Criar Novo Grupo
+const formCreateGroup = document.querySelector("#formCreateGroup");
+if (formCreateGroup) {
+  formCreateGroup.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const inputGroupName = document.querySelector("#inputGroupName");
+    const groupName = inputGroupName ? inputGroupName.value.trim() : "";
+
+    if (!groupName) {
+      groupMessage.textContent = "Por favor, insira um nome para o grupo.";
+      return;
+    }
+
+    btnCreateGroup.textContent = "Criando...";
     btnCreateGroup.disabled = true;
-    groupMessage.textContent = '';
-    groupMessage.style.color = 'var(--ink)';
+    groupMessage.textContent = "";
+    groupMessage.style.color = "var(--ink)";
 
     try {
+      const idGrupoSlug = slugify(groupName);
+
       const response = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'criar_grupo' }),
+        method: "POST",
+        body: JSON.stringify({
+          action: "criar_grupo",
+          nome: groupName,
+          id_grupo: idGrupoSlug,
+        }),
       });
       const data = await response.json();
 
       if (data.success) {
-        salvarGrupo(data.id_grupo);
-        groupMessage.style.color = 'var(--success)';
+        salvarGrupo(data.id_grupo, data.nome_grupo || groupName);
+        groupMessage.style.color = "var(--success)";
         groupMessage.textContent =
-          'Grupo criado com sucesso! Código: ' + data.id_grupo;
+          "Grupo criado com sucesso! Código: " + data.id_grupo;
 
         setTimeout(() => {
           initApp(); // Avança para a próxima tela
         }, 2000);
       } else {
-        groupMessage.textContent = 'Erro ao criar grupo.';
+        groupMessage.textContent = "Erro ao criar grupo.";
       }
     } catch (e) {
-      groupMessage.textContent = 'Erro de conexão com o banco de dados.';
+      groupMessage.textContent = "Erro de conexão com o banco de dados.";
     } finally {
-      btnCreateGroup.textContent = 'Criar Novo Grupo';
+      btnCreateGroup.textContent = "Criar Novo Grupo";
       btnCreateGroup.disabled = false;
     }
   });
@@ -3136,16 +3224,16 @@ if (btnCreateGroup) {
 
 // Formulário: Entrar em um Grupo Existente
 if (formJoinGroup) {
-  formJoinGroup.addEventListener('submit', async (e) => {
+  formJoinGroup.addEventListener("submit", async (e) => {
     e.preventDefault();
     const codigo = inputGroupCode.value.trim().toUpperCase();
     if (!codigo) return;
 
-    const btn = formJoinGroup.querySelector('button');
-    btn.textContent = 'Verificando...';
+    const btn = formJoinGroup.querySelector("button");
+    btn.textContent = "Verificando...";
     btn.disabled = true;
-    groupMessage.textContent = '';
-    groupMessage.style.color = 'var(--ink)';
+    groupMessage.textContent = "";
+    groupMessage.style.color = "var(--ink)";
 
     try {
       // Faz uma chamada para ver se o grupo existe e já baixa os dados
@@ -3155,45 +3243,57 @@ if (formJoinGroup) {
 
       if (data.success && data.perfis) {
         // Se trouxe os dados, o grupo existe!
-        salvarGrupo(codigo);
+        salvarGrupo(codigo, data.nome_grupo);
         initApp();
       } else {
-        groupMessage.style.color = 'var(--danger)';
-        groupMessage.textContent = 'Código de grupo não encontrado.';
+        groupMessage.style.color = "var(--danger)";
+        groupMessage.textContent = "Código de grupo não encontrado.";
       }
     } catch (error) {
-      groupMessage.style.color = 'var(--danger)';
-      groupMessage.textContent = 'Erro de conexão.';
+      groupMessage.style.color = "var(--danger)";
+      groupMessage.textContent = "Erro de conexão.";
     } finally {
-      btn.textContent = 'Entrar no Grupo';
+      btn.textContent = "Entrar no Grupo";
       btn.disabled = false;
     }
   });
 }
 
-function salvarGrupo(id) {
+function salvarGrupo(id, name) {
   state.groupId = id;
-  localStorage.setItem('streaming-payments-group-id', id);
+  localStorage.setItem("streaming-payments-group-id", id);
+  if (name) {
+    state.groupName = name;
+    localStorage.setItem("streaming-payments-group-name", name);
+  } else {
+    state.groupName = id;
+    localStorage.setItem("streaming-payments-group-name", id);
+  }
+  const currentGroupLabelElement = document.querySelector("#currentGroupLabel");
+  if (currentGroupLabelElement) {
+    currentGroupLabelElement.textContent = state.groupName || state.groupId;
+  }
 }
 
 // Baixa as pessoas, assinaturas e logs da nova planilha
 async function carregarDadosDoGrupo(idGrupo) {
-  profileMessage.style.color = 'var(--ink)';
-  profileMessage.textContent = 'Sincronizando dados do grupo...';
+  profileMessage.style.color = "var(--ink)";
+  profileMessage.textContent = "Sincronizando dados do grupo...";
   try {
     const url = `${API_URL}?action=carregar_dados&id_grupo=${idGrupo}`;
     const res = await fetch(url);
     const data = await res.json();
 
     if (data.success) {
+      if (data.nome_grupo) salvarGrupo(idGrupo, data.nome_grupo);
       processarDadosDaPlanilha(data);
-      profileMessage.textContent = '';
+      profileMessage.textContent = "";
       renderProfileSelection();
       restoreProfile();
     }
   } catch (e) {
-    profileMessage.style.color = 'var(--danger)';
-    profileMessage.textContent = 'Erro ao sincronizar. Verifique a internet.';
+    profileMessage.style.color = "var(--danger)";
+    profileMessage.textContent = "Erro ao sincronizar. Verifique a internet.";
   }
 }
 
@@ -3204,15 +3304,16 @@ function processarDadosDaPlanilha(data) {
 
   if (data.perfis && data.perfis.length > 0) {
     data.perfis.forEach((p) => {
-      const pKey = p.chave_perfil || p.chave || p.id || slugify(p.nome || p.name || '');
+      const pKey =
+        p.chave_perfil || p.chave || p.id || slugify(p.nome || p.name || "");
       if (!pKey) return;
       const name = p.nome || p.name || pKey;
       PEOPLE[pKey] = {
         name: name,
-        aliases: [name.toLowerCase().split(' ')[0], pKey],
-        color: p.cor || '#444444',
+        aliases: [name.toLowerCase().split(" ")[0], pKey],
+        color: p.cor || "#444444",
         avatar: p.iniciais || name.substring(0, 2).toUpperCase(),
-        isAdmin: p.is_admin === true || p.is_admin === 'TRUE',
+        isAdmin: p.is_admin === true || p.is_admin === "TRUE",
         subscriptions: [],
       };
     });
@@ -3221,32 +3322,34 @@ function processarDadosDaPlanilha(data) {
   if (data.assinaturas && data.assinaturas.length > 0) {
     data.assinaturas.forEach((s) => {
       let parts = [];
-      const rawParticipantes = s.participantes || s.participants || s.participantes_list || '';
+      const rawParticipantes =
+        s.participantes || s.participants || s.participantes_list || "";
       if (rawParticipantes) {
         if (Array.isArray(rawParticipantes)) {
           parts = rawParticipantes.map((x) => String(x).trim()).filter(Boolean);
         } else {
           parts = String(rawParticipantes)
-            .split(',')
+            .split(",")
             .map((x) => x.trim())
             .filter(Boolean);
         }
       }
 
-      const sKey = s.chave_servico || s.chave || s.id || slugify(s.nome || s.name || '');
+      const sKey =
+        s.chave_servico || s.chave || s.id || slugify(s.nome || s.name || "");
       if (!sKey) return;
       const name = s.nome || s.name || sKey;
-      const modelClass = s.modelo || s.model || 'monthly';
+      const modelClass = s.modelo || s.model || "monthly";
 
       SERVICES[sKey] = {
         name: name,
         shortName: s.sigla || name.substring(0, 2).trim(),
-        cssClass: 'service-' + sKey,
-        model: modelClass === 'rotation' ? 'rotation' : 'monthly',
-        modelLabel: modelClass === 'rotation' ? 'Rodízio' : 'Todo mês',
+        cssClass: "service-" + sKey,
+        model: modelClass === "rotation" ? "rotation" : "monthly",
+        modelLabel: modelClass === "rotation" ? "Rodízio" : "Todo mês",
         totalAmount: parseFloat(s.valor_total || s.total || s.valor) || 0,
         participants: parts,
-        color: s.cor || '#1a2b4c',
+        color: s.cor || "#1a2b4c",
       };
     });
   }
@@ -3254,14 +3357,14 @@ function processarDadosDaPlanilha(data) {
   paidLogsCache = {};
   if (data.logs && data.logs.length > 0) {
     data.logs.forEach((log) => {
-      if (log.pago === true || String(log.pago).toUpperCase() === 'TRUE') {
+      if (log.pago === true || String(log.pago).toUpperCase() === "TRUE") {
         const pKey = log.chave_perfil || log.perfil || log.nome;
         const sKey = log.chave_servico || log.servico || log.assinatura;
         const mes = log.mes || log.month;
 
         if (pKey && sKey && mes) {
           if (!paidLogsCache[pKey]) paidLogsCache[pKey] = {};
-          paidLogsCache[pKey][`${sKey}:${mes}`] = 'true';
+          paidLogsCache[pKey][`${sKey}:${mes}`] = "true";
         }
       }
     });
