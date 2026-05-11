@@ -1,0 +1,16 @@
+{
+  "name": "Pagamentos compartilhados Max & Disney+",
+  "short_name": "Pagamentos",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "icons": [
+    {
+      "src": "App-icon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+Não use react nem nenhum outro nesse projeto pois o intuito é que ele esteja hospedado no Github pages. 
+Busque utilizar a estrutura atual do banco de dados e do consumo da API do Apps Script para evitar alterações que possam criar algum problema na troca de informações entre site e banco de dados. Quando realizar uma alteração busque formas de fazer isso sem precisar alterar o apps script, é um saco ficar criando implantações toda hora. Está terminantemente proibido qualquer alteração do funcionamento de obter status de pagamento do banco de dados.

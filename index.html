@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pagamentos compartilhados</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="App-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="App-icon.png" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup" aria-label="Pagamentos compartilhados">
+        <img src="App-icon.png" alt="" class="brand-mark" />
+        <div>
+          <span>Pagamentos</span>
+          <strong>Assinaturas</strong>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="ghost-button top-icon-button is-hidden" id="adminButton" type="button" aria-label="Admin" title="Área do Administrador">
+          <img src="icones/icons8-settings-100.png" alt="" class="top-icon" />
+        </button>
+        <button class="ghost-button top-icon-button" id="tutorialButton" type="button" aria-label="Tutorial" title="Como usar">
+          <img src="icones/icons8-help-100.png" alt="" class="top-icon" />
+        </button>
+        <button class="ghost-button top-icon-button is-hidden" id="notificationButton" type="button">
+          Ativar notificações
+        </button>
+        <button class="ghost-button top-icon-button is-hidden" id="changeProfileButton" type="button" aria-label="Trocar usuário" title="Trocar usuário">
+          <img src="icones/icons8-profile-100.png" alt="" class="top-icon" />
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="profile-screen is-hidden" id="profileScreen">
+        <div class="profile-panel">
+          <div class="profile-copy">
+            <p class="eyebrow">Assinaturas compartilhadas</p>
+            <h1>Organize suas assinaturas<br>sem esforço.</h1>
+          </div>
+
+          <div class="profile-box">
+            <div class="profile-selection" id="profileSelection">
+              <h2 class="profile-selection-title">Quem está acessando?</h2>
+              <div style="text-align: center; margin-bottom: 24px;">
+                <span style="color: var(--muted); font-size: 0.85rem;">Grupo atual: <strong id="currentGroupLabel" style="color: var(--ink);"></strong></span>
+                <br>
+                <button type="button" class="ghost-button" id="btnChangeGroup" style="padding: 6px 12px; min-height: 30px; font-size: 0.75rem; margin-top: 8px;">Alternar Grupo</button>
+              </div>
+              <div class="profile-grid" id="profileGrid">
+                <!-- Perfis serão inseridos aqui via JS -->
+              </div>
+            </div>
+
+            <form class="profile-form is-hidden" id="profileForm" autocomplete="off">
+              <label for="profileNameInput">Ou digite seu nome</label>
+              <div class="input-row">
+                <input id="profileNameInput" name="name" type="text" inputmode="text" placeholder="André, Isabela, Ianka ou Sarha" />
+                <button type="submit">Continuar</button>
+              </div>
+              <p class="form-message" id="profileMessage" role="alert"></p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard is-hidden" id="dashboard" aria-live="polite">
+        <div class="welcome-row">
+          <div>
+            <p class="greeting-text">Olá, <strong id="personName"></strong></p>
+            <h1>Suas próximas parcelas</h1>
+          </div>
+          <div class="welcome-summary">
+            <div class="summary-pill">
+              <strong id="summaryCount">0</strong>
+              <span id="summaryLabel">assinaturas</span>
+            </div>
+            <div class="summary-pill id-total-pill">
+              <strong id="totalMonthAmount">R$ 0,00</strong>
+              <span>A pagar no mês</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="notification-status" id="notificationStatus" role="status"></p>
+
+        <div class="subscription-list" id="subscriptionList"></div>
+
+        <section class="details-panel is-hidden" id="detailsPanel">
+          <div class="details-loading-state is-hidden" id="detailsLoadingState">
+            <div class="loader-spinner"></div>
+            <p>Carregando pagamentos...</p>
+          </div>
+
+          <div class="details-content" id="detailsContent">
+            <div class="details-header">
+              <div>
+                <p class="eyebrow" id="detailsService"></p>
+                <h2 id="detailsTitle"></h2>
+              </div>
+              <button class="icon-button" id="closeDetailsButton" type="button" aria-label="Fechar detalhes">
+                &times;
+              </button>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="Detalhes da assinatura">
+              <button class="tab-button is-active" id="upcomingTab" type="button" role="tab" aria-selected="true" aria-controls="upcomingPanel" data-panel="upcoming">
+                Meus próximos pagamentos
+              </button>
+              <button class="tab-button" id="fullTab" type="button" role="tab" aria-selected="false" aria-controls="fullPanel" data-panel="full">
+                Planilha completa
+              </button>
+            </div>
+
+            <div class="year-controls is-hidden" id="yearControls" aria-label="Ano da planilha">
+              <button class="ghost-button top-icon-button" id="previousYearButton" type="button" aria-label="Ano anterior" title="Ano anterior">
+                <img src="icones/icons8-back-100.png" alt="" class="btn-icon" />
+              </button>
+              <strong id="selectedYearLabel">2026</strong>
+              <button class="ghost-button top-icon-button" id="nextYearButton" type="button" aria-label="Próximo ano" title="Próximo ano">
+                <img src="icones/icons8-forward-100.png" alt="" class="btn-icon" />
+              </button>
+              <button class="ghost-button" id="syncSheetsButton" type="button" title="Sincronizar com o Google Sheets">
+                <img src="icones/icons8-sync-100.png" alt="" class="sync-icon-img" /> Sincronizar
+              </button>
+            </div>
+
+            <div class="tab-panel" id="upcomingPanel" role="tabpanel" aria-labelledby="upcomingTab"></div>
+            <div class="tab-panel is-hidden" id="fullPanel" role="tabpanel" aria-labelledby="fullTab"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="admin-screen is-hidden" id="adminScreen">
+        <div class="admin-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <h2>Área do Administrador</h2>
+          <button class="ghost-button" id="backFromAdminButton" type="button" style="padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 8px;">&larr; Voltar</button>
+        </div>
+        <div class="admin-content" style="display: flex; flex-direction: column; gap: 32px;">
+          <div class="admin-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3>Assinaturas Configuradas</h3>
+              <button class="primary-button" id="addServiceButton" style="padding: 6px 12px; font-size: 0.9rem;">+ Assinatura</button>
+            </div>
+            <div id="adminServicesList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+          </div>
+
+          <div class="admin-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3>Perfis de Usuários</h3>
+              <button class="primary-button" id="addProfileButton" style="padding: 6px 12px; font-size: 0.9rem;">+ Perfil</button>
+            </div>
+            <div id="adminProfilesList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- NOVA TELA DE GRUPOS -->
+    <section class="group-screen is-hidden" id="groupScreen">
+      <div class="profile-panel">
+        <div class="profile-copy">
+          <p class="eyebrow">Bem-vindo</p>
+          <h1>Qual é a sua casa?</h1>
+          <p style="color: var(--muted); margin-top: 16px;">Para organizar suas assinaturas, crie um novo grupo para dividir com seus amigos, ou entre em um grupo existente usando um código.</p>
+        </div>
+
+        <div class="profile-box" style="gap: 16px;">
+          <button type="button" class="primary-button" id="btnCreateGroup" style="width: 100%; max-width: 300px; padding: 16px; font-size: 1.1rem;">
+            Criar Novo Grupo
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 8px; width: 100%; max-width: 300px; margin: 8px 0;">
+            <hr style="flex: 1; border: none; border-top: 1px solid var(--surface-border);">
+            <span style="color: var(--muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">OU</span>
+            <hr style="flex: 1; border: none; border-top: 1px solid var(--surface-border);">
+          </div>
+
+          <form id="formJoinGroup" style="width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 8px;">
+            <label for="inputGroupCode" style="font-size: 0.85rem; font-weight: 700; color: var(--ink);">Já tenho um código:</label>
+            <input type="text" id="inputGroupCode" placeholder="Ex: ABC-123" style="padding: 14px; border-radius: 8px; border: 1px solid var(--surface-border); background: var(--surface); color: var(--ink); text-transform: uppercase;" required>
+            <button type="submit" class="ghost-button" style="padding: 14px; margin-top: 4px;">Entrar no Grupo</button>
+          </form>
+          <p id="groupMessage" class="form-message" style="text-align: center;"></p>
+        </div>
+      </div>
+    </section>
+    <footer class="app-footer" aria-label="Rodapé">
+      <p>Desenvolvido por @oevidente &copy; 2026</p>
+    </footer>
+
+    <div class="modal-overlay is-hidden" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationModalTitle">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="notificationModalTitle">Ativar Notificações</h2>
+          <button class="icon-button" id="closeNotificationModal" type="button" aria-label="Fechar">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Receba lembretes sobre os pagamentos, datas de vencimento e atualizações das suas assinaturas compartilhadas.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="primary-button" id="allowNotificationsButton" type="button">Ativar notificações</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay is-hidden" id="tutorialModal" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
+      <div class="modal tutorial-modal">
+        <div class="modal-header">
+          <h2 id="tutorialModalTitle">Como usar o site</h2>
+          <button class="icon-button" id="closeTutorialModal" type="button" aria-label="Fechar">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body tutorial-body">
+          <div class="tutorial-item">
+            <div class="tutorial-icon-wrapper">
+              <img src="icones/icons8-profile-100.png" alt="" class="tutorial-icon" />
+            </div>
+            <div class="tutorial-text">
+              <strong>Trocar Usuário</strong>
+              <p>Volta para a tela inicial onde você pode selecionar qual perfil de usuário está acessando o site para ver as assinaturas dele.</p>
+            </div>
+          </div>
+          <div class="tutorial-item">
+            <div class="tutorial-icon-wrapper">
+              <span class="tutorial-button-example mark-example">
+                <img src="icones/icons8-pay-100.png" alt="" />
+              </span>
+            </div>
+            <div class="tutorial-text">
+              <strong>Marcar como Pago</strong>
+              <p>Confirma que você realizou o pagamento desta parcela.</p>
+            </div>
+          </div>
+          <div class="tutorial-item">
+            <div class="tutorial-icon-wrapper">
+              <span class="tutorial-button-example unmark-example">
+                <img src="icones/icons8-undo-pay-100.png" alt="" />
+              </span>
+            </div>
+            <div class="tutorial-text">
+              <strong>Desmarcar Pagamento</strong>
+              <p>Desfaz a marcação de pagamento na parcela correspondente.</p>
+            </div>
+          </div>
+          <div class="tutorial-item">
+            <div class="tutorial-icon-wrapper">
+              <span class="tutorial-button-example sync-example">
+                <img src="icones/icons8-sync-100.png" alt="" class="tutorial-icon" style="filter: none" />
+              </span>
+            </div>
+            <div class="tutorial-text">
+              <strong>Sincronizar</strong>
+              <p>Busca e atualiza imediatamente os dados caso a planilha Google Sheets tenha sido alterada fora do site.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Edit Modal -->
+    <div class="modal-overlay is-hidden" id="adminSharedModal" role="dialog" aria-modal="true">
+      <div class="modal" style="max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+          <h2 id="adminModalTitle">Editar</h2>
+          <button class="icon-button" id="closeAdminModal" type="button" aria-label="Fechar">&times;</button>
+        </div>
+        <div class="modal-body" id="adminModalBody">
+          <!-- content generated by JS -->
+        </div>
+        <div class="modal-footer" style="justify-content: space-between; display: flex; gap: 8px;">
+          <button class="ghost-button" id="adminModalDeleteButton" type="button" style="color: #ef4444; display: none;">Excluir</button>
+          <div style="margin-left: auto;">
+            <button class="ghost-button" id="adminModalCancelButton" type="button">Cancelar</button>
+            <button class="primary-button" id="adminModalSaveButton" type="button">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SENHA COM DICA -->
+  <div id="passwordModal" class="modal-overlay is-hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="passwordModalTitle">Acesso Restrito</h2>
+        <button type="button" id="closePasswordModal" class="icon-button" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <p id="passwordModalMessage" style="color: var(--ink); font-weight: 500;">Buscando credenciais...</p>
+        <div id="passwordInputContainer" class="is-hidden" style="display: flex; flex-direction: column; gap: 8px;">
+          <input type="password" id="passwordInput" placeholder="Sua senha" style="padding: 14px; border-radius: 8px; border: 1px solid var(--surface-border); background: var(--surface); color: var(--ink); width: 100%; font-size: 1rem;" />
+
+          <!-- Campo para CRIAR a dica -->
+          <input type="text" id="hintInput" placeholder="Dica para lembrar a senha (ex: nome do meu pet)" style="padding: 14px; border-radius: 8px; border: 1px solid var(--surface-border); background: var(--surface); color: var(--ink); width: 100%; font-size: 0.9rem; display: none;" />
+
+          <!-- Botão para VER a dica -->
+          <button type="button" id="showHintBtn" class="ghost-button" style="display: none; width: fit-content; padding: 6px 12px; font-size: 0.75rem; margin-top: 4px;">Esqueci a senha (Ver Dica)</button>
+          <p id="hintTextDisplay" style="display: none; font-size: 0.85rem; color: var(--accent-strong); margin: 0; padding-left: 4px; font-style: italic;"></p>
+
+          <p id="passwordError" class="form-message"></p>
+        </div>
+      </div>
+      <div class="modal-footer" id="passwordFooter">
+        <button type="button" id="passwordSubmitBtn" class="primary-button" style="display: none; width: 100%;">Entrar</button>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL DA FATURA DO MÊS -->
+  <div id="invoiceModal" class="modal-overlay is-hidden">
+    <div class="modal">
+      <div class="modal-header" style="border-bottom: none; padding-bottom: 10px;">
+        <div>
+          <p class="eyebrow" style="margin-bottom: 4px;">Resumo</p>
+          <h2 id="invoiceModalTitle">Sua Fatura</h2>
+        </div>
+        <button type="button" id="closeInvoiceModal" class="icon-button" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="modal-body" style="padding-top: 0;">
+        <!-- Cabeçalho do Total dentro da Fatura -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--surface-border-subtle);">
+          <span style="font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 0.8rem;">Total Pendente</span>
+          <strong id="invoiceTotalAmount" style="font-size: 1.8rem; color: var(--ink); line-height: 1;">R$ 0,00</strong>
+        </div>
+
+        <!-- Lista das assinaturas pendentes -->
+        <div id="invoiceList" style="display: flex; flex-direction: column; max-height: 50vh; overflow-y: auto; padding-right: 4px;">
+          <!-- As linhas entram aqui via JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js" defer></script>
+  <script src="ui-visual-updates.js" defer></script>
+</body>
+
+</html>
