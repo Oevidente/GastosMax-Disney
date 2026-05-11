@@ -595,12 +595,9 @@ function bindEvents() {
   });
 
   previousYearButton.addEventListener('click', () => {
-    const currentYear = getToday().getFullYear();
-
-    if (state.selectedYear <= currentYear) {
+    if (state.selectedYear <= 2026) {
       return;
     }
-
     state.selectedYear -= 1;
     renderDetails();
   });
@@ -1259,15 +1256,23 @@ function getUpcomingPaymentsForPerson(serviceKey, personKey, limit) {
   const today = startOfDay(getToday());
   const payments = [];
 
-  // Retrocede 2 meses para pegar parcelas vencidas que ainda NÃO foram pagas
+  // Retrocede 2 meses para pegar parcelas vencidas
   const startYear = today.getFullYear();
   const startMonth = today.getMonth() - 2;
+
+  // O MARCO ZERO DO SISTEMA: 1º de Maio de 2026
+  const systemStart = new Date(2026, 4, 1);
 
   for (let offset = 0; offset < 120 && payments.length < limit; offset += 1) {
     const monthIndex = startMonth + offset;
     const year = startYear + Math.floor(monthIndex / 12);
     const normalizedMonth = ((monthIndex % 12) + 12) % 12;
     const date = createPaymentDate(year, normalizedMonth);
+
+    // IGNORA COMPLETAMENTE TUDO QUE FOR ANTES DE MAIO DE 2026
+    if (date < systemStart) {
+      continue;
+    }
 
     // Se for no futuro, adicionamos
     // Se for no passado, SÓ adicionamos se NÃO estiver pago
@@ -1408,9 +1413,21 @@ function getRotationPayer(serviceKey, monthIndex) {
 }
 
 function getYearMonths(year) {
-  return Array.from({ length: 12 }, (_, monthIndex) =>
+  const months = Array.from({ length: 12 }, (_, monthIndex) =>
     createPaymentDate(year, monthIndex),
   );
+
+  // Se for o ano de lançamento (2026), oculta tudo antes de Maio (mês 4 no JavaScript)
+  if (year === 2026) {
+    return months.filter((date) => date.getMonth() >= 4);
+  }
+
+  // Impede que o sistema gere calendários para 2025 ou anos anteriores
+  if (year < 2026) {
+    return [];
+  }
+
+  return months;
 }
 
 function createPaymentDate(year, monthIndex) {
@@ -1445,7 +1462,8 @@ function updateYearControls() {
   const currentYear = getToday().getFullYear();
 
   selectedYearLabel.textContent = state.selectedYear;
-  previousYearButton.disabled = state.selectedYear <= currentYear;
+  // Trava o botão de voltar quando chegar no ano de criação (2026)
+  previousYearButton.disabled = state.selectedYear <= 2026;
 }
 
 function startSessionLoops() {
