@@ -348,7 +348,7 @@ const MONTHS = [
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzMH75zhqHhlgh7LW523Uuf4aRZa7HtZul8rWysXCzIFN0H9A3a6Zkn6bA6Pc50VdtkNw/exec".trim();
+  "https://script.google.com/macros/s/AKfycbxFbyLjXBGnKIJ8yn5FHsX33mz8n8SIqRK0dcP6np7gLrzAxDlXzn4IqYKlAzZfDPi5ag/exec".trim();
 
 // Estado global da aplicação
 
@@ -2568,8 +2568,26 @@ function openAdminModalForService(serviceKey) {
         <input type="text" id="adminS_name" value="${s.name}" oninput="document.getElementById('adminS_css').value = 'service-' + slugify(this.value)" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: inherit; width: 100%; box-sizing: border-box;" />
       </label>
       <label style="display:flex; flex-direction:column; gap:4px;">
-        <span style="font-size: 0.8rem; opacity:0.8;">Logo de Fundo (URL da Imagem)</span>
-        <input type="text" id="adminS_logoUrl" value="${s.logoUrl || ""}" placeholder="https://exemplo.com/logo.png" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: inherit; width: 100%; box-sizing: border-box;" />
+        <span style="font-size: 0.8rem; opacity:0.8;">Logo de Fundo (Selecione ou digite a URL)</span>
+        <div style="display:flex; gap:8px;">
+          <select id="adminS_logoSelect" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: #0f172a; color: inherit; width: 40%; box-sizing: border-box;" onchange="
+            const urlInput = document.getElementById('adminS_logoUrl');
+            if(this.value) {
+              urlInput.value = this.value;
+            }
+          ">
+            <option value="">Personalizada...</option>
+            <option value="amazon-prime-video-1.svg" ${s.logoUrl === 'amazon-prime-video-1.svg' ? 'selected' : ''}>Prime Video</option>
+            <option value="crunchyroll-logo.svg" ${s.logoUrl === 'crunchyroll-logo.svg' ? 'selected' : ''}>Crunchyroll</option>
+            <option value="disney--1.svg" ${s.logoUrl === 'disney--1.svg' ? 'selected' : ''}>Disney+</option>
+            <option value="f1 white.png" ${s.logoUrl === 'f1 white.png' ? 'selected' : ''}>F1 TV</option>
+            <option value="globoplay.png" ${s.logoUrl === 'globoplay.png' ? 'selected' : ''}>Globoplay</option>
+            <option value="Google_One_logo.png" ${s.logoUrl === 'Google_One_logo.png' ? 'selected' : ''}>Google One</option>
+            <option value="HBO_Max_logo_(May_2025).png" ${s.logoUrl === 'HBO_Max_logo_(May_2025).png' ? 'selected' : ''}>HBO Max</option>
+            <option value="Google_Calendar_icon_(2020).svg.png" ${s.logoUrl === 'Google_Calendar_icon_(2020).svg.png' ? 'selected' : ''}>Google Calendar</option>
+          </select>
+          <input type="text" id="adminS_logoUrl" value="${s.logoUrl || ""}" placeholder="URL ou nome local" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: inherit; width: 60%; box-sizing: border-box;" />
+        </div>
       </label>
       <label style="display:flex; flex-direction:column; gap:4px;">
         <span style="font-size: 0.8rem; opacity:0.8;">Sigla de Referência</span>
@@ -2698,6 +2716,7 @@ async function handleAdminSave() {
         modelo: SERVICES[sKey].model,
         valor_total: SERVICES[sKey].totalAmount,
         participantes: parts.join(","),
+        logo_url: SERVICES[sKey].logoUrl,
       }),
     });
     setNotificationStatus("Assinatura salva para todos!");
@@ -2891,6 +2910,38 @@ async function handleProfileClick(personKey) {
 
 // Botões do Modal
 document.addEventListener("click", async (event) => {
+  if (event.target.closest(".btn-mark-paid-invoice")) {
+    const markButton = event.target.closest(".btn-mark-paid-invoice");
+    const serviceKey = markButton.dataset.service;
+    const dateMs = Number(markButton.dataset.dateMs);
+    const personKey = markButton.dataset.person;
+    
+    if (!personKey) return;
+    
+    const payment = {
+      serviceKey,
+      date: new Date(dateMs),
+      amount: SERVICES[serviceKey]?.amount ?? 0,
+    };
+    
+    const paid = isPaymentPaid(personKey, payment);
+    
+    if (!paid) {
+      await markPaymentAsPaid(personKey, payment);
+      setNotificationStatus("Parcela marcada como paga.");
+      // O item está sendo mostrado como atrasado, então a intenção era marcar como pago.
+      // E precisamos remover ele da UI do modal.
+      markButton.closest(".invoice-item").remove();
+      
+      // Update the total
+      const invoiceTotalAmount = document.querySelector("#invoiceTotalAmount");
+      let currentTotalStr = invoiceTotalAmount.textContent.replace("R$", "").replace(".", "").replace(",", ".").trim();
+      let currentTotal = parseFloat(currentTotalStr) || 0;
+      let newTotal = Math.max(0, currentTotal - payment.amount);
+      invoiceTotalAmount.textContent = moneyFormatter.format(newTotal);
+    }
+  }
+
   if (event.target.closest("#closePasswordModal")) {
     document.querySelector("#passwordModal").classList.add("is-hidden");
   }
@@ -3020,9 +3071,25 @@ function openInvoiceModal(personKey) {
 
         let statusPill = "";
         if (isAtrasada) {
-          statusPill = `<span class="status-pill status-atrasada" style="background: rgba(225, 29, 72, 0.2); color: #ffa4bc;">Atrasado</span>`;
+          statusPill = `
+          <div class="status-toggle-wrapper" style="position: relative; display: inline-block;">
+            <span class="status-pill status-atrasada btn-invoice-status" style="background: rgba(225, 29, 72, 0.2); color: #ffa4bc; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="this.nextElementSibling.classList.toggle('is-hidden')">
+              Atrasado <span style="font-size: 0.6rem;">▼</span>
+            </span>
+            <div class="status-popup is-hidden" style="position: absolute; top: calc(100% + 4px); right: 0; background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 4px; box-shadow: var(--shadow-xl); z-index: 100; min-width: 100px; display: flex; flex-direction: column; gap: 4px;">
+              <button type="button" class="ghost-button btn-mark-paid-invoice" data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}" data-person="${personKey}" style="padding: 8px; justify-content: flex-start; min-height: unset; color: var(--success); text-align: left; font-size: 0.8rem;">Marcar como Pago</button>
+            </div>
+          </div>`;
         } else if (isHoje) {
-          statusPill = `<span class="status-pill status-atrasada" style="background: rgba(251, 146, 60, 0.2); color: #fdba74;">Vence Hoje</span>`;
+          statusPill = `
+          <div class="status-toggle-wrapper" style="position: relative; display: inline-block;">
+            <span class="status-pill status-atrasada btn-invoice-status" style="background: rgba(251, 146, 60, 0.2); color: #fdba74; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="this.nextElementSibling.classList.toggle('is-hidden')">
+              Vence Hoje <span style="font-size: 0.6rem;">▼</span>
+            </span>
+            <div class="status-popup is-hidden" style="position: absolute; top: calc(100% + 4px); right: 0; background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 4px; box-shadow: var(--shadow-xl); z-index: 100; min-width: 100px; display: flex; flex-direction: column; gap: 4px;">
+              <button type="button" class="ghost-button btn-mark-paid-invoice" data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}" data-person="${personKey}" style="padding: 8px; justify-content: flex-start; min-height: unset; color: var(--success); text-align: left; font-size: 0.8rem;">Marcar como Pago</button>
+            </div>
+          </div>`;
         } else {
           statusPill = `<span class="status-pill status-futuro" style="background: rgba(255, 255, 255, 0.15); color: #ffffff;">Pendente</span>`;
         }
@@ -3114,11 +3181,12 @@ if (btnChangeGroup) {
   });
 }
 
-// Lógica de Renomear Grupo
+// Lógica de Renomear e Excluir Grupo
 const btnEditGroupName = document.querySelector("#btnEditGroupName");
 const renameGroupContainer = document.querySelector("#renameGroupContainer");
 const inputRenameGroup = document.querySelector("#inputRenameGroup");
 const btnSaveGroupName = document.querySelector("#btnSaveGroupName");
+const btnDeleteGroup = document.querySelector("#btnDeleteGroup");
 const renameGroupMessage = document.querySelector("#renameGroupMessage");
 
 if (btnEditGroupName && renameGroupContainer) {
@@ -3129,6 +3197,61 @@ if (btnEditGroupName && renameGroupContainer) {
       inputRenameGroup.focus();
     }
   });
+
+  if (btnDeleteGroup) {
+    let confirmDelete = false;
+
+    btnDeleteGroup.addEventListener("click", async () => {
+      if (!confirmDelete) {
+        confirmDelete = true;
+        btnDeleteGroup.textContent = "Tem certeza?";
+        btnDeleteGroup.style.backgroundColor = "darkred";
+        setTimeout(() => {
+          confirmDelete = false;
+          btnDeleteGroup.textContent = "Excluir";
+          btnDeleteGroup.style.backgroundColor = "var(--danger)";
+        }, 3000);
+        return;
+      }
+
+      btnDeleteGroup.textContent = "Excluindo...";
+      btnDeleteGroup.disabled = true;
+      renameGroupMessage.textContent = "";
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "excluir_grupo",
+            id_grupo: state.groupId,
+          }),
+        });
+        const data = await response.json();
+
+        if (!data.success) throw new Error(data.error);
+
+        // Limpa o estado local
+        localStorage.removeItem("streaming-payments-group-id");
+        localStorage.removeItem("streaming-payments-group-name");
+        localStorage.removeItem("streaming-payments-groups-cache");
+        state.groupId = "";
+        state.groupName = "";
+
+        // Tenta atualizar a lista de grupos se possivel e carrega a tela inicial
+        if (typeof carregarListaDeGrupos === 'function') {
+          carregarListaDeGrupos();
+        }
+        initApp();
+      } catch (e) {
+        renameGroupMessage.textContent = "Erro ao excluir: " + (e.message || "conexão com o banco falhou.");
+        renameGroupMessage.style.color = "var(--danger)";
+        btnDeleteGroup.textContent = "Excluir";
+        btnDeleteGroup.disabled = false;
+        btnDeleteGroup.style.backgroundColor = "var(--danger)";
+        confirmDelete = false;
+      }
+    });
+  }
 
   if (btnSaveGroupName) {
     btnSaveGroupName.addEventListener("click", async () => {
@@ -3230,46 +3353,63 @@ const groupList = document.querySelector("#groupList");
 
 async function carregarListaDeGrupos() {
   if (!groupList) return;
-  groupList.innerHTML = '<p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Buscando grupos...</p>';
+  
+  const renderGroupListLocal = (grupos) => {
+    groupList.innerHTML = '';
+    if (grupos.length === 0) {
+      groupList.innerHTML = '<p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Nenhum grupo encontrado.</p>';
+    } else {
+      const colors = ['#dc2626', '#16a34a', '#2563eb', '#ca8a04', '#9333ea', '#db2777', '#0891b2', '#ea580c'];
+      grupos.forEach((grupo, index) => {
+        const btn = document.createElement("button");
+        btn.className = "profile-item";
+        btn.type = "button";
+        
+        const avatarColor = colors[index % colors.length];
+        const nome = grupo.nome || grupo.id_grupo;
+        const avatarLetters = nome.substring(0, 2).toUpperCase();
+        
+        btn.innerHTML = `
+          <div class="profile-avatar" style="background-color: ${avatarColor};">${avatarLetters}</div>
+          <span class="profile-name" style="text-transform: capitalize;">${nome}</span>
+        `;
+        
+        btn.addEventListener("click", () => {
+           salvarGrupo(grupo.id_grupo, nome);
+           initApp();
+        });
+        groupList.appendChild(btn);
+      });
+    }
+  };
+
+  const cachedGroupsStr = localStorage.getItem("streaming-payments-groups-cache");
+  if (cachedGroupsStr) {
+    try {
+      const cachedGroups = JSON.parse(cachedGroupsStr);
+      renderGroupListLocal(cachedGroups);
+    } catch(e) {
+      groupList.innerHTML = '<p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Buscando grupos...</p>';
+    }
+  } else {
+    groupList.innerHTML = '<p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Buscando grupos...</p>';
+  }
+
   try {
     const url = `${API_URL}?action=listar_grupos`;
     const res = await fetch(url);
     const data = await res.json();
     
     if (data.success && data.grupos) {
-      groupList.innerHTML = '';
-      if (data.grupos.length === 0) {
-        groupList.innerHTML = '<p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Nenhum grupo encontrado.</p>';
-      } else {
-        data.grupos.forEach(grupo => {
-          const btn = document.createElement("button");
-          btn.className = "profile-item";
-          btn.style.width = "100%";
-          btn.style.flexDirection = "row";
-          btn.style.justifyContent = "flex-start";
-          btn.style.padding = "12px 16px";
-          btn.style.gap = "16px";
-          btn.innerHTML = `
-            <div class="profile-avatar" style="width: 48px; height: 48px; font-size: 1rem; flex-shrink: 0;">
-              ${(grupo.nome || grupo.id_grupo).substring(0, 2).toUpperCase()}
-            </div>
-            <div class="profile-info" style="text-align: left; display: flex; flex-direction: column; gap: 4px;">
-              <strong style="color: var(--ink); font-size: 1rem;">${grupo.nome || grupo.id_grupo}</strong>
-              <small style="color: var(--muted); font-size: 0.8rem;">Código: ${grupo.id_grupo}</small>
-            </div>
-          `;
-          btn.addEventListener("click", () => {
-             salvarGrupo(grupo.id_grupo, grupo.nome);
-             initApp();
-          });
-          groupList.appendChild(btn);
-        });
-      }
-    } else {
+      localStorage.setItem("streaming-payments-groups-cache", JSON.stringify(data.grupos));
+      renderGroupListLocal(data.grupos);
+    } else if (!cachedGroupsStr) {
       groupList.innerHTML = '<p style="text-align: center; color: var(--danger); font-size: 0.9rem; grid-column: 1/-1;">Erro ao carregar os grupos.</p>';
     }
   } catch(error) {
-    groupList.innerHTML = '<p style="text-align: center; color: var(--danger); font-size: 0.9rem; grid-column: 1/-1;">Erro de conexão.</p>';
+    if (!cachedGroupsStr) {
+      groupList.innerHTML = '<p style="text-align: center; color: var(--danger); font-size: 0.9rem; grid-column: 1/-1;">Erro de conexão.</p>';
+    }
   }
 }
 
@@ -3345,7 +3485,7 @@ function processarDadosDaPlanilha(data) {
         } else {
           parts = String(rawParticipantes)
             .split(",")
-            .map((x) => x.trim())
+            .map((x) => x.replace(/^[\[\]"']+|[\[\]"']+$/g, "").trim())
             .filter(Boolean);
         }
       }
@@ -3359,6 +3499,7 @@ function processarDadosDaPlanilha(data) {
       SERVICES[sKey] = {
         name: name,
         shortName: s.sigla || name.substring(0, 2).trim(),
+        logoUrl: s.logo_url || s.logoUrl || s.logo || "",
         cssClass: "service-" + sKey,
         model: modelClass === "rotation" ? "rotation" : "monthly",
         modelLabel: modelClass === "rotation" ? "Rodízio" : "Todo mês",

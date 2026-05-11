@@ -2251,6 +2251,17 @@ html[data-theme="dark"] .modal {
     flex: 1;
     min-width: 0;
     width: auto;
+    padding: 12px;
+  }
+
+  .summary-pill strong {
+    font-size: 1.5rem;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+
+  .summary-pill span {
+    font-size: 0.65rem;
   }
 
   .subscription-top,
@@ -2492,9 +2503,8 @@ html[data-theme="dark"] .modal {
   display: block;
   font-size: 1.15rem;
   color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-wrap: break-word;
   letter-spacing: -0.01em;
 }
 
@@ -2515,17 +2525,57 @@ html[data-theme="dark"] .modal {
 
 .rename-input-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
 }
 
 .rename-input-row input {
-  flex: 1;
+  flex: 1 1 100%;
+  min-height: 40px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   border: 1px solid var(--surface-border);
   background: var(--soft);
   color: var(--ink);
   font-size: 0.9rem;
+}
+
+.rename-input-row button {
+  flex: 1;
+}
+
+.danger-button {
+  min-height: 40px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--danger);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.2);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.danger-button:hover,
+.danger-button:focus-visible {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  outline: 0;
+}
+
+@media (min-width: 481px) {
+  .rename-input-row {
+    flex-wrap: nowrap;
+  }
+  .rename-input-row input {
+    flex: 1;
+  }
+  .rename-input-row button {
+    flex: none;
+  }
 }
 
 .invoice-item-right {

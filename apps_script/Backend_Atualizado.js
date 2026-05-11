@@ -103,6 +103,30 @@ function doPost(e) {
         }
         return jsonResponse({ success: true, id_grupo: idGrupoNew, nome_grupo: payload.nome });
       }
+
+      if (action === 'excluir_grupo') {
+        var idGrupoOld = payload.id_grupo;
+        
+        var deleteForeignKeyRows = function(sName) {
+          var s = getSheetByName(sName);
+          if (s.getLastRow() > 0) {
+            var sData = s.getDataRange().getValues();
+            for (var k = sData.length - 1; k >= 1; k--) {
+              if (sData[k][0] === idGrupoOld) {
+                s.deleteRow(k + 1);
+              }
+            }
+          }
+        };
+
+        deleteForeignKeyRows('Grupos');
+        deleteForeignKeyRows('Perfis');
+        deleteForeignKeyRows('Assinaturas');
+        deleteForeignKeyRows('Logs');
+        deleteForeignKeyRows('Senhas');
+
+        return jsonResponse({ success: true });
+      }
       
       var idGrupo = payload.id_grupo;
       if (!idGrupo) return jsonResponse({ success: false, error: 'id_grupo missing' });
@@ -124,8 +148,9 @@ function doPost(e) {
       }
       
       if (action === 'salvar_assinatura') {
-        saveRow('Assinaturas', ['id_grupo', 'chave_servico', 'nome', 'sigla', 'cor', 'modelo', 'valor_total', 'participantes'], 
-          [idGrupo, payload.chave_servico, payload.nome, payload.sigla || '', payload.cor || '', payload.modelo, payload.valor_total, JSON.stringify(payload.participantes || [])],
+        var partsStr = Array.isArray(payload.participantes) ? payload.participantes.join(",") : (payload.participantes || '');
+        saveRow('Assinaturas', ['id_grupo', 'chave_servico', 'nome', 'sigla', 'cor', 'modelo', 'valor_total', 'participantes', 'logo_url'], 
+          [idGrupo, payload.chave_servico, payload.nome, payload.sigla || '', payload.cor || '', payload.modelo, payload.valor_total, partsStr, payload.logo_url || ''],
           function(r) { return r[0] === idGrupo && r[1] === payload.chave_servico; }
         );
         return jsonResponse({ success: true });
@@ -202,7 +227,22 @@ function getCollection(sheetName, idGrupo) {
 
 function saveRow(sheetName, headers, rowData, matchFunc) {
   var sheet = getSheetByName(sheetName);
-  ensureHeaders(sheet, headers);
+  
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+  } else {
+    var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var needsHeaderUpdate = headers.length > currentHeaders.length;
+    for (var h = 0; h < currentHeaders.length; h++) {
+      if (h < headers.length && currentHeaders[h] === '') {
+        needsHeaderUpdate = true;
+      }
+    }
+    if (needsHeaderUpdate) {
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    }
+  }
+
   var data = sheet.getDataRange().getValues();
   var updated = false;
   
@@ -218,7 +258,11 @@ function saveRow(sheetName, headers, rowData, matchFunc) {
     }
   }
   if (!updated) {
-    sheet.appendRow(rowData);
+    var newRow = [];
+    for(var j=0; j<headers.length; j++) {
+      newRow.push(rowData[j] !== undefined ? rowData[j] : '');
+    }
+    sheet.appendRow(newRow);
   }
   SpreadsheetApp.flush();
 }

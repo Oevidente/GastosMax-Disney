@@ -62,7 +62,9 @@
                     <button type="button" class="ghost-button top-icon-button" id="btnEditGroupName" aria-label="Configurar Grupo" title="Configurar Grupo">
                       <img src="icones/icons8-settings-100.png" alt="" class="btn-icon" />
                     </button>
-                    <button type="button" class="ghost-button" id="btnChangeGroup">Alternar Grupo</button>
+                    <button type="button" class="ghost-button top-icon-button" id="btnChangeGroup" aria-label="Alternar Grupo" title="Alternar Grupo">
+                      <img src="icones/icons8-sync-100.png" alt="" class="btn-icon" />
+                    </button>
                   </div>
                 </div>
                 
@@ -70,6 +72,7 @@
                   <div class="rename-input-row">
                     <input type="text" id="inputRenameGroup" placeholder="Novo nome" />
                     <button type="button" id="btnSaveGroupName" class="primary-button">Salvar</button>
+                    <button type="button" id="btnDeleteGroup" class="danger-button">Excluir</button>
                   </div>
                   <p id="renameGroupMessage" class="form-message"></p>
                 </div>
@@ -188,31 +191,34 @@
         <div class="profile-copy">
           <p class="eyebrow">Bem-vindo</p>
           <h1>Qual é o seu grupo?</h1>
-          <p style="color: var(--muted); margin-top: 16px;">Para organizar suas assinaturas, crie um novo grupo para dividir com seus amigos, ou entre em um dos grupos existentes.</p>
+          <p style="color: var(--muted); margin-top: 16px;">Selecione um dos grupos existentes para acessar suas assinaturas, ou crie um novo para dividir com seus amigos.</p>
         </div>
 
-        <div class="profile-box" style="gap: 16px;">
-          <form id="formCreateGroup" style="width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 8px;">
-            <label for="inputGroupName" style="font-size: 0.85rem; font-weight: 700; color: var(--ink);">Nome do seu novo grupo:</label>
-            <input type="text" id="inputGroupName" placeholder="Ex: Casa, Família, República..." style="padding: 14px; border-radius: 8px; border: 1px solid var(--surface-border); background: var(--surface); color: var(--ink);" required>
-            <button type="submit" class="primary-button" id="btnCreateGroup" style="width: 100%; padding: 16px; font-size: 1.1rem; margin-top: 4px;">
-              Criar Novo Grupo
-            </button>
-          </form>
-
-          <div style="display: flex; align-items: center; gap: 8px; width: 100%; max-width: 300px; margin: 8px 0;">
+        <div class="profile-box">
+          <div class="profile-selection" style="width: 100%;">
+            <div id="groupListContainer" style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+              <div id="groupList" class="profile-grid" style="margin-bottom: 8px;">
+                <p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Carregando grupos...</p>
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 16px auto;">
             <hr style="flex: 1; border: none; border-top: 1px solid var(--surface-border);">
             <span style="color: var(--muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">OU</span>
             <hr style="flex: 1; border: none; border-top: 1px solid var(--surface-border);">
           </div>
 
-          <div id="groupListContainer" style="width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 8px;">
-            <p style="font-size: 0.85rem; font-weight: 700; color: var(--ink);">Selecione um grupo existente:</p>
-            <div id="groupList" class="profile-grid" style="grid-template-columns: 1fr; gap: 8px; margin-bottom: 8px;">
-              <p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Carregando grupos...</p>
+          <form id="formCreateGroup" style="width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 8px; margin: 0 auto;">
+            <label for="inputGroupName" style="font-size: 0.85rem; font-weight: 700; color: var(--ink);">Criar um novo grupo:</label>
+            <div class="input-row" style="display: flex; gap: 8px; margin-top: 4px;">
+              <input type="text" id="inputGroupName" placeholder="Ex: Casa..." style="flex: 1; padding: 14px; border-radius: 8px; border: 1px solid var(--surface-border); background: var(--surface); color: var(--ink);" required>
+              <button type="submit" class="primary-button" id="btnCreateGroup" style="padding: 14px 24px;">
+                Criar
+              </button>
             </div>
-          </div>
-          <p id="groupMessage" class="form-message" style="text-align: center;"></p>
+            <p id="groupMessage" class="form-message" style="text-align: center; margin-top: 8px;"></p>
+          </form>
         </div>
       </div>
     </section>
