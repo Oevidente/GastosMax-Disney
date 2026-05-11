@@ -180,7 +180,7 @@ function loadAdminSettings() {
   const settingsProviders = ['admin', state?.currentPersonKey].filter(Boolean);
 
   for (const provider of settingsProviders) {
-    const providerLogs = paidLogsCache[provider];
+    const providerLogs = paidLogsCache && paidLogsCache[provider];
     if (!providerLogs) continue;
 
     // 1) Single entry (legacy)
@@ -272,7 +272,8 @@ const STORAGE_KEYS = {
 function readJson(key, fallback) {
   try {
     const rawValue = localStorage.getItem(key);
-    return rawValue ? JSON.parse(rawValue) : fallback;
+    const parsed = rawValue ? JSON.parse(rawValue) : null;
+    return parsed !== null ? parsed : fallback;
   } catch {
     return fallback;
   }
@@ -1311,7 +1312,9 @@ function getUpcomingPaymentsForPerson(serviceKey, personKey, limit) {
   // O MARCO ZERO DO SISTEMA: 1º de Maio de 2026
   const systemStart = new Date(2026, 4, 1);
 
-  for (let offset = 0; offset < 120 && payments.length < limit; offset += 1) {
+  // Expande de 120 para 240 meses (20 anos) garantindo que vai encontrar algo, além de logging interno.
+  let futureCount = 0;
+  for (let offset = 0; offset < 240 && futureCount < limit; offset += 1) {
     const monthIndex = startMonth + offset;
     const year = startYear + Math.floor(monthIndex / 12);
     const normalizedMonth = ((monthIndex % 12) + 12) % 12;
@@ -1324,19 +1327,23 @@ function getUpcomingPaymentsForPerson(serviceKey, personKey, limit) {
 
     // Se for no futuro, adicionamos
     // Se for no passado, SÓ adicionamos se NÃO estiver pago
-    const isFuture = date >= today;
+    const isFuture = date.getTime() >= today.getTime();
     const paid = isPaymentPaid(personKey, { serviceKey, date });
 
     if (!isFuture && paid) {
       continue;
     }
 
-    if (personPaysInMonth(serviceKey, personKey, normalizedMonth)) {
+    if (personPaysInMonth(serviceKey, personKey, monthIndex)) {
       payments.push({
         serviceKey,
         date,
-        amount: SERVICES[serviceKey].amount,
+        amount: SERVICES[serviceKey]?.amount ?? 0,
       });
+
+      if (isFuture) {
+        futureCount += 1;
+      }
     }
   }
 
@@ -1433,21 +1440,24 @@ function createCalendarEventDate(date, hour, minute) {
 
 function personPaysInMonth(serviceKey, personKey, monthIndex) {
   const service = SERVICES[serviceKey];
+  if (!service) return false;
 
-  if (!service.participants.includes(personKey)) {
-    return false;
-  }
-
+  const matchPKey = findPersonKey(personKey) || personKey.toLowerCase();
+  
   if (service.model === 'monthly') {
-    return true;
+    const participantsKeys = (service.participants || []).map(p => findPersonKey(p) || p.toLowerCase());
+    return participantsKeys.includes(matchPKey);
   }
 
   const rotationPayer = getRotationPayer(serviceKey, monthIndex);
-  return rotationPayer === personKey;
+  if (!rotationPayer) return false;
+  
+  return (findPersonKey(rotationPayer) || rotationPayer.toLowerCase()) === matchPKey;
 }
 
 function getRotationPayer(serviceKey, monthIndex) {
   const service = SERVICES[serviceKey];
+  if (!service) return null;
   let rotation = service.participants || [];
 
   if (serviceKey === 'max') {
@@ -1459,7 +1469,7 @@ function getRotationPayer(serviceKey, monthIndex) {
   const offset = monthIndex - SETTINGS.maxRotationStartMonth;
   const rotationIndex =
     ((offset % rotation.length) + rotation.length) % rotation.length;
-  return rotation[rotationIndex];
+  return rotation[rotationIndex]?.toLowerCase();
 }
 
 function getYearMonths(year) {
