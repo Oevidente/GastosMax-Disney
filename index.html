@@ -285,6 +285,31 @@
       </div>
     </div>
   </div>
+  <!-- MODAL DA FATURA DO MÊS -->
+  <div id="invoiceModal" class="modal-overlay is-hidden">
+    <div class="modal">
+      <div class="modal-header" style="border-bottom: none; padding-bottom: 10px;">
+        <div>
+          <p class="eyebrow" style="margin-bottom: 4px;">Resumo</p>
+          <h2 id="invoiceModalTitle">Sua Fatura</h2>
+        </div>
+        <button type="button" id="closeInvoiceModal" class="icon-button" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="modal-body" style="padding-top: 0;">
+        <!-- Cabeçalho do Total dentro da Fatura -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--surface-border-subtle);">
+          <span style="font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 0.8rem;">Total Pendente</span>
+          <strong id="invoiceTotalAmount" style="font-size: 1.8rem; color: var(--ink); line-height: 1;">R$ 0,00</strong>
+        </div>
+
+        <!-- Lista das assinaturas pendentes -->
+        <div id="invoiceList" style="display: flex; flex-direction: column; max-height: 50vh; overflow-y: auto; padding-right: 4px;">
+          <!-- As linhas entram aqui via JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js" defer></script>
   <script src="ui-visual-updates.js" defer></script>

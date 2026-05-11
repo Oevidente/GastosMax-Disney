@@ -2389,3 +2389,80 @@ html[data-theme="dark"] .modal {
 .subscription-card:active {
   cursor: default;
 }
+/* ==========================================
+   VISUAL DA FATURA DO MÊS
+   ========================================== */
+
+/* Transforma o card de Total em um botão clicável */
+.id-total-pill {
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.id-total-pill:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  border-color: var(--accent);
+}
+
+.id-total-pill:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Estilo das linhas simplificadas da fatura */
+.invoice-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  color: #ffffff; /* Letra sempre branca pois os fundos são escuros */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.invoice-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.invoice-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.invoice-item-info strong {
+  font-size: 1.05rem;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.invoice-item-info span {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.invoice-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.invoice-item-right strong {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+/* Ajustes no status pill para dentro da fatura */
+.invoice-item-right .status-pill {
+  min-height: 20px;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+}

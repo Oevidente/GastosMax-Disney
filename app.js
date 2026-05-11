@@ -344,7 +344,7 @@ const MONTHS = [
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbxzSoRdRwYOf0tKwSb6HIr2TozXWjtVYPb2kjoKXRyGs4ooROj8C2YJUvwI1UJVabNo/exec'.trim();
+  'https://script.google.com/macros/s/AKfycbx6zNNhu2z3PRNDPWSXdE5OvCcSAO37U-du95ayss7ZE5lH0FmBj8vGrGyYFyARoKB9/exec'.trim();
 
 // Estado global da aplicação
 
@@ -429,6 +429,25 @@ function checkInitialNotificationPermission() {
 }
 
 function bindEvents() {
+  // --- CLIQUE PARA ABRIR A FATURA ---
+  document.querySelector('.id-total-pill').addEventListener('click', () => {
+    if (state.currentPersonKey) {
+      openInvoiceModal(state.currentPersonKey);
+    }
+  });
+
+  document.querySelector('#closeInvoiceModal').addEventListener('click', () => {
+    document.querySelector('#invoiceModal').classList.add('is-hidden');
+  });
+
+  document.addEventListener('click', (event) => {
+    if (event.target === document.querySelector('#invoiceModal')) {
+      document.querySelector('#invoiceModal').classList.add('is-hidden');
+    }
+  });
+  // ----------------------------------
+
+  // (aqui continua o resto do seu bindEvents que já existe...)
   profileForm.addEventListener('submit', (event) => {
     event.preventDefault();
     void handleProfileSubmit();
@@ -903,22 +922,40 @@ function getSavedSubscriptionOrder(personKey) {
 function updateMonthlyTotal(personKey) {
   if (!totalMonthAmount) return;
 
-  const today = getToday();
-  const currentMonthIndex = today.getMonth();
-  const currentYear = today.getFullYear();
   const person = PEOPLE[personKey];
-
   if (!person) return;
 
-  let total = 0;
-  person.subscriptions.forEach((serviceKey) => {
-    if (personPaysInMonth(serviceKey, personKey, currentMonthIndex)) {
-      const date = createPaymentDate(currentYear, currentMonthIndex);
-      const paid = isPaymentPaid(personKey, { serviceKey, date });
-      if (!paid) {
-        total += SERVICES[serviceKey].amount;
-      }
+  const today = startOfDay(getToday());
+  let activeMonth = today.getMonth();
+  let activeYear = today.getFullYear();
+
+  // Se já passou do dia de vencimento, a nossa "fatura" vira a do mês que vem.
+  if (today.getDate() > SETTINGS.dueDay) {
+    activeMonth += 1;
+    if (activeMonth > 11) {
+      activeMonth = 0;
+      activeYear += 1;
     }
+  }
+
+  // Essa é a nossa Data Limite de Cobrança.
+  // Ex: Se hoje for 11/05, a data limite será 10/06.
+  const activeCutoffDate = createPaymentDate(activeYear, activeMonth);
+
+  let total = 0;
+
+  person.subscriptions.forEach((serviceKey) => {
+    // Puxa uma lista de até 12 parcelas (vencidas e futuras)
+    const payments = getUpcomingPaymentsForPerson(serviceKey, personKey, 12);
+
+    payments.forEach((payment) => {
+      const isPaid = isPaymentPaid(personKey, payment);
+
+      // Se NÃO está pago, E a data da parcela for menor ou igual ao nosso limite
+      if (!isPaid && payment.date <= activeCutoffDate) {
+        total += payment.amount;
+      }
+    });
   });
 
   totalMonthAmount.textContent = moneyFormatter.format(total);
@@ -2913,3 +2950,110 @@ document.addEventListener('click', async (event) => {
     }
   }
 });
+
+// ==========================================
+// FATURA DO MÊS (RESUMO)
+// ==========================================
+function openInvoiceModal(personKey) {
+  const person = PEOPLE[personKey];
+  if (!person) return;
+
+  const today = startOfDay(getToday());
+  let activeMonth = today.getMonth();
+  let activeYear = today.getFullYear();
+
+  // A mesma regra de data limite que usamos no painel
+  if (today.getDate() > SETTINGS.dueDay) {
+    activeMonth += 1;
+    if (activeMonth > 11) {
+      activeMonth = 0;
+      activeYear += 1;
+    }
+  }
+
+  const activeCutoffDate = createPaymentDate(activeYear, activeMonth);
+  const pendingItems = [];
+  let total = 0;
+
+  // Busca todas as pendências
+  person.subscriptions.forEach((serviceKey) => {
+    const payments = getUpcomingPaymentsForPerson(serviceKey, personKey, 12);
+    payments.forEach((payment) => {
+      const isPaid = isPaymentPaid(personKey, payment);
+      if (!isPaid && payment.date <= activeCutoffDate) {
+        pendingItems.push(payment);
+        total += payment.amount;
+      }
+    });
+  });
+
+  // Ordena por data (o mais atrasado primeiro)
+  pendingItems.sort((a, b) => a.date - b.date);
+
+  const invoiceList = document.querySelector('#invoiceList');
+  const invoiceTotalAmount = document.querySelector('#invoiceTotalAmount');
+  let html = '';
+
+  if (pendingItems.length === 0) {
+    html = `
+      <div class="empty-state" style="text-align: center; padding: 40px 16px; border: none; background: transparent;">
+        <span style="font-size: 3rem; display: block; margin-bottom: 12px;">🎉</span>
+        <strong style="color: var(--ink); font-size: 1.2rem;">Tudo em dia!</strong>
+        <span style="display: block; margin-top: 4px;">Você não tem nenhum pagamento<br>pendente nesta fatura.</span>
+      </div>
+    `;
+  } else {
+    html = pendingItems
+      .map((payment) => {
+        const service = SERVICES[payment.serviceKey];
+        const isAtrasada = payment.date < today;
+        const isHoje = payment.date.getTime() === today.getTime();
+
+        let statusPill = '';
+        if (isAtrasada) {
+          statusPill = `<span class="status-pill status-atrasada" style="background: rgba(225, 29, 72, 0.2); color: #ffa4bc;">Atrasado</span>`;
+        } else if (isHoje) {
+          statusPill = `<span class="status-pill status-atrasada" style="background: rgba(251, 146, 60, 0.2); color: #fdba74;">Vence Hoje</span>`;
+        } else {
+          statusPill = `<span class="status-pill status-futuro" style="background: rgba(255, 255, 255, 0.15); color: #ffffff;">Pendente</span>`;
+        }
+
+        // Dicionário com as cores exatas do seu CSS para as 8 assinaturas originais
+        const fallbackColors = {
+          disney: 'rgb(4, 7, 20)',
+          max: 'rgb(0, 0, 0)',
+          spotify: 'rgb(15, 60, 30)',
+          crunchyroll: 'rgb(180, 60, 0)',
+          prime_video: 'rgb(0, 55, 75)',
+          google_one: 'rgb(4, 30, 71)',
+          f1_tv_pro: 'rgb(95, 0, 0)',
+          globoplay: 'rgb(95, 8, 24)',
+        };
+
+        // Tenta usar a cor customizada do Admin. Se não tiver, usa a cor do dicionário. Se falhar, usa o azul padrão.
+        const bgColor =
+          service.color || fallbackColors[payment.serviceKey] || '#1a2b4c';
+
+        return `
+        <div class="invoice-item" style="background-color: ${bgColor};">
+           <div class="invoice-item-left">
+              <span class="service-symbol" style="width: 34px; height: 34px; font-size: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); display: grid; place-items: center; border-radius: 8px; flex-shrink: 0;">${service.shortName}</span>
+              <div class="invoice-item-info">
+                 <strong>${service.name}</strong>
+                 <span>Venc. ${formatShortDate(payment.date)}</span>
+              </div>
+           </div>
+           <div class="invoice-item-right">
+              <strong>${moneyFormatter.format(payment.amount)}</strong>
+              ${statusPill}
+           </div>
+        </div>
+      `;
+      })
+      .join('');
+  }
+
+  invoiceList.innerHTML = html;
+  invoiceTotalAmount.textContent = moneyFormatter.format(total);
+  document.querySelector('#invoiceModal').classList.remove('is-hidden');
+}

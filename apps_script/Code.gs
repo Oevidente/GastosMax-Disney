@@ -165,7 +165,7 @@ function handleSetPaidStatus(data, paidStatus, sheetName) {
         sheet.getRange(dataStartRow + i, 1, 1, HEADERS.length).setValues([[
           normalized.nome,
           normalized.assinatura,
-          normalized.monthDate,
+          "'" + normalized.monthDate, // O apóstrofo mágico voltou aqui!
           normalized.pago,
         ]]);
         updated = true;
@@ -177,10 +177,12 @@ function handleSetPaidStatus(data, paidStatus, sheetName) {
       sheet.appendRow([
         normalized.nome,
         normalized.assinatura,
-        normalized.monthDate,
+        "'" + normalized.monthDate, // E o apóstrofo mágico voltou aqui também!
         normalized.pago,
       ]);
     }
+
+    SpreadsheetApp.flush(); // Obriga o Google a salvar na hora
 
     return jsonResponse({
       success: true,
