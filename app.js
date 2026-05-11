@@ -348,7 +348,7 @@ const MONTHS = [
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbydWZzphnDnAeH4panv0GLfUrInDrZuPzUAQLxsGF7-15l6ldxkzs6f4kZMKO5vSL7h/exec".trim();
+  "https://script.google.com/macros/s/AKfycbzMH75zhqHhlgh7LW523Uuf4aRZa7HtZul8rWysXCzIFN0H9A3a6Zkn6bA6Pc50VdtkNw/exec".trim();
 
 // Estado global da aplicação
 
@@ -3086,6 +3086,8 @@ function initApp() {
     profileScreen.classList.add("is-hidden");
     dashboard.classList.add("is-hidden");
     if (adminButton) adminButton.classList.add("is-hidden");
+    // Carregar a lista de grupos para exibir ao invés de digitar o nome
+    carregarListaDeGrupos();
   } else {
     // Se já tem grupo, tenta buscar os dados dele
     groupScreen.classList.add("is-hidden");
@@ -3223,41 +3225,54 @@ if (formCreateGroup) {
 }
 
 // Formulário: Entrar em um Grupo Existente
-if (formJoinGroup) {
-  formJoinGroup.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const codigo = inputGroupCode.value.trim().toUpperCase();
-    if (!codigo) return;
+const groupListContainer = document.querySelector("#groupListContainer");
+const groupList = document.querySelector("#groupList");
 
-    const btn = formJoinGroup.querySelector("button");
-    btn.textContent = "Verificando...";
-    btn.disabled = true;
-    groupMessage.textContent = "";
-    groupMessage.style.color = "var(--ink)";
-
-    try {
-      // Faz uma chamada para ver se o grupo existe e já baixa os dados
-      const url = `${API_URL}?action=carregar_dados&id_grupo=${codigo}`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (data.success && data.perfis) {
-        // Se trouxe os dados, o grupo existe!
-        salvarGrupo(codigo, data.nome_grupo);
-        initApp();
+async function carregarListaDeGrupos() {
+  if (!groupList) return;
+  groupList.innerHTML = '<p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Buscando grupos...</p>';
+  try {
+    const url = `${API_URL}?action=listar_grupos`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    if (data.success && data.grupos) {
+      groupList.innerHTML = '';
+      if (data.grupos.length === 0) {
+        groupList.innerHTML = '<p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Nenhum grupo encontrado.</p>';
       } else {
-        groupMessage.style.color = "var(--danger)";
-        groupMessage.textContent = "Código de grupo não encontrado.";
+        data.grupos.forEach(grupo => {
+          const btn = document.createElement("button");
+          btn.className = "profile-item";
+          btn.style.width = "100%";
+          btn.style.flexDirection = "row";
+          btn.style.justifyContent = "flex-start";
+          btn.style.padding = "12px 16px";
+          btn.style.gap = "16px";
+          btn.innerHTML = `
+            <div class="profile-avatar" style="width: 48px; height: 48px; font-size: 1rem; flex-shrink: 0;">
+              ${(grupo.nome || grupo.id_grupo).substring(0, 2).toUpperCase()}
+            </div>
+            <div class="profile-info" style="text-align: left; display: flex; flex-direction: column; gap: 4px;">
+              <strong style="color: var(--ink); font-size: 1rem;">${grupo.nome || grupo.id_grupo}</strong>
+              <small style="color: var(--muted); font-size: 0.8rem;">Código: ${grupo.id_grupo}</small>
+            </div>
+          `;
+          btn.addEventListener("click", () => {
+             salvarGrupo(grupo.id_grupo, grupo.nome);
+             initApp();
+          });
+          groupList.appendChild(btn);
+        });
       }
-    } catch (error) {
-      groupMessage.style.color = "var(--danger)";
-      groupMessage.textContent = "Erro de conexão.";
-    } finally {
-      btn.textContent = "Entrar no Grupo";
-      btn.disabled = false;
+    } else {
+      groupList.innerHTML = '<p style="text-align: center; color: var(--danger); font-size: 0.9rem; grid-column: 1/-1;">Erro ao carregar os grupos.</p>';
     }
-  });
+  } catch(error) {
+    groupList.innerHTML = '<p style="text-align: center; color: var(--danger); font-size: 0.9rem; grid-column: 1/-1;">Erro de conexão.</p>';
+  }
 }
+
 
 function salvarGrupo(id, name) {
   state.groupId = id;

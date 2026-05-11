@@ -1,4 +1,4 @@
-const SPREADSHEET_ID = '1FTSntPaY0ZSNAHdpKFaYpx9B2378jylDmvkhL1Gw-yY';
+const SPREADSHEET_ID = '19ENt7Jc4-ZdKGffBUl6hhJGiH3gXXZHAHGD6VLY1ls4';
 
 function getSheetByName(name) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -22,6 +22,20 @@ function doGet(e) {
         assinaturas: getCollection('Assinaturas', idGrupo),
         logs: getCollection('Logs', idGrupo)
       });
+    }
+
+    if (action === 'listar_grupos') {
+      var sheet = getSheetByName('Grupos');
+      var lastRow = sheet.getLastRow();
+      if (lastRow <= 1) return jsonResponse({ success: true, grupos: [] });
+      var data = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+      var grupos = data.map(function(row) {
+        return {
+          id_grupo: row[0],
+          nome: row[1]
+        };
+      });
+      return jsonResponse({ success: true, grupos: grupos });
     }
     
     if (action === 'has_password') {
@@ -110,8 +124,8 @@ function doPost(e) {
       }
       
       if (action === 'salvar_assinatura') {
-        saveRow('Assinaturas', ['id_grupo', 'chave_servico', 'nome', 'valor_total', 'modelo', 'participantes', 'cor'], 
-          [idGrupo, payload.chave_servico, payload.nome, payload.valor_total, payload.modelo, JSON.stringify(payload.participantes || []), payload.cor || ''],
+        saveRow('Assinaturas', ['id_grupo', 'chave_servico', 'nome', 'sigla', 'cor', 'modelo', 'valor_total', 'participantes'], 
+          [idGrupo, payload.chave_servico, payload.nome, payload.sigla || '', payload.cor || '', payload.modelo, payload.valor_total, JSON.stringify(payload.participantes || [])],
           function(r) { return r[0] === idGrupo && r[1] === payload.chave_servico; }
         );
         return jsonResponse({ success: true });

@@ -206,11 +206,12 @@
             <hr style="flex: 1; border: none; border-top: 1px solid var(--surface-border);">
           </div>
 
-          <form id="formJoinGroup" style="width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 8px;">
-            <label for="inputGroupCode" style="font-size: 0.85rem; font-weight: 700; color: var(--ink);">Já tenho um código:</label>
-            <input type="text" id="inputGroupCode" placeholder="Ex: ABC-123" style="padding: 14px; border-radius: 8px; border: 1px solid var(--surface-border); background: var(--surface); color: var(--ink); text-transform: uppercase;" required>
-            <button type="submit" class="ghost-button" style="padding: 14px; margin-top: 4px;">Entrar no Grupo</button>
-          </form>
+          <div id="groupListContainer" style="width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 8px;">
+            <p style="font-size: 0.85rem; font-weight: 700; color: var(--ink);">Selecione um grupo existente:</p>
+            <div id="groupList" class="profile-grid" style="grid-template-columns: 1fr; gap: 8px; margin-bottom: 8px;">
+              <p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Carregando grupos...</p>
+            </div>
+          </div>
           <p id="groupMessage" class="form-message" style="text-align: center;"></p>
         </div>
       </div>
