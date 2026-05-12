@@ -321,11 +321,12 @@ button {
 }
 
 .ghost-button.calendar-button {
-  --conic-blue-color: rgba(66, 133, 244, 1);
-  --conic-green-color: rgba(52, 168, 83, 1);
-  --conic-yellow-color: rgba(251, 188, 5, 1);
-  --conic-red-color: rgba(234, 67, 53, 1);
-  --outline-var: rgba(255, 255, 255, 0.1);
+  --conic-blue-color: rgba(66,133,244,.55);
+  --conic-green-color: rgba(26,166,74,.5);
+  --conic-yellow-color: rgba(252,189,0,.5);
+  --conic-red-color: rgba(219,55,45,.5);
+  --outline-var: rgba(255, 255, 255, 0.08);
+  --calendar-anim-duration: 8s;
 
   display: inline-flex;
   align-items: center;
@@ -333,12 +334,17 @@ button {
   gap: 8px;
   position: relative;
   border-color: transparent; /* so original border doesn't clash with the conic gradient ::after */
-  /* Instead of an outer padding wrapper, we let it be exactly the size of a ghost-button */
   z-index: 1;
+
+  transition: --conic-blue-color 0.6s ease-in-out, --conic-green-color 0.6s ease-in-out, --conic-yellow-color 0.6s ease-in-out, --conic-red-color 0.6s ease-in-out;
 }
 
 .ghost-button.calendar-button:hover {
   transform: translateY(-2px);
+  --conic-blue-color: #4285f4;
+  --conic-green-color: #1aa64a;
+  --conic-yellow-color: #fcbd00;
+  --conic-red-color: #db372d;
 }
 
 /* O brilho exterior suave */
@@ -363,15 +369,16 @@ button {
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  filter: blur(6px);
-  opacity: 0.35;
+  filter: blur(12px);
+  opacity: 0.45;
   z-index: -1;
   animation: rotate-calendar-btn-border 40s linear infinite;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s ease, filter 0.25s ease;
 }
 
 .ghost-button.calendar-button:hover::before {
-  opacity: 0.6;
+  opacity: 0.7;
+  filter: blur(18px);
 }
 
 /* A Borda Colorida Nítida recortada (para não vazar no fundo transparente do botão) */
@@ -396,7 +403,7 @@ button {
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: rotate-calendar-btn-border 4s linear infinite;
+  animation: rotate-calendar-btn-border 8s linear infinite;
   pointer-events: none;
   z-index: 1; /* Sits naturally over the button, visually acting as its border */
 }
@@ -2465,4 +2472,146 @@ html[data-theme="dark"] .modal {
   min-height: 20px;
   padding: 2px 8px;
   font-size: 0.65rem;
+}
+
+/* Bloco de estilos para botão de calendário (colar este bloco no final do styles.css) */
+@property --calendar-btn-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --conic-blue-color {
+  syntax: "<color>";
+  initial-value: rgba(66, 133, 244, 0.55);
+  inherits: false;
+}
+
+@property --conic-green-color {
+  syntax: "<color>";
+  initial-value: rgba(26, 166, 74, 0.5);
+  inherits: false;
+}
+
+@property --conic-yellow-color {
+  syntax: "<color>";
+  initial-value: rgba(252, 189, 0, 0.5);
+  inherits: false;
+}
+
+@property --conic-red-color {
+  syntax: "<color>";
+  initial-value: rgba(219, 55, 45, 0.5);
+  inherits: false;
+}
+
+@keyframes rotate-calendar-btn-border {
+  from { --calendar-btn-angle: 0deg; }
+  to { --calendar-btn-angle: 360deg; }
+}
+
+.ghost-button.calendar-button {
+  --conic-blue-color: rgba(66, 133, 244, 0.55);
+  --conic-green-color: rgba(26, 166, 74, 0.5);
+  --conic-yellow-color: rgba(252, 189, 0, 0.5);
+  --conic-red-color: rgba(219, 55, 45, 0.5);
+  --outline-var: rgba(255, 255, 255, 0.1);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  /* border-color: transparent deixa a máscara exibir a borda falsa com as cores girando */
+  border-color: transparent; 
+  box-shadow: rgba(10, 13, 18, 0.04) 0px 3px 3px -1.5px, 
+              rgba(10, 13, 18, 0.03) 0px 8px 8px -4px, 
+              rgba(10, 13, 18, 0.08) 0px 20px 24px -4px;
+  transition: --conic-blue-color 0.6s ease-in-out, 
+              --conic-green-color 0.6s ease-in-out, 
+              --conic-yellow-color 0.6s ease-in-out, 
+              --conic-red-color 0.6s ease-in-out, 
+              transform 0.2s ease;
+  z-index: 1;
+}
+
+.ghost-button.calendar-button:hover {
+  --conic-blue-color: #4285f4;
+  --conic-green-color: #1aa64a;
+  --conic-yellow-color: #fcbd00;
+  --conic-red-color: #db372d;
+  transform: translateY(-2px);
+}
+
+/* O brilho exterior suave */
+.ghost-button.calendar-button::before {
+  content: '';
+  position: absolute;
+  inset: -3px; 
+  border-radius: calc(var(--radius) + 3px);
+  padding: 6px; 
+  background: conic-gradient(
+    from var(--calendar-btn-angle) at 50% 50%,
+    var(--outline-var) 0deg,
+    var(--outline-var) 69deg,
+    var(--conic-blue-color) 115deg,
+    var(--conic-green-color) 193deg,
+    var(--outline-var) 270deg,
+    var(--conic-yellow-color) 291deg,
+    var(--conic-red-color) 322deg,
+    var(--outline-var) 1turn
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  filter: blur(6px);
+  opacity: 0.35;
+  z-index: -1;
+  animation: rotate-calendar-btn-border 40s linear infinite;
+  transition: opacity 0.6s ease-in-out, filter 0.6s ease-in-out;
+}
+
+.ghost-button.calendar-button:hover::before {
+  filter: blur(18px);
+  opacity: 0.7;
+  animation-duration: 8s;
+}
+
+/* A Borda Colorida Nítida recortada (para não vazar no fundo transparente do botão) */
+.ghost-button.calendar-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  padding: 1.5px; /* A espessura que queremos para o arco-íris */
+  background: conic-gradient(
+    from var(--calendar-btn-angle) at 50% 50%,
+    var(--outline-var) 0deg,
+    var(--outline-var) 69deg,
+    var(--conic-blue-color) 115deg,
+    var(--conic-green-color) 193deg,
+    var(--outline-var) 270deg,
+    var(--conic-yellow-color) 291deg,
+    var(--conic-red-color) 322deg,
+    var(--outline-var) 1turn
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotate-calendar-btn-border 40s linear infinite;
+  pointer-events: none;
+  z-index: 1; /* Fica naturalmente em cima do botão, agindo visualmente como se fosse a borda */
+}
+
+.ghost-button.calendar-button:hover::after {
+  animation-duration: 8s;
+}
+
+.calendar-logo {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  object-fit: contain;
 }
