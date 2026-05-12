@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+css do botão google.txt
+instruções para não usar framework.txt
+apps_script/Code.gs.txt
