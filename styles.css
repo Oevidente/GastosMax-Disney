@@ -72,15 +72,15 @@
   animation: pulseSuccess 0.6s ease-out !important;
 }
 
-.payment-item {
+.payment-list.is-entering .payment-item {
   animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.payment-item:nth-child(1) { animation-delay: 0.05s; }
-.payment-item:nth-child(2) { animation-delay: 0.1s; }
-.payment-item:nth-child(3) { animation-delay: 0.15s; }
-.payment-item:nth-child(4) { animation-delay: 0.2s; }
-.payment-item:nth-child(5) { animation-delay: 0.25s; }
+.payment-list.is-entering .payment-item:nth-child(1) { animation-delay: 0.05s; }
+.payment-list.is-entering .payment-item:nth-child(2) { animation-delay: 0.1s; }
+.payment-list.is-entering .payment-item:nth-child(3) { animation-delay: 0.15s; }
+.payment-list.is-entering .payment-item:nth-child(4) { animation-delay: 0.2s; }
+.payment-list.is-entering .payment-item:nth-child(5) { animation-delay: 0.25s; }
 
 html {
   min-height: 100%;

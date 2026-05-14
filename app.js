@@ -346,9 +346,9 @@ const MONTHS = [
 ];
 
 // Esta é a API publicada no Google Apps Script.
-// O arquivo apps_script/Code.gs é só a cópia versionada do código que roda nessa URL.
+// O arquivo apps_script/Backend_Atualizado.js é a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbx9mnAKExbXJ8KcWFuiGi6rhwRA9KArcZLNjknppb6qqVpLodLRz6qOshVfNrBPoAvd1A/exec'.trim();
+  'https://script.google.com/macros/s/AKfycbyfEgaZ2jE62bxvnj0UrRcNrWyIFDhY3r3K98FLTQlbld6ZgSwMzm3wjz3M1CpmpbdBsw/exec'.trim();
 
 // Estado global da aplicação
 
@@ -416,6 +416,11 @@ const moneyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 });
+
+const PAYMENT_ACTION_ICONS = {
+  mark: 'icones/icons8-pay-100.png',
+  unmark: 'icones/icons8-undo-pay-100.png',
+};
 
 loadAdminSettings();
 // Removidos os inícios antigos, agora usamos o initApp()
@@ -683,7 +688,7 @@ function bindEvents() {
   backFromAdminButton.addEventListener('click', () => {
     adminScreen.classList.add('is-hidden');
     dashboard.classList.remove('is-hidden');
-    refreshCurrentDates();
+    refreshCurrentDates({ fullRender: true, animatePayments: false });
   });
 
   addServiceButton.addEventListener('click', () =>
@@ -883,31 +888,60 @@ async function openDashboard(personKey) {
   startSessionLoops();
 }
 
-function renderSubscriptionCards(personKey) {
+function getSortedServiceKeysForPerson(personKey) {
   const person = PEOPLE[personKey];
+  if (!person) return [];
 
-  // Buscar ordem salva (Nuvem ou Local)
-  let savedOrder = getSavedSubscriptionOrder(personKey);
+  const savedOrder = getSavedSubscriptionOrder(personKey);
 
-  let sortedServices;
   if (savedOrder && savedOrder.length > 0) {
-    // Filtrar apenas assinaturas que a pessoa realmente tem e que existam em SERVICES
-    sortedServices = savedOrder.filter(
+    const sortedServices = savedOrder.filter(
       (s) => person.subscriptions.includes(s) && SERVICES[s],
     );
-    // Adicionar novas assinaturas que não estavam na ordem salva
     const missing = person.subscriptions.filter(
       (s) => !sortedServices.includes(s) && SERVICES[s],
     );
-    sortedServices = [...sortedServices, ...missing];
-  } else {
-    // Padrão alfabético
-    sortedServices = [...person.subscriptions]
-      .filter((s) => SERVICES[s])
-      .sort((a, b) =>
-        SERVICES[a].name.localeCompare(SERVICES[b].name, 'pt-BR'),
-      );
+    return [...sortedServices, ...missing];
   }
+
+  return [...person.subscriptions]
+    .filter((s) => SERVICES[s])
+    .sort((a, b) => SERVICES[a].name.localeCompare(SERVICES[b].name, 'pt-BR'));
+}
+
+function htmlToElement(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html.trim();
+  return template.content.firstElementChild;
+}
+
+function bindSubscriptionCard(card) {
+  if (!card || card.dataset.cardBound === 'true') return;
+
+  card.dataset.cardBound = 'true';
+  card.addEventListener('click', () => {
+    void openServiceDetails(card.dataset.service);
+  });
+}
+
+function getRenderedSubscriptionKeys() {
+  return Array.from(subscriptionList.children)
+    .filter((element) => element.classList.contains('subscription-card'))
+    .map((card) => card.dataset.service);
+}
+
+function hasCurrentSubscriptionCardStructure(personKey) {
+  const expected = getSortedServiceKeysForPerson(personKey);
+  const rendered = getRenderedSubscriptionKeys();
+
+  return (
+    expected.length === rendered.length &&
+    expected.every((serviceKey, index) => serviceKey === rendered[index])
+  );
+}
+
+function renderSubscriptionCards(personKey) {
+  const sortedServices = getSortedServiceKeysForPerson(personKey);
 
   // Preserve detailsPanel if it has been moved inside subscriptionList
   if (detailsPanel.parentElement === subscriptionList) {
@@ -918,11 +952,9 @@ function renderSubscriptionCards(personKey) {
     .map((serviceKey) => createSubscriptionCard(serviceKey, personKey))
     .join('');
 
-  subscriptionList.querySelectorAll('.subscription-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      void openServiceDetails(card.dataset.service);
-    });
-  });
+  subscriptionList
+    .querySelectorAll('.subscription-card')
+    .forEach(bindSubscriptionCard);
 
   if (state.selectedServiceKey) {
     document.querySelectorAll('.subscription-card').forEach((card) => {
@@ -933,6 +965,49 @@ function renderSubscriptionCards(personKey) {
     });
     positionDetailsPanel();
   }
+}
+
+function patchSubscriptionCard(serviceKey, personKey) {
+  const currentCard = Array.from(subscriptionList.children).find(
+    (element) =>
+      element.classList.contains('subscription-card') &&
+      element.dataset.service === serviceKey,
+  );
+
+  if (!currentCard) {
+    return false;
+  }
+
+  const replacement = htmlToElement(
+    createSubscriptionCard(serviceKey, personKey),
+  );
+  if (!replacement) {
+    return false;
+  }
+
+  if (state.selectedServiceKey === serviceKey) {
+    replacement.classList.add('is-selected');
+  }
+
+  currentCard.replaceWith(replacement);
+  bindSubscriptionCard(replacement);
+
+  if (state.selectedServiceKey === serviceKey) {
+    positionDetailsPanel();
+  }
+
+  return true;
+}
+
+function patchSubscriptionCardsForPerson(personKey) {
+  if (!hasCurrentSubscriptionCardStructure(personKey)) {
+    renderSubscriptionCards(personKey);
+    return;
+  }
+
+  getSortedServiceKeysForPerson(personKey).forEach((serviceKey) => {
+    patchSubscriptionCard(serviceKey, personKey);
+  });
 }
 
 function getSavedSubscriptionOrder(personKey) {
@@ -1033,7 +1108,7 @@ function createSubscriptionCard(serviceKey, personKey) {
     : 'Sem data restante';
   const amountText = moneyFormatter.format(service.amount);
   const statusPill = paid
-    ? '<span class="status-pill status-pago" style="margin-left: 8px; vertical-align: middle;">Pago</span>'
+    ? '<span class="status-pill status-pago" data-card-paid-pill style="margin-left: 8px; vertical-align: middle;">Pago</span>'
     : '';
 
   const participantsHtml = (service.participants || [])
@@ -1055,7 +1130,7 @@ function createSubscriptionCard(serviceKey, personKey) {
   const symbolHtml = `<span class="service-symbol">${service.shortName}</span>`;
 
   return `
-    <button class="subscription-card ${service.cssClass}${paid ? ' is-paid' : ''}" type="button" data-service="${serviceKey}" ${overrideStyle}>
+    <button class="subscription-card ${service.cssClass}${paid ? ' is-paid' : ''}" type="button" data-service="${serviceKey}" data-person="${personKey}" ${overrideStyle}>
       <span class="subscription-top">
         <span class="subscription-title-container">
           <span class="subscription-title">
@@ -1071,12 +1146,12 @@ function createSubscriptionCard(serviceKey, personKey) {
 
       <span class="payment-line">
         <span>
-          <span>${paid ? 'Data paga' : 'Próxima data'}</span>
-          <strong>${dateText}</strong>
+          <span data-card-date-label>${paid ? 'Data paga' : 'Próxima data'}</span>
+          <strong data-card-date>${dateText}</strong>
         </span>
         <span>
           <span>Valor</span>
-          <strong>${amountText}</strong>
+          <strong data-card-amount>${amountText}</strong>
         </span>
       </span>
     </button>
@@ -1124,7 +1199,6 @@ async function openServiceDetails(serviceKey) {
 
   try {
     await fetchPaidLogs();
-    renderDetails();
   } finally {
     // Esconder loading e mostrar conteúdo
     detailsLoadingState.classList.add('is-hidden');
@@ -1137,20 +1211,33 @@ async function openServiceDetails(serviceKey) {
   }
 }
 
-function renderDetails() {
+function renderDetails({ animatePayments = true } = {}) {
   if (!state.selectedServiceKey || !state.currentPersonKey) {
+    return;
+  }
+
+  if (!SERVICES[state.selectedServiceKey] || !PEOPLE[state.currentPersonKey]) {
+    state.selectedServiceKey = null;
+    detailsPanel.classList.add('is-hidden');
     return;
   }
 
   upcomingPanel.innerHTML = renderUpcomingPayments(
     state.selectedServiceKey,
     state.currentPersonKey,
+    { animate: animatePayments },
   );
   fullPanel.innerHTML = renderFullSheet(state.selectedServiceKey);
+  normalizePaymentActionButtons(upcomingPanel);
+  clearPaymentListIntroAnimation(upcomingPanel);
   updateYearControls();
 }
 
-function renderUpcomingPayments(serviceKey, personKey) {
+function renderUpcomingPayments(
+  serviceKey,
+  personKey,
+  { animate = true } = {},
+) {
   const payments = getUpcomingPaymentsForPerson(
     serviceKey,
     personKey,
@@ -1176,41 +1263,322 @@ function renderUpcomingPayments(serviceKey, personKey) {
         Testar notificação
       </button>
     </div>
-    <ul class="payment-list">
+    <ul class="payment-list${animate ? ' is-entering' : ''}">
       ${payments
-        .map((payment) => {
-          const paid = isPaymentPaid(personKey, payment);
-          return `
-            <li class="payment-item">
-              <span class="payment-info-group">
-                <strong>${capitalize(MONTHS[payment.date.getMonth()])}</strong>
-                <span>${formatLongDate(payment.date)}</span>
-              </span>
-              <span class="payment-item-right">
-                <span class="amount">${moneyFormatter.format(payment.amount)}</span>
-                ${
-                  paid
-                    ? `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Desfazer pago</button>`
-                    : `<button class="ghost-button" type="button" data-mark-paid data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}">Marcar como pago</button>`
-                }
-              </span>
-            </li>
-          `;
-        })
+        .map((payment) => renderUpcomingPaymentItem(payment, personKey))
         .join('')}
     </ul>
   `;
+}
+
+function clearPaymentListIntroAnimation(root) {
+  const list = root.querySelector('.payment-list.is-entering');
+  if (!list) return;
+
+  window.setTimeout(() => {
+    list.classList.remove('is-entering');
+  }, 700);
+}
+
+function getPaymentActionLabel(paid) {
+  return paid ? 'Desfazer pago' : 'Marcar como pago';
+}
+
+function getPaymentActionIcon(paid) {
+  return paid ? PAYMENT_ACTION_ICONS.unmark : PAYMENT_ACTION_ICONS.mark;
+}
+
+function renderPaymentActionButton(payment, personKey, paid, actionAttribute) {
+  const label = getPaymentActionLabel(paid);
+  const iconSrc = getPaymentActionIcon(paid);
+  const actionClass = paid ? 'is-unmark' : 'is-mark';
+
+  return `
+    <button class="ghost-button payment-action-button ${actionClass}" type="button" ${actionAttribute}
+      data-service="${payment.serviceKey}"
+      data-person="${personKey}"
+      data-date-ms="${payment.date.getTime()}"
+      data-date-key="${formatDateKey(payment.date)}"
+      aria-label="${label}"
+      title="${label}">
+      ${label}<img src="${iconSrc}" alt="" />
+    </button>
+  `;
+}
+
+function normalizePaymentActionButton(button, paid) {
+  const label = getPaymentActionLabel(paid);
+  const iconSrc = getPaymentActionIcon(paid);
+  const existingImage = button.querySelector('img');
+
+  button.classList.add('payment-action-button');
+  button.classList.toggle('is-unmark', paid);
+  button.classList.toggle('is-mark', !paid);
+  button.setAttribute('aria-label', label);
+  button.title = label;
+  button.textContent = label;
+
+  const image = existingImage || document.createElement('img');
+  image.src = iconSrc;
+  image.alt = '';
+  button.appendChild(image);
+}
+
+function normalizePaymentActionButtons(root) {
+  root
+    .querySelectorAll('button[data-mark-paid], button[data-toggle-paid]')
+    .forEach((button) => {
+      const serviceKey = button.dataset.service;
+      const dateMs = Number(button.dataset.dateMs);
+      const personKey = button.dataset.person || state.currentPersonKey;
+
+      if (!serviceKey || !dateMs || !personKey) return;
+
+      normalizePaymentActionButton(
+        button,
+        isPaymentPaid(personKey, {
+          serviceKey,
+          date: new Date(dateMs),
+        }),
+      );
+    });
+}
+
+function renderUpcomingPaymentItem(payment, personKey) {
+  const paid = isPaymentPaid(personKey, payment);
+  const paymentKey = getPaymentNotificationKey(payment);
+
+  return `
+    <li class="payment-item" data-payment-item data-payment-key="${paymentKey}" data-service="${payment.serviceKey}" data-date-key="${formatDateKey(payment.date)}">
+      <span class="payment-info-group">
+        <strong data-payment-month>${capitalize(MONTHS[payment.date.getMonth()])}</strong>
+        <span data-payment-date>${formatLongDate(payment.date)}</span>
+      </span>
+      <span class="payment-item-right">
+        <span class="amount" data-payment-amount>${moneyFormatter.format(payment.amount)}</span>
+        ${renderPaymentActionButton(payment, personKey, paid, 'data-mark-paid')}
+      </span>
+    </li>
+  `;
+}
+
+function patchUpcomingPaymentItem(item, payment, personKey) {
+  const paid = isPaymentPaid(personKey, payment);
+  const monthLabel = item.querySelector('[data-payment-month]');
+  const dateLabel = item.querySelector('[data-payment-date]');
+  const amountLabel = item.querySelector('[data-payment-amount]');
+  const button = item.querySelector('[data-mark-paid]');
+
+  item.dataset.paymentKey = getPaymentNotificationKey(payment);
+  item.dataset.service = payment.serviceKey;
+  item.dataset.dateKey = formatDateKey(payment.date);
+
+  if (monthLabel) {
+    monthLabel.textContent = capitalize(MONTHS[payment.date.getMonth()]);
+  }
+  if (dateLabel) {
+    dateLabel.textContent = formatLongDate(payment.date);
+  }
+  if (amountLabel) {
+    amountLabel.textContent = moneyFormatter.format(payment.amount);
+  }
+  if (button) {
+    button.dataset.service = payment.serviceKey;
+    button.dataset.person = personKey;
+    button.dataset.dateMs = String(payment.date.getTime());
+    button.dataset.dateKey = formatDateKey(payment.date);
+    normalizePaymentActionButton(button, paid);
+  }
+}
+
+function reconcileUpcomingPayments(
+  serviceKey,
+  personKey,
+  { animate = false } = {},
+) {
+  if (
+    state.selectedServiceKey !== serviceKey ||
+    state.currentPersonKey !== personKey
+  ) {
+    return;
+  }
+
+  const payments = getUpcomingPaymentsForPerson(
+    serviceKey,
+    personKey,
+    SETTINGS.upcomingPaymentLimit,
+  );
+  const list = upcomingPanel.querySelector('.payment-list');
+
+  if (!payments.length || !list) {
+    upcomingPanel.innerHTML = renderUpcomingPayments(serviceKey, personKey, {
+      animate,
+    });
+    normalizePaymentActionButtons(upcomingPanel);
+    clearPaymentListIntroAnimation(upcomingPanel);
+    return;
+  }
+
+  list.classList.remove('is-entering');
+
+  const existingItems = new Map(
+    Array.from(list.querySelectorAll('[data-payment-item]')).map((item) => [
+      item.dataset.paymentKey,
+      item,
+    ]),
+  );
+  const desiredKeys = new Set();
+
+  payments.forEach((payment) => {
+    const paymentKey = getPaymentNotificationKey(payment);
+    desiredKeys.add(paymentKey);
+
+    let item = existingItems.get(paymentKey);
+    if (item) {
+      patchUpcomingPaymentItem(item, payment, personKey);
+    } else {
+      item = htmlToElement(renderUpcomingPaymentItem(payment, personKey));
+    }
+
+    list.appendChild(item);
+  });
+
+  existingItems.forEach((item, paymentKey) => {
+    if (!desiredKeys.has(paymentKey)) {
+      item.remove();
+    }
+  });
+
+  normalizePaymentActionButtons(list);
 }
 
 function renderFullSheet(serviceKey) {
   const service = SERVICES[serviceKey];
   const year = state.selectedYear;
 
+  if (!service) return '';
+
   if (service.model === 'monthly') {
     return renderMonthlySheet(serviceKey, year);
   }
 
   return renderRotationSheet(serviceKey, year);
+}
+
+function getStatusClass(status) {
+  return status === 'atrasada'
+    ? ' status-atrasada'
+    : status === 'pago'
+      ? ' status-pago'
+      : status === 'futuro'
+        ? ' status-futuro'
+        : '';
+}
+
+function renderStatusPill(status) {
+  return `<div class="status-actions"><span class="status-pill${getStatusClass(status)}">${status}</span></div>`;
+}
+
+function getMonthlyRowStatus(serviceKey, date) {
+  const currentPersonPaid = state.currentPersonKey
+    ? isPaymentPaid(state.currentPersonKey, { serviceKey, date })
+    : false;
+
+  return currentPersonPaid ? 'pago' : getDateStatus(date);
+}
+
+function getRotationRowStatus(serviceKey, date) {
+  const payerKey = getRotationPayer(serviceKey, date.getMonth());
+  const paid = payerKey ? isPaymentPaid(payerKey, { serviceKey, date }) : false;
+
+  return paid ? 'pago' : getDateStatus(date);
+}
+
+function renderPaymentCellContent(serviceKey, personKey, date) {
+  const service = SERVICES[serviceKey];
+  const paid = isPaymentPaid(personKey, { serviceKey, date });
+
+  return paid
+    ? '<div class="status-actions"><span class="status-pill status-pago">pago</span></div>'
+    : `<div class="status-actions"><span class="amount">${moneyFormatter.format(service.amount)}</span></div>`;
+}
+
+function findSheetRow(serviceKey, date) {
+  const dateKey = formatDateKey(date);
+
+  return Array.from(fullPanel.querySelectorAll('[data-sheet-row]')).find(
+    (row) =>
+      row.dataset.service === serviceKey && row.dataset.dateKey === dateKey,
+  );
+}
+
+function findPaymentCell(row, personKey) {
+  return Array.from(row.querySelectorAll('[data-payment-cell]')).find(
+    (cell) => cell.dataset.person === personKey,
+  );
+}
+
+function patchFullSheetRowStatus(serviceKey, date, row) {
+  const service = SERVICES[serviceKey];
+  const status =
+    service.model === 'monthly'
+      ? getMonthlyRowStatus(serviceKey, date)
+      : getRotationRowStatus(serviceKey, date);
+  const statusCell = row.querySelector('[data-row-status-cell]');
+
+  if (statusCell) {
+    statusCell.innerHTML = renderStatusPill(status);
+  }
+}
+
+function patchFullSheetPaymentState(serviceKey, personKey, date) {
+  if (
+    state.selectedServiceKey !== serviceKey ||
+    date.getFullYear() !== state.selectedYear
+  ) {
+    return;
+  }
+
+  const service = SERVICES[serviceKey];
+  const row = findSheetRow(serviceKey, date);
+  if (!service || !row) return;
+
+  if (service.model === 'monthly') {
+    const cell = findPaymentCell(row, personKey);
+    if (cell) {
+      cell.innerHTML = renderPaymentCellContent(serviceKey, personKey, date);
+    }
+  }
+
+  patchFullSheetRowStatus(serviceKey, date, row);
+}
+
+function refreshFullSheetRows(serviceKey) {
+  const service = SERVICES[serviceKey];
+  if (!service || !fullPanel.querySelector('.sheet-table')) {
+    fullPanel.innerHTML = renderFullSheet(serviceKey);
+    return;
+  }
+
+  getYearMonths(state.selectedYear).forEach((date) => {
+    const row = findSheetRow(serviceKey, date);
+    if (!row) return;
+
+    if (service.model === 'monthly') {
+      service.participants.forEach((personKey) => {
+        const cell = findPaymentCell(row, personKey);
+        if (cell) {
+          cell.innerHTML = renderPaymentCellContent(
+            serviceKey,
+            personKey,
+            date,
+          );
+        }
+      });
+    }
+
+    patchFullSheetRowStatus(serviceKey, date, row);
+  });
 }
 
 function renderMonthlySheet(serviceKey, year) {
@@ -1221,36 +1589,26 @@ function renderMonthlySheet(serviceKey, year) {
 
   const rows = getYearMonths(year)
     .map((date) => {
-      const status = getDateStatus(date);
-      const currentPersonPaid = state.currentPersonKey
-        ? isPaymentPaid(state.currentPersonKey, { serviceKey, date })
-        : false;
-      const rowStatus = currentPersonPaid ? 'pago' : status;
-      const statusClass =
-        rowStatus === 'atrasada'
-          ? ' status-atrasada'
-          : rowStatus === 'pago'
-            ? ' status-pago'
-            : rowStatus === 'futuro'
-              ? ' status-futuro'
-              : '';
+      const dateKey = formatDateKey(date);
+      const rowStatus = getMonthlyRowStatus(serviceKey, date);
 
       const participantCells = service.participants
         .map((participantKey) => {
-          const paid = isPaymentPaid(participantKey, { serviceKey, date });
-          const innerContent = paid
-            ? `<div class="status-actions"><span class="status-pill status-pago">pago</span></div>`
-            : `<div class="status-actions"><span class="amount">${moneyFormatter.format(service.amount)}</span></div>`;
-          return `<td data-label="${PEOPLE[participantKey]?.name || participantKey}">${innerContent}</td>`;
+          const innerContent = renderPaymentCellContent(
+            serviceKey,
+            participantKey,
+            date,
+          );
+          return `<td data-label="${PEOPLE[participantKey]?.name || participantKey}" data-payment-cell data-person="${participantKey}" data-service="${serviceKey}" data-date-key="${dateKey}">${innerContent}</td>`;
         })
         .join('');
 
       return `
-        <tr>
+        <tr data-sheet-row data-service="${serviceKey}" data-date-key="${dateKey}">
           <td data-label="Mês">${capitalize(MONTHS[date.getMonth()])}</td>
           <td data-label="Data">${formatLongDate(date)}</td>
           ${participantCells}
-          <td data-label="Status"><div class="status-actions"><span class="status-pill${statusClass}">${rowStatus}</span></div></td>
+          <td data-label="Status" data-row-status-cell>${renderStatusPill(rowStatus)}</td>
         </tr>
       `;
     })
@@ -1277,24 +1635,15 @@ function renderRotationSheet(serviceKey, year) {
   const rows = getYearMonths(year)
     .map((date) => {
       const payerKey = getRotationPayer(serviceKey, date.getMonth());
-      const baseStatus = getDateStatus(date);
-      const paid = isPaymentPaid(payerKey, { serviceKey, date });
-      const status = paid ? 'pago' : baseStatus;
-      const statusClass =
-        status === 'atrasada'
-          ? ' status-atrasada'
-          : status === 'pago'
-            ? ' status-pago'
-            : status === 'futuro'
-              ? ' status-futuro'
-              : '';
+      const dateKey = formatDateKey(date);
+      const status = getRotationRowStatus(serviceKey, date);
       return `
-        <tr>
+        <tr data-sheet-row data-service="${serviceKey}" data-date-key="${dateKey}">
           <td data-label="Mês">${capitalize(MONTHS[date.getMonth()])}</td>
           <td data-label="Data">${formatLongDate(date)}</td>
           <td data-label="Responsável">${PEOPLE[payerKey]?.name || payerKey}</td>
           <td data-label="Valor"><span class="amount">${moneyFormatter.format(SERVICES[serviceKey].amount)}</span></td>
-          <td data-label="Status"><div class="status-actions"><span class="status-pill${statusClass}">${status}</span></div></td>
+          <td data-label="Status" data-row-status-cell>${renderStatusPill(status)}</td>
         </tr>
       `;
     })
@@ -1570,17 +1919,72 @@ function stopSessionLoops() {
   }
 }
 
-function refreshCurrentDates() {
+function refreshCurrentDates({
+  fullRender = false,
+  animatePayments = false,
+} = {}) {
+  if (!state.currentPersonKey) {
+    return;
+  }
+
+  if (!PEOPLE[state.currentPersonKey]) {
+    changeProfile();
+    return;
+  }
+
+  updateMonthlyTotal(state.currentPersonKey);
+
+  if (fullRender) {
+    renderSubscriptionCards(state.currentPersonKey);
+  } else {
+    patchSubscriptionCardsForPerson(state.currentPersonKey);
+  }
+
+  if (state.selectedServiceKey) {
+    const hasUpcomingSurface =
+      upcomingPanel.querySelector('.payment-list') ||
+      upcomingPanel.querySelector('.empty-state');
+    const hasFullSurface = fullPanel.querySelector('.sheet-table');
+
+    if (
+      fullRender ||
+      !SERVICES[state.selectedServiceKey] ||
+      !hasUpcomingSurface ||
+      !hasFullSurface
+    ) {
+      renderDetails({ animatePayments });
+    } else {
+      reconcileUpcomingPayments(
+        state.selectedServiceKey,
+        state.currentPersonKey,
+      );
+      refreshFullSheetRows(state.selectedServiceKey);
+      updateYearControls();
+    }
+  }
+
+  refreshOpenInvoiceModal(state.currentPersonKey, { fullRender });
+}
+
+function updatePaymentSurfaces(personKey, payment) {
   if (!state.currentPersonKey) {
     return;
   }
 
   updateMonthlyTotal(state.currentPersonKey);
-  renderSubscriptionCards(state.currentPersonKey);
 
-  if (state.selectedServiceKey) {
-    renderDetails();
+  if (personKey === state.currentPersonKey) {
+    if (!patchSubscriptionCard(payment.serviceKey, state.currentPersonKey)) {
+      patchSubscriptionCardsForPerson(state.currentPersonKey);
+    }
   }
+
+  if (state.selectedServiceKey === payment.serviceKey) {
+    reconcileUpcomingPayments(payment.serviceKey, state.currentPersonKey);
+    patchFullSheetPaymentState(payment.serviceKey, personKey, payment.date);
+  }
+
+  refreshOpenInvoiceModal(state.currentPersonKey);
 }
 
 async function requestNotificationAccess({ runReminderCheck = true } = {}) {
@@ -2031,22 +2435,6 @@ function getPaymentNotificationKey(payment) {
   return `${payment.serviceKey}:${formatDateKey(payment.date)}`;
 }
 
-function getPaymentSyncPayload(personKey, payment, paid) {
-  const service = SERVICES[payment.serviceKey];
-  const person = PEOPLE[personKey];
-  const mes = formatDateKey(payment.date);
-
-  return {
-    personKey,
-    paymentKey: getPaymentNotificationKey(payment),
-    nome: person?.name ?? personKey,
-    serviceKey: payment.serviceKey,
-    assinatura: service?.name ?? payment.serviceKey,
-    mes,
-    pago: paid,
-  };
-}
-
 function getNotificationLogs() {
   const localLogs = readJson(STORAGE_KEYS.notifications, {});
   return localLogs;
@@ -2163,24 +2551,10 @@ function rowsArrayToLogs(rows) {
   if (!Array.isArray(rows)) return logs;
   rows.forEach((row) => {
     try {
-      // Usar as chaves exatas que o Apps Script retorna (camelCase)
-      const pKey = row.personKey;
-      const payKey = row.paymentKey;
-
-      if (!pKey || !payKey) return;
-
-      // Status de pagamento seguindo a lógica do normalizeBoolean do Code.gs
-      const p = row.pago !== undefined ? row.pago : row.paid;
-      const isPaid =
-        p === true ||
-        String(p).toLowerCase() === 'true' ||
-        String(p).toLowerCase() === 'sim' ||
-        String(p) === '1' ||
-        String(p).toLowerCase() === 'pago';
-
-      if (isPaid) {
-        logs[pKey] = logs[pKey] || {};
-        logs[pKey][payKey] = 'true';
+      const paidLog = normalizePaidLogRow(row);
+      if (paidLog) {
+        logs[paidLog.personKey] = logs[paidLog.personKey] || {};
+        logs[paidLog.personKey][paidLog.paymentKey] = 'true';
       }
     } catch (e) {
       // ignorar linha problemática
@@ -2189,10 +2563,64 @@ function rowsArrayToLogs(rows) {
   return logs;
 }
 
+function getStructureSnapshot() {
+  const people = Object.keys(PEOPLE)
+    .sort()
+    .map((key) => {
+      const person = PEOPLE[key];
+      return {
+        key,
+        name: person.name,
+        aliases: person.aliases || [],
+        color: person.color,
+        avatar: person.avatar,
+        isAdmin: Boolean(person.isAdmin),
+        subscriptions: person.subscriptions || [],
+      };
+    });
+  const services = Object.keys(SERVICES)
+    .sort()
+    .map((key) => {
+      const service = SERVICES[key];
+      return {
+        key,
+        name: service.name,
+        shortName: service.shortName,
+        cssClass: service.cssClass,
+        model: service.model,
+        modelLabel: service.modelLabel,
+        totalAmount: service.totalAmount,
+        amount: service.amount,
+        participants: service.participants || [],
+        color: service.color,
+        logoUrl: service.logoUrl,
+      };
+    });
+
+  return JSON.stringify({ people, services });
+}
+
+function getPaidLogsSnapshot(logs = paidLogsCache) {
+  return Object.keys(logs || {})
+    .sort()
+    .flatMap((personKey) =>
+      Object.keys(logs[personKey] || {})
+        .sort()
+        .map(
+          (paymentKey) =>
+            `${personKey}:${paymentKey}:${logs[personKey][paymentKey]}`,
+        ),
+    )
+    .join('|');
+}
+
 async function fetchPaidLogs() {
   if (!state.groupId) return;
 
   try {
+    const previousStructureSnapshot = getStructureSnapshot();
+    const previousPaidLogs = paidLogsCache;
+
     // Agora só pedimos para o Script: "Me dá os dados do grupo X"
     const url = `${API_URL}?action=carregar_dados&id_grupo=${state.groupId}`;
     const res = await fetch(url);
@@ -2202,20 +2630,39 @@ async function fetchPaidLogs() {
     if (data.success) {
       if (data.nome_grupo) salvarGrupo(state.groupId, data.nome_grupo);
       processarDadosDaPlanilha(data);
-      updateUIAfterSync();
+      updateUIAfterSync({
+        previousStructureSnapshot,
+        previousPaidLogs,
+      });
     }
   } catch (e) {
     console.warn('Erro na sincronização', e);
   }
 }
 
-function updateUIAfterSync() {
+function updateUIAfterSync({
+  previousStructureSnapshot = null,
+  previousPaidLogs = null,
+} = {}) {
   loadAdminSettings();
 
   if (state.currentPersonKey) {
-    refreshCurrentDates();
-    renderSubscriptionCards(state.currentPersonKey);
-    if (state.selectedServiceKey) renderDetails();
+    const structureChanged =
+      previousStructureSnapshot !== null &&
+      previousStructureSnapshot !== getStructureSnapshot();
+    const paidLogsChanged =
+      previousPaidLogs !== null &&
+      getPaidLogsSnapshot(previousPaidLogs) !== getPaidLogsSnapshot();
+
+    refreshCurrentDates({
+      fullRender: structureChanged,
+      animatePayments: false,
+    });
+
+    if (!structureChanged && !paidLogsChanged) {
+      updateYearControls();
+    }
+
     void syncRemindersToSW();
   }
 }
@@ -2226,8 +2673,7 @@ async function markPaymentAsPaid(personKey, payment) {
   paidLogsCache[personKey] = paidLogsCache[personKey] ?? {};
   paidLogsCache[personKey][paymentKey] = 'true';
   savePaidLogs(paidLogsCache);
-  renderDetails();
-  refreshCurrentDates();
+  updatePaymentSurfaces(personKey, payment);
   void syncRemindersToSW();
 
   if (!state.groupId) return;
@@ -2236,6 +2682,11 @@ async function markPaymentAsPaid(personKey, payment) {
     setNotificationStatus('Salvando pagamento no banco...');
     await fetch(API_URL, {
       method: 'POST',
+      mode: 'no-cors',
+      referrerPolicy: 'no-referrer',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
       body: JSON.stringify({
         action: 'salvar_log',
         id_grupo: state.groupId,
@@ -2254,41 +2705,6 @@ async function markPaymentAsPaid(personKey, payment) {
 async function unmarkPayment(personKey, payment) {
   const paymentKey = getPaymentNotificationKey(payment);
 
-  if (!paidLogsCache[personKey]) return;
-  delete paidLogsCache[personKey][paymentKey];
-  if (Object.keys(paidLogsCache[personKey]).length === 0) {
-    delete paidLogsCache[personKey];
-  }
-
-  savePaidLogs(paidLogsCache);
-  renderDetails();
-  refreshCurrentDates();
-  void syncRemindersToSW();
-
-  if (!state.groupId) return;
-
-  try {
-    setNotificationStatus('Removendo do banco de dados...');
-    await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'salvar_log',
-        id_grupo: state.groupId,
-        chave_perfil: personKey,
-        chave_servico: payment.serviceKey,
-        mes: formatDateKey(payment.date),
-        pago: false,
-      }),
-    });
-    setNotificationStatus('Parcela desmarcada.');
-  } catch (error) {
-    setNotificationStatus('Erro de conexão ao remover.', true);
-  }
-}
-
-async function unmarkPayment(personKey, payment) {
-  const paymentKey = getPaymentNotificationKey(payment);
-
   // Atualização otimista: remover a marcação localmente
   if (!paidLogsCache[personKey]) {
     return;
@@ -2300,9 +2716,10 @@ async function unmarkPayment(personKey, payment) {
   }
 
   savePaidLogs(paidLogsCache);
-  renderDetails();
-  refreshCurrentDates();
+  updatePaymentSurfaces(personKey, payment);
   void syncRemindersToSW();
+
+  if (!state.groupId) return;
 
   if (!API_URL || API_URL.includes('COLA_TUA_URL_DO_APPS_SCRIPT_AQUI')) {
     return;
@@ -2318,8 +2735,12 @@ async function unmarkPayment(personKey, payment) {
         'Content-Type': 'text/plain;charset=utf-8',
       },
       body: JSON.stringify({
-        ...getPaymentSyncPayload(personKey, payment, false),
-        remove: true,
+        action: 'salvar_log',
+        id_grupo: state.groupId,
+        chave_perfil: personKey,
+        chave_servico: payment.serviceKey,
+        mes: formatDateKey(payment.date),
+        pago: false,
       }),
     });
     setNotificationStatus('Parcela desmarcada e sincronizada.');
@@ -2449,6 +2870,86 @@ function formatDateKey(date) {
     String(date.getMonth() + 1).padStart(2, '0'),
     String(date.getDate()).padStart(2, '0'),
   ].join('-');
+}
+
+function normalizeSheetDateKey(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return formatDateKey(value);
+  }
+
+  const rawValue = value === undefined || value === null ? '' : String(value);
+  const text = rawValue.replace(/^'+/, '').trim();
+  if (!text) return '';
+
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
+  const brMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (brMatch) {
+    return [
+      brMatch[3],
+      brMatch[2].padStart(2, '0'),
+      brMatch[1].padStart(2, '0'),
+    ].join('-');
+  }
+
+  const parsedDate = new Date(text);
+  if (!Number.isNaN(parsedDate.getTime())) return formatDateKey(parsedDate);
+
+  return text;
+}
+
+function isPaidValue(value) {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase();
+  return (
+    value === true ||
+    normalized === 'true' ||
+    normalized === 'sim' ||
+    normalized === '1' ||
+    normalized === 'pago' ||
+    normalized === 'yes'
+  );
+}
+
+function normalizePaidLogRow(row) {
+  if (!row || typeof row !== 'object') return null;
+
+  const paidValue = row.pago !== undefined ? row.pago : row.paid;
+  if (!isPaidValue(paidValue)) return null;
+
+  const rawPaymentKey = String(row.paymentKey || row.payment_key || '').trim();
+  let paymentKeyService = '';
+  let paymentKeyDate = '';
+
+  if (rawPaymentKey.includes(':')) {
+    const parts = rawPaymentKey.split(':');
+    paymentKeyService = parts[0];
+    paymentKeyDate = parts.slice(1).join(':');
+  }
+
+  const personKey = findPersonKey(
+    row.chave_perfil || row.personKey || row.perfil || row.nome || row.name,
+  );
+  const serviceKey = findServiceKey(
+    row.chave_servico ||
+      row.serviceKey ||
+      row.servico ||
+      row.assinatura ||
+      row.serviceName ||
+      paymentKeyService,
+  );
+  const monthKey = normalizeSheetDateKey(
+    row.mes || row.month || row.data || row.date || paymentKeyDate,
+  );
+
+  if (!personKey || !serviceKey || !monthKey) return null;
+
+  return {
+    personKey,
+    paymentKey: `${serviceKey}:${monthKey}`,
+  };
 }
 
 function formatGoogleCalendarDate(date) {
@@ -2957,20 +3458,6 @@ document.addEventListener('click', async (event) => {
     if (!paid) {
       await markPaymentAsPaid(personKey, payment);
       setNotificationStatus('Parcela marcada como paga.');
-      // O item está sendo mostrado como atrasado, então a intenção era marcar como pago.
-      // E precisamos remover ele da UI do modal.
-      markButton.closest('.invoice-item').remove();
-
-      // Update the total
-      const invoiceTotalAmount = document.querySelector('#invoiceTotalAmount');
-      let currentTotalStr = invoiceTotalAmount.textContent
-        .replace('R$', '')
-        .replace('.', '')
-        .replace(',', '.')
-        .trim();
-      let currentTotal = parseFloat(currentTotalStr) || 0;
-      let newTotal = Math.max(0, currentTotal - payment.amount);
-      invoiceTotalAmount.textContent = moneyFormatter.format(newTotal);
     }
   }
 
@@ -3046,9 +3533,9 @@ document.addEventListener('click', async (event) => {
 // ==========================================
 // FATURA DO MÊS (RESUMO)
 // ==========================================
-function openInvoiceModal(personKey) {
+function getInvoiceSummary(personKey) {
   const person = PEOPLE[personKey];
-  if (!person) return;
+  if (!person) return { pendingItems: [], total: 0 };
 
   const today = startOfDay(getToday());
   let activeMonth = today.getMonth();
@@ -3067,7 +3554,6 @@ function openInvoiceModal(personKey) {
   const pendingItems = [];
   let total = 0;
 
-  // Busca todas as pendências
   person.subscriptions.forEach((serviceKey) => {
     const payments = getUpcomingPaymentsForPerson(serviceKey, personKey, 12);
     payments.forEach((payment) => {
@@ -3079,91 +3565,160 @@ function openInvoiceModal(personKey) {
     });
   });
 
-  // Ordena por data (o mais atrasado primeiro)
   pendingItems.sort((a, b) => a.date - b.date);
 
-  const invoiceList = document.querySelector('#invoiceList');
-  const invoiceTotalAmount = document.querySelector('#invoiceTotalAmount');
-  let html = '';
+  return { pendingItems, total };
+}
 
-  if (pendingItems.length === 0) {
-    html = `
-      <div class="empty-state" style="text-align: center; padding: 40px 16px; border: none; background: transparent;">
-        <span style="font-size: 3rem; display: block; margin-bottom: 12px;">🎉</span>
-        <strong style="color: var(--ink); font-size: 1.2rem;">Tudo em dia!</strong>
-        <span style="display: block; margin-top: 4px;">Você não tem nenhum pagamento<br>pendente nesta fatura.</span>
-      </div>
-    `;
-  } else {
-    html = pendingItems
-      .map((payment) => {
-        const service = SERVICES[payment.serviceKey];
-        const isAtrasada = payment.date < today;
-        const isHoje = payment.date.getTime() === today.getTime();
+function renderInvoiceEmptyState() {
+  return `
+    <div class="empty-state" style="text-align: center; padding: 40px 16px; border: none; background: transparent;">
+      <span style="font-size: 3rem; display: block; margin-bottom: 12px;">🎉</span>
+      <strong style="color: var(--ink); font-size: 1.2rem;">Tudo em dia!</strong>
+      <span style="display: block; margin-top: 4px;">Você não tem nenhum pagamento<br>pendente nesta fatura.</span>
+    </div>
+  `;
+}
 
-        let statusPill = '';
-        if (isAtrasada) {
-          statusPill = `
-          <div class="status-toggle-wrapper" style="position: relative; display: inline-block;">
-            <span class="status-pill status-atrasada btn-invoice-status" style="background: rgba(225, 29, 72, 0.2); color: #ffa4bc; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="this.nextElementSibling.classList.toggle('is-hidden')">
-              Atrasado <span style="font-size: 0.6rem;">▼</span>
-            </span>
-            <div class="status-popup is-hidden" style="position: absolute; top: calc(100% + 4px); right: 0; background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 4px; box-shadow: var(--shadow-xl); z-index: 100; min-width: 100px; display: flex; flex-direction: column; gap: 4px;">
-              <button type="button" class="ghost-button btn-mark-paid-invoice" data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}" data-person="${personKey}" style="padding: 8px; justify-content: flex-start; min-height: unset; color: var(--success); text-align: left; font-size: 0.8rem;">Marcar como Pago</button>
-            </div>
-          </div>`;
-        } else if (isHoje) {
-          statusPill = `
-          <div class="status-toggle-wrapper" style="position: relative; display: inline-block;">
-            <span class="status-pill status-atrasada btn-invoice-status" style="background: rgba(251, 146, 60, 0.2); color: #fdba74; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="this.nextElementSibling.classList.toggle('is-hidden')">
-              Vence Hoje <span style="font-size: 0.6rem;">▼</span>
-            </span>
-            <div class="status-popup is-hidden" style="position: absolute; top: calc(100% + 4px); right: 0; background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 4px; box-shadow: var(--shadow-xl); z-index: 100; min-width: 100px; display: flex; flex-direction: column; gap: 4px;">
-              <button type="button" class="ghost-button btn-mark-paid-invoice" data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}" data-person="${personKey}" style="padding: 8px; justify-content: flex-start; min-height: unset; color: var(--success); text-align: left; font-size: 0.8rem;">Marcar como Pago</button>
-            </div>
-          </div>`;
-        } else {
-          statusPill = `<span class="status-pill status-futuro" style="background: rgba(255, 255, 255, 0.15); color: #ffffff;">Pendente</span>`;
-        }
+function renderInvoiceStatus(payment, personKey) {
+  const today = startOfDay(getToday());
+  const isAtrasada = payment.date < today;
+  const isHoje = payment.date.getTime() === today.getTime();
+  const buttonHtml = `
+    <div class="status-popup is-hidden" style="position: absolute; top: calc(100% + 4px); right: 0; background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 4px; box-shadow: var(--shadow-xl); z-index: 100; min-width: 100px; display: flex; flex-direction: column; gap: 4px;">
+      <button type="button" class="ghost-button btn-mark-paid-invoice" data-service="${payment.serviceKey}" data-date-ms="${payment.date.getTime()}" data-date-key="${formatDateKey(payment.date)}" data-person="${personKey}" style="padding: 8px; justify-content: flex-start; min-height: unset; color: var(--success); text-align: left; font-size: 0.8rem;">Marcar como Pago</button>
+    </div>
+  `;
 
-        // Dicionário com as cores exatas do seu CSS para as 8 assinaturas originais
-        const fallbackColors = {
-          disney: 'rgb(4, 7, 20)',
-          max: 'rgb(0, 0, 0)',
-          spotify: 'rgb(15, 60, 30)',
-          crunchyroll: 'rgb(180, 60, 0)',
-          prime_video: 'rgb(0, 55, 75)',
-          google_one: 'rgb(4, 30, 71)',
-          f1_tv_pro: 'rgb(95, 0, 0)',
-          globoplay: 'rgb(95, 8, 24)',
-        };
-
-        // Tenta usar a cor customizada do Admin. Se não tiver, usa a cor do dicionário. Se falhar, usa o azul padrão.
-        const bgColor =
-          service.color || fallbackColors[payment.serviceKey] || '#1a2b4c';
-
-        return `
-        <div class="invoice-item" style="background-color: ${bgColor};">
-           <div class="invoice-item-left">
-              <span class="service-symbol" style="width: 34px; height: 34px; font-size: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); display: grid; place-items: center; border-radius: 8px; flex-shrink: 0;">${service.shortName}</span>
-              <div class="invoice-item-info">
-                 <strong>${service.name}</strong>
-                 <span>Venc. ${formatShortDate(payment.date)}</span>
-              </div>
-           </div>
-           <div class="invoice-item-right">
-              <strong>${moneyFormatter.format(payment.amount)}</strong>
-              ${statusPill}
-           </div>
-        </div>
-      `;
-      })
-      .join('');
+  if (isAtrasada) {
+    return `
+      <div class="status-toggle-wrapper" style="position: relative; display: inline-block;">
+        <span class="status-pill status-atrasada btn-invoice-status" style="background: rgba(225, 29, 72, 0.2); color: #ffa4bc; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="this.nextElementSibling.classList.toggle('is-hidden')">
+          Atrasado <span style="font-size: 0.6rem;">▼</span>
+        </span>
+        ${buttonHtml}
+      </div>`;
   }
 
-  invoiceList.innerHTML = html;
+  if (isHoje) {
+    return `
+      <div class="status-toggle-wrapper" style="position: relative; display: inline-block;">
+        <span class="status-pill status-atrasada btn-invoice-status" style="background: rgba(251, 146, 60, 0.2); color: #fdba74; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="this.nextElementSibling.classList.toggle('is-hidden')">
+          Vence Hoje <span style="font-size: 0.6rem;">▼</span>
+        </span>
+        ${buttonHtml}
+      </div>`;
+  }
+
+  return '<span class="status-pill status-futuro" style="background: rgba(255, 255, 255, 0.15); color: #ffffff;">Pendente</span>';
+}
+
+function getInvoiceItemColor(serviceKey) {
+  const fallbackColors = {
+    disney: 'rgb(4, 7, 20)',
+    max: 'rgb(0, 0, 0)',
+    spotify: 'rgb(15, 60, 30)',
+    crunchyroll: 'rgb(180, 60, 0)',
+    prime_video: 'rgb(0, 55, 75)',
+    google_one: 'rgb(4, 30, 71)',
+    f1_tv_pro: 'rgb(95, 0, 0)',
+    globoplay: 'rgb(95, 8, 24)',
+  };
+
+  return SERVICES[serviceKey]?.color || fallbackColors[serviceKey] || '#1a2b4c';
+}
+
+function renderInvoiceItem(payment, personKey) {
+  const service = SERVICES[payment.serviceKey];
+  if (!service) return '';
+
+  const paymentKey = getPaymentNotificationKey(payment);
+
+  return `
+    <div class="invoice-item" data-invoice-item data-payment-key="${paymentKey}" data-service="${payment.serviceKey}" data-date-key="${formatDateKey(payment.date)}" data-person="${personKey}" style="background-color: ${getInvoiceItemColor(payment.serviceKey)};">
+       <div class="invoice-item-left">
+          <span class="service-symbol" style="width: 34px; height: 34px; font-size: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); display: grid; place-items: center; border-radius: 8px; flex-shrink: 0;">${service.shortName}</span>
+          <div class="invoice-item-info">
+             <strong>${service.name}</strong>
+             <span>Venc. ${formatShortDate(payment.date)}</span>
+          </div>
+       </div>
+       <div class="invoice-item-right">
+          <strong>${moneyFormatter.format(payment.amount)}</strong>
+          ${renderInvoiceStatus(payment, personKey)}
+       </div>
+    </div>
+  `;
+}
+
+function renderInvoiceContent(personKey, { reconcile = false } = {}) {
+  const { pendingItems, total } = getInvoiceSummary(personKey);
+  const invoiceList = document.querySelector('#invoiceList');
+  const invoiceTotalAmount = document.querySelector('#invoiceTotalAmount');
+
+  if (!invoiceList || !invoiceTotalAmount) return;
+
   invoiceTotalAmount.textContent = moneyFormatter.format(total);
-  document.querySelector('#invoiceModal').classList.remove('is-hidden');
+
+  if (!pendingItems.length) {
+    invoiceList.innerHTML = renderInvoiceEmptyState();
+    return;
+  }
+
+  if (!reconcile || !invoiceList.querySelector('[data-invoice-item]')) {
+    invoiceList.innerHTML = pendingItems
+      .map((payment) => renderInvoiceItem(payment, personKey))
+      .join('');
+    return;
+  }
+
+  const existingItems = new Map(
+    Array.from(invoiceList.querySelectorAll('[data-invoice-item]')).map(
+      (item) => [item.dataset.paymentKey, item],
+    ),
+  );
+  const desiredKeys = new Set();
+
+  pendingItems.forEach((payment) => {
+    const paymentKey = getPaymentNotificationKey(payment);
+    desiredKeys.add(paymentKey);
+
+    let item = existingItems.get(paymentKey);
+    if (!item) {
+      item = htmlToElement(renderInvoiceItem(payment, personKey));
+    }
+
+    if (item) invoiceList.appendChild(item);
+  });
+
+  existingItems.forEach((item, paymentKey) => {
+    if (!desiredKeys.has(paymentKey)) {
+      item.remove();
+    }
+  });
+}
+
+function refreshOpenInvoiceModal(personKey, { fullRender = false } = {}) {
+  const invoiceModal = document.querySelector('#invoiceModal');
+  if (!invoiceModal || invoiceModal.classList.contains('is-hidden')) return;
+  if (
+    invoiceModal.dataset.person &&
+    invoiceModal.dataset.person !== personKey
+  ) {
+    return;
+  }
+
+  renderInvoiceContent(personKey, { reconcile: !fullRender });
+}
+
+function openInvoiceModal(personKey) {
+  const person = PEOPLE[personKey];
+  if (!person) return;
+
+  const invoiceModal = document.querySelector('#invoiceModal');
+  invoiceModal.dataset.person = personKey;
+  renderInvoiceContent(personKey);
+  invoiceModal.classList.remove('is-hidden');
 }
 
 // ==========================================
@@ -3570,17 +4125,12 @@ function processarDadosDaPlanilha(data) {
   paidLogsCache = {};
   if (data.logs && data.logs.length > 0) {
     data.logs.forEach((log) => {
-      if (log.pago === true || String(log.pago).toUpperCase() === 'TRUE') {
-        const pKey = findPersonKey(log.chave_perfil || log.perfil || log.nome);
-        const sKey = findServiceKey(
-          log.chave_servico || log.servico || log.assinatura,
-        );
-        const mes = log.mes || log.month;
-
-        if (pKey && sKey && mes) {
-          if (!paidLogsCache[pKey]) paidLogsCache[pKey] = {};
-          paidLogsCache[pKey][`${sKey}:${mes}`] = 'true';
+      const paidLog = normalizePaidLogRow(log);
+      if (paidLog) {
+        if (!paidLogsCache[paidLog.personKey]) {
+          paidLogsCache[paidLog.personKey] = {};
         }
+        paidLogsCache[paidLog.personKey][paidLog.paymentKey] = 'true';
       }
     });
   }

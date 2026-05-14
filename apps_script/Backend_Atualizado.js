@@ -140,9 +140,19 @@ function doPost(e) {
       }
       
       if (action === 'salvar_log') {
-        saveRow('Logs', ['id_grupo', 'chave_perfil', 'chave_servico', 'mes', 'pago', 'nome', 'assinatura'], 
-          [idGrupo, payload.chave_perfil, payload.chave_servico, "'" + payload.mes, payload.pago, payload.nome, payload.assinatura],
-          function(r) { return r[0] === idGrupo && r[1] === payload.chave_perfil && r[2] === payload.chave_servico && r[3] === payload.mes; }
+        var chavePerfil = payload.chave_perfil || payload.personKey || payload.perfil || payload.nome;
+        var chaveServico = payload.chave_servico || payload.serviceKey || payload.servico || payload.assinatura;
+        var mes = normalizeDateKey(payload.mes || payload.month || payload.data || payload.date);
+        var pago = normalizeBoolean(payload.pago);
+
+        saveRow('Logs', ['id_grupo', 'chave_perfil', 'chave_servico', 'mes', 'pago'],
+          [idGrupo, chavePerfil, chaveServico, mes, pago],
+          function(r) {
+            return String(r[0]) === String(idGrupo) &&
+              String(r[1]) === String(chavePerfil) &&
+              String(r[2]) === String(chaveServico) &&
+              normalizeDateKey(r[3]) === mes;
+          }
         );
         return jsonResponse({ success: true });
       }
@@ -157,8 +167,8 @@ function doPost(e) {
       }
       
       if (action === 'salvar_perfil') {
-        saveRow('Perfis', ['id_grupo', 'chave_perfil', 'nome', 'cor', 'iniciais', 'is_admin'], 
-          [idGrupo, payload.chave_perfil, payload.nome, payload.cor || '', payload.iniciais || '', payload.is_admin || false],
+        saveRow('Perfis', ['id_grupo', 'chave_perfil', 'nome', 'iniciais', 'cor', 'is_admin'], 
+          [idGrupo, payload.chave_perfil, payload.nome, payload.iniciais || '', payload.cor || '', payload.is_admin || false],
           function(r) { return r[0] === idGrupo && r[1] === payload.chave_perfil; }
         );
         return jsonResponse({ success: true });
@@ -207,7 +217,9 @@ function getCollection(sheetName, idGrupo) {
   var lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
   var data = sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).getValues();
-  var headers = data[0];
+  var headers = data[0].map(function(header) {
+    return String(header).trim();
+  });
   var results = [];
   
   var idGrupoColIndex = headers.indexOf('id_grupo'); // Find the 'id_grupo' column by name
@@ -225,6 +237,12 @@ function getCollection(sheetName, idGrupo) {
       var val = data[i][j];
       if (headers[j] === 'participantes' && typeof val === 'string' && val.indexOf('[') === 0) {
         try { val = JSON.parse(val); } catch(ev) {}
+      }
+      if (headers[j] === 'mes') {
+        val = normalizeDateKey(val);
+      }
+      if (headers[j] === 'pago') {
+        val = normalizeBoolean(val);
       }
       item[headers[j]] = val;
     }
@@ -273,6 +291,48 @@ function saveRow(sheetName, headers, rowData, matchFunc) {
     sheet.appendRow(newRow);
   }
   SpreadsheetApp.flush();
+}
+
+function normalizeDateKey(value) {
+  if (value === null || value === undefined) return '';
+
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+
+  var text = String(value).replace(/^'+/, '').trim();
+  if (!text) return '';
+
+  var isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return isoMatch[1] + '-' + isoMatch[2] + '-' + isoMatch[3];
+  }
+
+  var brMatch = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (brMatch) {
+    return brMatch[3] + '-' + pad2(brMatch[2]) + '-' + pad2(brMatch[1]);
+  }
+
+  var parsedDate = new Date(text);
+  if (!isNaN(parsedDate.getTime())) {
+    return Utilities.formatDate(parsedDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+
+  return text;
+}
+
+function normalizeBoolean(value) {
+  var normalized = String(value).trim().toLowerCase();
+  return value === true ||
+    normalized === 'true' ||
+    normalized === 'sim' ||
+    normalized === '1' ||
+    normalized === 'pago' ||
+    normalized === 'yes';
+}
+
+function pad2(value) {
+  return String(value).padStart(2, '0');
 }
 
 function updateCollectionField(sheetName, idOld, idIdx, idNew, extraVar, extraIdx) {
