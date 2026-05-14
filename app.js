@@ -3294,40 +3294,124 @@ async function handleAdminDelete(e) {
     }, 3000);
     return;
   }
-
   if (!state.groupId) return;
 
   setNotificationStatus('Excluindo do banco de dados...');
   if (currentAdminContext.type === 'service') {
-    delete SERVICES[currentAdminContext.key];
-    await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'deletar_item',
-        id_grupo: state.groupId,
-        aba: 'Assinaturas',
-        coluna_chave: 'chave_servico',
-        valor_chave: currentAdminContext.key,
-      }),
-    });
-  } else {
-    delete PEOPLE[currentAdminContext.key];
-    for (const s of Object.values(SERVICES)) {
-      if (s.participants)
-        s.participants = s.participants.filter(
-          (p) => p !== currentAdminContext.key,
-        );
+    const serviceKey = currentAdminContext.key;
+    delete SERVICES[serviceKey];
+    try {
+      // Remove linha da aba Assinaturas (usa chave_servico)
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'deletar_item',
+          id_grupo: state.groupId,
+          aba: 'Assinaturas',
+          chave_servico: serviceKey,
+        }),
+      });
+
+      // Remover logs relacionados à assinatura
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'deletar_item',
+          id_grupo: state.groupId,
+          aba: 'Logs',
+          chave_servico: serviceKey,
+        }),
+      });
+    } catch (err) {
+      console.error('Erro ao excluir assinatura no servidor:', err);
+      setNotificationStatus(
+        'Erro ao excluir no servidor. Alteração local aplicada.',
+        true,
+      );
     }
-    await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'deletar_item',
-        id_grupo: state.groupId,
-        aba: 'Perfis',
-        coluna_chave: 'chave_perfil',
-        valor_chave: currentAdminContext.key,
-      }),
-    });
+  } else {
+    const personKey = currentAdminContext.key;
+
+    // Serviços que tinham esse participante
+    const affectedServiceKeys = Object.keys(SERVICES).filter(
+      (sKey) =>
+        SERVICES[sKey].participants &&
+        SERVICES[sKey].participants.includes(personKey),
+    );
+
+    // Remover localmente primeiro
+    delete PEOPLE[personKey];
+    // Remover logs locais associados ao perfil (cache/localStorage)
+    if (paidLogsCache && paidLogsCache[personKey]) {
+      delete paidLogsCache[personKey];
+      writeJson(STORAGE_KEYS.paid, paidLogsCache);
+    }
+    for (const sKey of affectedServiceKeys) {
+      SERVICES[sKey].participants = (SERVICES[sKey].participants || []).filter(
+        (p) => p !== personKey,
+      );
+    }
+
+    try {
+      // Excluir perfil da aba Perfis
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'deletar_item',
+          id_grupo: state.groupId,
+          aba: 'Perfis',
+          chave_perfil: personKey,
+        }),
+      });
+
+      // Excluir logs relacionados ao perfil
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'deletar_item',
+          id_grupo: state.groupId,
+          aba: 'Logs',
+          chave_perfil: personKey,
+        }),
+      });
+
+      // Excluir senhas relacionadas ao perfil
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'deletar_item',
+          id_grupo: state.groupId,
+          aba: 'Senhas',
+          chave_perfil: personKey,
+        }),
+      });
+
+      // Atualizar assinaturas afetadas no servidor
+      for (const sKey of affectedServiceKeys) {
+        const s = SERVICES[sKey];
+        await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'salvar_assinatura',
+            id_grupo: state.groupId,
+            chave_servico: sKey,
+            nome: s.name,
+            sigla: s.shortName || '',
+            cor: s.color || '',
+            modelo: s.model || 'monthly',
+            valor_total: s.totalAmount || s.amount || 0,
+            participantes: (s.participants || []).join(','),
+            logo_url: s.logoUrl || '',
+          }),
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao excluir perfil no servidor:', err);
+      setNotificationStatus(
+        'Erro ao excluir no servidor. Alteração local aplicada.',
+        true,
+      );
+    }
   }
 
   setNotificationStatus('Excluído com sucesso!');
