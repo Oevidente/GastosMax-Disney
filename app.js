@@ -348,7 +348,7 @@ const MONTHS = [
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Backend_Atualizado.js é a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbxZ3Qg2gjxrAyy72jigf1C9PJdwutz6H_R7nPqRCYIaRfkjKgj7xZMPpGqm3rkuZ7AS/exec'.trim();
+  'https://script.google.com/macros/s/AKfycbzM0hNoBD-kG4TKrpAM_Mo2Y3YLjzC22lbGjMZ_OyhjgCoGy7o28vd2jmVnQHcop5EuPw/exec'.trim();
 
 // Estado global da aplicação
 
@@ -4126,6 +4126,13 @@ function salvarGrupo(id, name) {
 async function carregarDadosDoGrupo(idGrupo) {
   profileMessage.style.color = 'var(--ink)';
   profileMessage.textContent = 'Sincronizando dados do grupo...';
+
+  // Limpa caches locais antes de sincronizar para evitar mostrar perfis de outros grupos
+  PEOPLE = {};
+  SERVICES = {};
+  paidLogsCache = {};
+  if (adminProfilesList) adminProfilesList.innerHTML = '';
+  if (adminServicesList) adminServicesList.innerHTML = '';
 
   if (profileGrid) {
     profileGrid.innerHTML =

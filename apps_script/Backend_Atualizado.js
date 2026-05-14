@@ -6,21 +6,23 @@ function getSheetByName(name) {
 }
 
 function jsonResponse(payload) {
-  return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(
+    ContentService.MimeType.JSON,
+  );
 }
 
 function doGet(e) {
   try {
     var action = e.parameter.action;
     var idGrupo = e.parameter.id_grupo;
-    
+
     if (action === 'carregar_dados') {
       return jsonResponse({
         success: true,
         nome_grupo: getNomeGrupo(idGrupo),
         perfis: getCollection('Perfis', idGrupo),
         assinaturas: getCollection('Assinaturas', idGrupo),
-        logs: getCollection('Logs', idGrupo)
+        logs: getCollection('Logs', idGrupo),
       });
     }
 
@@ -29,42 +31,56 @@ function doGet(e) {
       var lastRow = sheet.getLastRow();
       if (lastRow <= 1) return jsonResponse({ success: true, grupos: [] });
       var data = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-      var grupos = data.map(function(row) {
+      var grupos = data.map(function (row) {
         return {
           id_grupo: row[0],
-          nome: row[1]
+          nome: row[1],
         };
       });
       return jsonResponse({ success: true, grupos: grupos });
     }
-    
+
     if (action === 'has_password') {
       var pKey = e.parameter.personKey;
       var sheet = getSheetByName('Senhas');
-      if (sheet.getLastRow() === 0) return jsonResponse({ success: true, hasPassword: false });
+      if (sheet.getLastRow() === 0)
+        return jsonResponse({ success: true, hasPassword: false });
       var data = sheet.getDataRange().getValues();
       for (var i = 1; i < data.length; i++) {
-        if (data[i][0] === idGrupo && data[i][1] === pKey && String(data[i][2]).trim() !== '') {
-          return jsonResponse({ success: true, hasPassword: true, hint: String(data[i][3]) || '' });
+        if (
+          data[i][0] === idGrupo &&
+          data[i][1] === pKey &&
+          String(data[i][2]).trim() !== ''
+        ) {
+          return jsonResponse({
+            success: true,
+            hasPassword: true,
+            hint: String(data[i][3]) || '',
+          });
         }
       }
       return jsonResponse({ success: true, hasPassword: false });
     }
-    
+
     if (action === 'check_password') {
       var pKey = e.parameter.personKey;
       var pass = e.parameter.password;
       var sheet = getSheetByName('Senhas');
-      if (sheet.getLastRow() === 0) return jsonResponse({ success: true, match: false });
+      if (sheet.getLastRow() === 0)
+        return jsonResponse({ success: true, match: false });
       var data = sheet.getDataRange().getValues();
       for (var i = 1; i < data.length; i++) {
-        if (data[i][0] === idGrupo && data[i][1] === pKey && String(data[i][2]).trim() === String(pass).trim()) {
+        if (
+          data[i][0] === idGrupo &&
+          data[i][1] === pKey &&
+          String(data[i][2]).trim() === String(pass).trim()
+        ) {
           return jsonResponse({ success: true, match: true });
         }
       }
       return jsonResponse({ success: true, match: false });
     }
-    
+
     return jsonResponse({ success: false, error: 'Ação GET não encontrada' });
   } catch (err) {
     return jsonResponse({ success: false, error: err.toString() });
@@ -73,41 +89,69 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    var payload = typeof e.postData !== 'undefined' ? JSON.parse(e.postData.contents) : e.parameter;
+    var payload =
+      typeof e.postData !== 'undefined'
+        ? JSON.parse(e.postData.contents)
+        : e.parameter;
     var action = payload.action;
     var lock = LockService.getScriptLock();
     lock.waitLock(15000);
-    
+
     try {
       if (action === 'criar_grupo') {
         var sheet = getSheetByName('Grupos');
-        var idGrupo = payload.id_grupo || payload.nome.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+        var idGrupo =
+          payload.id_grupo ||
+          payload.nome
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/(^_|_$)/g, '');
         ensureHeaders(sheet, ['id_grupo', 'nome']);
         sheet.appendRow([idGrupo, payload.nome]);
-        return jsonResponse({ success: true, id_grupo: idGrupo, nome_grupo: payload.nome });
+        return jsonResponse({
+          success: true,
+          id_grupo: idGrupo,
+          nome_grupo: payload.nome,
+        });
       }
-      
+
       if (action === 'renomear_grupo') {
         var idGrupoOld = payload.id_grupo;
-        var idGrupoNew = payload.id_grupo_novo || payload.nome.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
-        
+        var idGrupoNew =
+          payload.id_grupo_novo ||
+          payload.nome
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/(^_|_$)/g, '');
+
         // Update Grupos
-        updateCollectionField('Grupos', idGrupoOld, 0, idGrupoNew, payload.nome, 1);
-        
+        updateCollectionField(
+          'Grupos',
+          idGrupoOld,
+          0,
+          idGrupoNew,
+          payload.nome,
+          1,
+        );
+
         // Update foreign instances if slug changed
         if (idGrupoOld !== idGrupoNew) {
-           updateCollectionForeignKey('Perfis', idGrupoOld, idGrupoNew);
-           updateCollectionForeignKey('Assinaturas', idGrupoOld, idGrupoNew);
-           updateCollectionForeignKey('Logs', idGrupoOld, idGrupoNew);
-           updateCollectionForeignKey('Senhas', idGrupoOld, idGrupoNew);
+          updateCollectionForeignKey('Perfis', idGrupoOld, idGrupoNew);
+          updateCollectionForeignKey('Assinaturas', idGrupoOld, idGrupoNew);
+          updateCollectionForeignKey('Logs', idGrupoOld, idGrupoNew);
+          updateCollectionForeignKey('Senhas', idGrupoOld, idGrupoNew);
         }
-        return jsonResponse({ success: true, id_grupo: idGrupoNew, nome_grupo: payload.nome });
+        return jsonResponse({
+          success: true,
+          id_grupo: idGrupoNew,
+          nome_grupo: payload.nome,
+        });
       }
 
       if (action === 'excluir_grupo') {
         var idGrupoOld = payload.id_grupo;
-        
-        var deleteForeignKeyRows = function(sName) {
+
+        var deleteForeignKeyRows = function (sName) {
           var s = getSheetByName(sName);
           if (s.getLastRow() > 0) {
             var sData = s.getDataRange().getValues();
@@ -127,66 +171,128 @@ function doPost(e) {
 
         return jsonResponse({ success: true });
       }
-      
+
       var idGrupo = payload.id_grupo;
-      if (!idGrupo) return jsonResponse({ success: false, error: 'id_grupo missing' });
-      
+      if (!idGrupo)
+        return jsonResponse({ success: false, error: 'id_grupo missing' });
+
       if (action === 'set_password') {
-        saveRow('Senhas', ['id_grupo', 'chave_perfil', 'senha', 'dica'], 
-          [idGrupo, payload.chave_perfil, payload.newPassword || payload.senha || '', payload.hint || payload.dica || ''],
-          function(r) { return r[0] === idGrupo && r[1] === payload.chave_perfil; }
+        saveRow(
+          'Senhas',
+          ['id_grupo', 'chave_perfil', 'senha', 'dica'],
+          [
+            idGrupo,
+            payload.chave_perfil,
+            payload.newPassword || payload.senha || '',
+            payload.hint || payload.dica || '',
+          ],
+          function (r) {
+            return r[0] === idGrupo && r[1] === payload.chave_perfil;
+          },
         );
         return jsonResponse({ success: true });
       }
-      
+
       if (action === 'salvar_log') {
-        var chavePerfil = payload.chave_perfil || payload.personKey || payload.perfil || payload.nome;
-        var chaveServico = payload.chave_servico || payload.serviceKey || payload.servico || payload.assinatura;
-        var mes = normalizeDateKey(payload.mes || payload.month || payload.data || payload.date);
+        var chavePerfil =
+          payload.chave_perfil ||
+          payload.personKey ||
+          payload.perfil ||
+          payload.nome;
+        var chaveServico =
+          payload.chave_servico ||
+          payload.serviceKey ||
+          payload.servico ||
+          payload.assinatura;
+        var mes = normalizeDateKey(
+          payload.mes || payload.month || payload.data || payload.date,
+        );
         var pago = normalizeBoolean(payload.pago);
 
-        saveRow('Logs', ['id_grupo', 'chave_perfil', 'chave_servico', 'mes', 'pago'],
+        saveRow(
+          'Logs',
+          ['id_grupo', 'chave_perfil', 'chave_servico', 'mes', 'pago'],
           [idGrupo, chavePerfil, chaveServico, mes, pago],
-          function(r) {
-            return String(r[0]) === String(idGrupo) &&
+          function (r) {
+            return (
+              String(r[0]) === String(idGrupo) &&
               String(r[1]) === String(chavePerfil) &&
               String(r[2]) === String(chaveServico) &&
-              normalizeDateKey(r[3]) === mes;
-          }
+              normalizeDateKey(r[3]) === mes
+            );
+          },
         );
         return jsonResponse({ success: true });
       }
-      
+
       if (action === 'salvar_assinatura') {
-        var partsStr = Array.isArray(payload.participantes) ? payload.participantes.join(",") : (payload.participantes || '');
-        saveRow('Assinaturas', ['id_grupo', 'chave_servico', 'nome', 'sigla', 'cor', 'modelo', 'valor_total', 'participantes', 'logo_url'], 
-          [idGrupo, payload.chave_servico, payload.nome, payload.sigla || '', payload.cor || '', payload.modelo, payload.valor_total, partsStr, payload.logo_url || ''],
-          function(r) { return r[0] === idGrupo && r[1] === payload.chave_servico; }
+        var partsStr = Array.isArray(payload.participantes)
+          ? payload.participantes.join(',')
+          : payload.participantes || '';
+        saveRow(
+          'Assinaturas',
+          [
+            'id_grupo',
+            'chave_servico',
+            'nome',
+            'sigla',
+            'cor',
+            'modelo',
+            'valor_total',
+            'participantes',
+            'logo_url',
+          ],
+          [
+            idGrupo,
+            payload.chave_servico,
+            payload.nome,
+            payload.sigla || '',
+            payload.cor || '',
+            payload.modelo,
+            payload.valor_total,
+            partsStr,
+            payload.logo_url || '',
+          ],
+          function (r) {
+            return r[0] === idGrupo && r[1] === payload.chave_servico;
+          },
         );
         return jsonResponse({ success: true });
       }
-      
+
       if (action === 'salvar_perfil') {
-        saveRow('Perfis', ['id_grupo', 'chave_perfil', 'nome', 'iniciais', 'cor', 'is_admin'], 
-          [idGrupo, payload.chave_perfil, payload.nome, payload.iniciais || '', payload.cor || '', payload.is_admin || false],
-          function(r) { return r[0] === idGrupo && r[1] === payload.chave_perfil; }
+        saveRow(
+          'Perfis',
+          ['id_grupo', 'chave_perfil', 'nome', 'iniciais', 'cor', 'is_admin'],
+          [
+            idGrupo,
+            payload.chave_perfil,
+            payload.nome,
+            payload.iniciais || '',
+            payload.cor || '',
+            payload.is_admin || false,
+          ],
+          function (r) {
+            return r[0] === idGrupo && r[1] === payload.chave_perfil;
+          },
         );
         return jsonResponse({ success: true });
       }
-      
+
       if (action === 'deletar_item') {
         var sheet = getSheetByName(payload.aba);
         if (sheet.getLastRow() === 0) return jsonResponse({ success: true });
         var data = sheet.getDataRange().getValues();
-        var key = payload.chave || payload.chave_perfil || payload.chave_servico; 
+        var key =
+          payload.chave || payload.chave_perfil || payload.chave_servico;
         for (var i = data.length - 1; i >= 1; i--) {
-           if (data[i][0] === idGrupo && data[i][1] === key) {
-             sheet.deleteRow(i + 1);
-           }
+          if (data[i][0] === idGrupo && data[i][1] === key) {
+            sheet.deleteRow(i + 1);
+          }
         }
         return jsonResponse({ success: true });
       }
-      
+
       return jsonResponse({ success: false, error: 'Ação não encontrada' });
     } finally {
       lock.releaseLock();
@@ -217,26 +323,46 @@ function getCollection(sheetName, idGrupo) {
   var lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
   var data = sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).getValues();
-  var headers = data[0].map(function(header) {
+  var headers = data[0].map(function (header) {
     return String(header).trim();
   });
   var results = [];
-  
+
   var idGrupoColIndex = headers.indexOf('id_grupo'); // Find the 'id_grupo' column by name
 
   for (var i = 1; i < data.length; i++) {
-    // If 'id_grupo' column exists and is populated for this row, filter by it.
-    // If 'id_grupo' column does not exist (idGrupoColIndex === -1) or is empty for this row,
-    // assume it's a legacy entry and include it (don't filter by id_grupo for this row).
-    if (idGrupoColIndex !== -1 && data[i][idGrupoColIndex] !== '' && data[i][idGrupoColIndex] !== idGrupo) {
-      continue;
+    // Segurança: quando um `id_grupo` é informado, só incluímos linhas
+    // cujo campo 'id_grupo' exista e coincida exatamente com o solicitado.
+    // Linhas sem 'id_grupo' (legacy) não devem vazar para outros grupos.
+    if (idGrupo) {
+      if (idGrupoColIndex === -1) {
+        // Planilha não tem coluna `id_grupo` — não podemos inferir grupo, então ignore.
+        continue;
+      }
+
+      var cellVal = data[i][idGrupoColIndex];
+      if (cellVal === undefined || cellVal === null) cellVal = '';
+      cellVal = String(cellVal).trim();
+
+      if (cellVal !== String(idGrupo)) {
+        continue; // pertence a outro grupo (ou está vazio) — não incluir
+      }
+    } else {
+      // Se não foi informado `idGrupo`, mantém comportamento antigo: incluir todas as linhas
+      // (útil para chamadas administrativas que querem ler tudo).
     }
 
     var item = {};
     for (var j = 0; j < headers.length; j++) {
       var val = data[i][j];
-      if (headers[j] === 'participantes' && typeof val === 'string' && val.indexOf('[') === 0) {
-        try { val = JSON.parse(val); } catch(ev) {}
+      if (
+        headers[j] === 'participantes' &&
+        typeof val === 'string' &&
+        val.indexOf('[') === 0
+      ) {
+        try {
+          val = JSON.parse(val);
+        } catch (ev) {}
       }
       if (headers[j] === 'mes') {
         val = normalizeDateKey(val);
@@ -253,11 +379,13 @@ function getCollection(sheetName, idGrupo) {
 
 function saveRow(sheetName, headers, rowData, matchFunc) {
   var sheet = getSheetByName(sheetName);
-  
+
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(headers);
   } else {
-    var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var currentHeaders = sheet
+      .getRange(1, 1, 1, sheet.getLastColumn())
+      .getValues()[0];
     var needsHeaderUpdate = headers.length > currentHeaders.length;
     for (var h = 0; h < currentHeaders.length; h++) {
       if (h < headers.length && currentHeaders[h] === '') {
@@ -271,11 +399,11 @@ function saveRow(sheetName, headers, rowData, matchFunc) {
 
   var data = sheet.getDataRange().getValues();
   var updated = false;
-  
+
   for (var i = 1; i < data.length; i++) {
     if (matchFunc(data[i])) {
       var finalRow = [];
-      for(var j=0; j<headers.length; j++) {
+      for (var j = 0; j < headers.length; j++) {
         finalRow.push(rowData[j] !== undefined ? rowData[j] : '');
       }
       sheet.getRange(i + 1, 1, 1, headers.length).setValues([finalRow]);
@@ -285,7 +413,7 @@ function saveRow(sheetName, headers, rowData, matchFunc) {
   }
   if (!updated) {
     var newRow = [];
-    for(var j=0; j<headers.length; j++) {
+    for (var j = 0; j < headers.length; j++) {
       newRow.push(rowData[j] !== undefined ? rowData[j] : '');
     }
     sheet.appendRow(newRow);
@@ -296,8 +424,15 @@ function saveRow(sheetName, headers, rowData, matchFunc) {
 function normalizeDateKey(value) {
   if (value === null || value === undefined) return '';
 
-  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
-    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  if (
+    Object.prototype.toString.call(value) === '[object Date]' &&
+    !isNaN(value.getTime())
+  ) {
+    return Utilities.formatDate(
+      value,
+      Session.getScriptTimeZone(),
+      'yyyy-MM-dd',
+    );
   }
 
   var text = String(value).replace(/^'+/, '').trim();
@@ -315,7 +450,11 @@ function normalizeDateKey(value) {
 
   var parsedDate = new Date(text);
   if (!isNaN(parsedDate.getTime())) {
-    return Utilities.formatDate(parsedDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    return Utilities.formatDate(
+      parsedDate,
+      Session.getScriptTimeZone(),
+      'yyyy-MM-dd',
+    );
   }
 
   return text;
@@ -323,22 +462,31 @@ function normalizeDateKey(value) {
 
 function normalizeBoolean(value) {
   var normalized = String(value).trim().toLowerCase();
-  return value === true ||
+  return (
+    value === true ||
     normalized === 'true' ||
     normalized === 'sim' ||
     normalized === '1' ||
     normalized === 'pago' ||
-    normalized === 'yes';
+    normalized === 'yes'
+  );
 }
 
 function pad2(value) {
   return String(value).padStart(2, '0');
 }
 
-function updateCollectionField(sheetName, idOld, idIdx, idNew, extraVar, extraIdx) {
+function updateCollectionField(
+  sheetName,
+  idOld,
+  idIdx,
+  idNew,
+  extraVar,
+  extraIdx,
+) {
   var sheet = getSheetByName(sheetName);
   ensureHeaders(sheet, ['id_grupo', 'nome']); // for Grupos tab
-  if(sheet.getLastRow() <= 1) {
+  if (sheet.getLastRow() <= 1) {
     if (sheetName === 'Grupos') sheet.appendRow([idNew, extraVar]);
     return;
   }
@@ -346,12 +494,12 @@ function updateCollectionField(sheetName, idOld, idIdx, idNew, extraVar, extraId
   var found = false;
   for (var i = 1; i < data.length; i++) {
     if (data[i][idIdx] === idOld) {
-       sheet.getRange(i + 1, idIdx + 1).setValue(idNew);
-       if(extraIdx !== undefined && extraVar !== undefined) {
-         sheet.getRange(i + 1, extraIdx + 1).setValue(extraVar);
-       }
-       found = true;
-       return;
+      sheet.getRange(i + 1, idIdx + 1).setValue(idNew);
+      if (extraIdx !== undefined && extraVar !== undefined) {
+        sheet.getRange(i + 1, extraIdx + 1).setValue(extraVar);
+      }
+      found = true;
+      return;
     }
   }
   if (!found && sheetName === 'Grupos') {
@@ -361,11 +509,11 @@ function updateCollectionField(sheetName, idOld, idIdx, idNew, extraVar, extraId
 
 function updateCollectionForeignKey(sheetName, idOld, idNew) {
   var sheet = getSheetByName(sheetName);
-  if(sheet.getLastRow() <= 1) return;
+  if (sheet.getLastRow() <= 1) return;
   var data = sheet.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === idOld) {
-       sheet.getRange(i + 1, 1).setValue(idNew);
+      sheet.getRange(i + 1, 1).setValue(idNew);
     }
   }
 }
