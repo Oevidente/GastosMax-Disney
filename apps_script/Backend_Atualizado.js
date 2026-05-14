@@ -210,8 +210,16 @@ function getCollection(sheetName, idGrupo) {
   var headers = data[0];
   var results = [];
   
+  var idGrupoColIndex = headers.indexOf('id_grupo'); // Find the 'id_grupo' column by name
+
   for (var i = 1; i < data.length; i++) {
-    if (data[i][0] !== idGrupo) continue;
+    // If 'id_grupo' column exists and is populated for this row, filter by it.
+    // If 'id_grupo' column does not exist (idGrupoColIndex === -1) or is empty for this row,
+    // assume it's a legacy entry and include it (don't filter by id_grupo for this row).
+    if (idGrupoColIndex !== -1 && data[i][idGrupoColIndex] !== '' && data[i][idGrupoColIndex] !== idGrupo) {
+      continue;
+    }
+
     var item = {};
     for (var j = 0; j < headers.length; j++) {
       var val = data[i][j];

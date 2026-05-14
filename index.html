@@ -78,7 +78,10 @@
                 </div>
               </div>
               <div class="profile-grid" id="profileGrid">
-                <!-- Perfis serão inseridos aqui via JS -->
+                <div style="grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 0; width: 100%;">
+                  <div class="loader-spinner"></div>
+                  <p style="color: var(--muted); font-size: 0.9rem; margin: 0;">Carregando perfis...</p>
+                </div>
               </div>
             </div>
 
@@ -198,7 +201,10 @@
           <div class="profile-selection" style="width: 100%;">
             <div id="groupListContainer" style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
               <div id="groupList" class="profile-grid" style="margin-bottom: 8px;">
-                <p style="text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1;">Carregando grupos...</p>
+                <div style="grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 0; width: 100%;">
+                  <div class="loader-spinner"></div>
+                  <p style="text-align: center; color: var(--muted); font-size: 0.9rem; margin: 0;">Carregando grupos...</p>
+                </div>
               </div>
             </div>
           </div>
