@@ -348,7 +348,7 @@ const MONTHS = [
 // Esta é a API publicada no Google Apps Script.
 // O arquivo apps_script/Backend_Atualizado.js é a cópia versionada do código que roda nessa URL.
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbyfEgaZ2jE62bxvnj0UrRcNrWyIFDhY3r3K98FLTQlbld6ZgSwMzm3wjz3M1CpmpbdBsw/exec'.trim();
+  'https://script.google.com/macros/s/AKfycbxZ3Qg2gjxrAyy72jigf1C9PJdwutz6H_R7nPqRCYIaRfkjKgj7xZMPpGqm3rkuZ7AS/exec'.trim();
 
 // Estado global da aplicação
 
@@ -3514,7 +3514,9 @@ document.addEventListener('click', async (event) => {
             id_grupo: state.groupId,
             chave_perfil: authenticatingPerson,
             senha: pass,
+            newPassword: pass,
             dica: hintInput.value.trim(),
+            hint: hintInput.value.trim(),
           }),
         });
         document.querySelector('#passwordModal').classList.add('is-hidden');

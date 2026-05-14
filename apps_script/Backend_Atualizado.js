@@ -133,7 +133,7 @@ function doPost(e) {
       
       if (action === 'set_password') {
         saveRow('Senhas', ['id_grupo', 'chave_perfil', 'senha', 'dica'], 
-          [idGrupo, payload.chave_perfil, payload.newPassword, payload.hint || ''],
+          [idGrupo, payload.chave_perfil, payload.newPassword || payload.senha || '', payload.hint || payload.dica || ''],
           function(r) { return r[0] === idGrupo && r[1] === payload.chave_perfil; }
         );
         return jsonResponse({ success: true });
